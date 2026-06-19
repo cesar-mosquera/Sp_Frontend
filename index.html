@@ -1,0 +1,87 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Servidor Espía - Inteligencia Central</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;800&family=Share+Tech+Mono&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <div class="background-grid"></div>
+    
+    <div class="dashboard">
+        <header>
+            <h1 class="glitch" data-text="Servidor Espía">Servidor Espía</h1>
+            <h2>PANEL DE INTELIGENCIA CENTRAL</h2>
+        </header>
+
+        <main class="grid-container">
+            <!-- Fila Superior -->
+            <div class="card stat-card" data-filter="ops">
+                <h3 class="card-title">Operaciones Totales</h3>
+                <p class="value">1,234</p>
+            </div>
+            <div class="card stat-card" data-filter="success">
+                <h3 class="card-title">Tasa de Éxito</h3>
+                <p class="value">98.7<span class="unit">%</span></p>
+            </div>
+            <div class="card stat-card" data-filter="nodes">
+                <h3 class="card-title">Nodos de Red</h3>
+                <p class="value">2,104</p>
+            </div>
+
+            <!-- Fila Inferior -->
+            <div class="card stat-card" data-filter="agents">
+                <h3 class="card-title">Agentes Activos</h3>
+                <p class="value">567</p>
+            </div>
+            <div class="card stat-card" data-filter="intercepts">
+                <h3 class="card-title">Intercepciones</h3>
+                <p class="value">89</p>
+            </div>
+            <div class="card stat-card" data-filter="data">
+                <h3 class="card-title">Datos Procesados</h3>
+                <p class="value">2.3 <span class="unit">TB</span></p>
+            </div>
+
+            <!-- Sección de Registros -->
+            <div class="card log-section" id="log-card">
+                <div class="log-header">
+                    <h3 class="card-title">Registro <span id="log-filter-indicator"></span></h3>
+                    <div class="log-controls">
+                        <button id="reset-filter" class="btn-small" style="display: none;">Restablecer</button>
+                    </div>
+                </div>
+                <ul class="log-list" id="log-list">
+                    <!-- El JS llenará esto -->
+                </ul>
+            </div>
+
+            <!-- Sección de Estado del Sistema -->
+            <div class="card status-section">
+                <div class="status-item">
+                    <span class="label">Estado:</span>
+                    <span class="value success blink">En Línea</span>
+                </div>
+                <div class="status-item">
+                    <span class="label">Seguridad:</span>
+                    <span class="value success">Alta</span>
+                </div>
+                <div class="status-item">
+                    <span class="label">Latencia:</span>
+                    <span class="value" id="latency-val">12 ms</span>
+                </div>
+                <div class="status-item">
+                    <span class="label">Conexiones:</span>
+                    <span class="value" id="connections-val">892</span>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <script src="app.js"></script>
+</body>
+</html>
