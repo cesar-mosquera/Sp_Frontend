@@ -13,5 +13,5 @@
 //  ⚠️  CAMBIA la IP por la de tu VPS antes de subir a Netlify
 // ============================================================
 
-const API_BASE_URL = "http://localhost:5000";   // ← CAMBIA ESTO por la IP de tu VPS cuando subas a Netlify
+const API_BASE_URL = "http://18.227.94.9:5000";   // ← CAMBIA ESTO por la IP de tu VPS cuando subas a Netlify
 const DASHBOARD_KEY = "DashK3y_SpyFront_2026_Secure!"; // ← Igual al .env del backend
