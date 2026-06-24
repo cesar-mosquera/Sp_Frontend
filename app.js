@@ -1,3 +1,50 @@
+// ============================================================
+// CARGA DE DATOS DESDE EL BACKEND
+// ============================================================
+async function fetchDashboardData() {
+    try {
+        const res = await fetch(API_BASE_URL + "/api/dashboard-data", {
+            headers: { "X-Dashboard-Key": DASHBOARD_KEY }
+        });
+        if (!res.ok) throw new Error("HTTP " + res.status);
+        return await res.json();
+    } catch (e) {
+        console.warn("No se pudo conectar al backend:", e.message);
+        return null;
+    }
+}
+
+async function loadStats() {
+    const data = await fetchDashboardData();
+    if (!data || !data.stats) return;
+    const s = data.stats;
+
+    const valEls = document.querySelectorAll('.stat-card .value');
+    if (valEls.length >= 6) {
+        valEls[0].innerHTML = s.total_operations.toLocaleString();
+        valEls[1].innerHTML = s.success_rate + '<span class="unit">%</span>';
+        valEls[2].innerHTML = s.network_nodes.toLocaleString();
+        valEls[3].innerHTML = s.active_agents.toLocaleString();
+        valEls[4].innerHTML = s.intercepts_24h.toLocaleString();
+        valEls[5].innerHTML = s.data_processed_tb + ' <span class="unit">TB</span>';
+    }
+
+    if (data.logs && data.logs.length > 0) {
+        window._realLogs = data.logs.map(log => ({
+            type: (log.type || 'GENERAL').toLowerCase(),
+            msg: (log.content || '').slice(0, 80),
+            time: (log.timestamp || '').slice(11, 19),
+            size: log.device_id || ''
+        }));
+        renderLogs();
+    }
+}
+
+document.addEventListener('DOMContentLoaded', loadStats);
+
+// ============================================================
+// DATOS DE RESPALDO (mock)
+// ============================================================
 const logsData = [
     { type: 'agents', msg: 'WhatsApp - Enviando video a Mi Reina', time: '0:34M', size: '12MB' },
     { type: 'agents', msg: 'Telegram - Extrayendo ubicación (Agente 007)', time: '0:34M', size: '1.2MB' },
@@ -32,9 +79,10 @@ const filterNames = {
 function renderLogs(filter = 'all') {
     logListElement.innerHTML = '';
     
+    const source = (window._realLogs && window._realLogs.length > 0) ? window._realLogs : logsData;
     const filteredLogs = filter === 'all' 
-        ? logsData 
-        : logsData.filter(log => log.type === filter);
+        ? source 
+        : source.filter(log => log.type === filter);
 
     if (filteredLogs.length === 0) {
         logListElement.innerHTML = '<li class="log-item"><span class="log-msg">No hay registros recientes para esta categoría.</span></li>';

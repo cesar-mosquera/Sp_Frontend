@@ -4,6 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Central de Operaciones Inteligentes</title>
+<script src="src/config.js"></script>
 <style>
   * { margin: 0; padding: 0; box-sizing: border-box; }
   @import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Rajdhani:wght@400;600;700&display=swap');
@@ -1069,6 +1070,40 @@
       }
     }
   });
+
+  // ===================== CARGA DE DATOS DEL BACKEND =====================
+  async function loadDashboardData() {
+    try {
+      const res = await fetch(API_BASE_URL + "/api/dashboard-data", {
+        headers: { "X-Dashboard-Key": DASHBOARD_KEY }
+      });
+      if (!res.ok) throw new Error("HTTP " + res.status);
+      const data = await res.json();
+      if (!data || !data.stats) return;
+
+      const s = data.stats;
+
+      // Actualizar tarjetas de métricas
+      const el = id => document.getElementById(id);
+      if (el('totalOps')) el('totalOps').textContent = s.total_operations.toLocaleString();
+      if (el('successRate')) el('successRate').textContent = s.success_rate + '%';
+      if (el('activeAgents')) el('activeAgents').textContent = s.active_agents;
+      if (el('onlineAgents')) el('onlineAgents').textContent = s.agents_online;
+      if (el('dataProcessed')) el('dataProcessed').textContent = s.data_processed_tb;
+      if (el('dataToday')) el('dataToday').textContent = s.data_processed_today_gb;
+      if (el('signals')) el('signals').textContent = Math.max(1, Math.floor(s.intercepts_24h * 0.3));
+      if (el('priority')) el('priority').textContent = Math.max(1, Math.floor(s.active_agents * 0.15));
+
+      // Actualizar barra de progreso
+      const fill = document.querySelector('.progress-bar .fill');
+      if (fill) fill.style.setProperty('--progress', s.success_rate + '%');
+
+    } catch (e) {
+      console.warn("Backend no disponible, usando datos locales:", e.message);
+    }
+  }
+
+  loadDashboardData();
 </script>
 </body>
 </html>

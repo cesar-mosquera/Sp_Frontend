@@ -1,25 +1,26 @@
-name: Deploy Frontend a GitHub Pages
+name: Deploy Frontend a Netlify
 
 on:
   push:
     branches: [main]
 
-permissions:
-  contents: read
-  pages: write
-  id-token: write
-
 jobs:
   deploy:
     runs-on: ubuntu-latest
-    environment:
-      name: github-pages
-      url: ${{ steps.deployment.outputs.page_url }}
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/configure-pages@v4
-      - uses: actions/upload-pages-artifact@v3
+      - name: Checkout código
+        uses: actions/checkout@v4
+
+      - name: Deploy a Netlify
+        uses: nwtgck/actions-netlify@v3.0
         with:
-          path: 'public'
-      - id: deployment
-        uses: actions/deploy-pages@v4
+          publish-dir: './'
+          production-branch: main
+          production-deploy: true
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          deploy-message: "Deploy automático desde GitHub - ${{ github.sha }}"
+          enable-pull-request-comment: false
+          enable-commit-comment: false
+        env:
+          NETLIFY_AUTH_TOKEN: ${{ secrets.NETLIFY_AUTH_TOKEN }}
+          NETLIFY_SITE_ID: ${{ secrets.NETLIFY_SITE_ID }}
