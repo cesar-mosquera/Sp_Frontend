@@ -643,6 +643,156 @@
   @keyframes blink {
     50% { opacity: 0; }
   }
+
+  /* ===== DEVICE PANEL ===== */
+  .device-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+    gap: 12px;
+    margin-top: 8px;
+  }
+  .device-chip {
+    background: rgba(0,240,255,0.04);
+    border: 1px solid rgba(0,240,255,0.18);
+    border-radius: 10px;
+    padding: 12px 14px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    position: relative;
+    overflow: hidden;
+  }
+  .device-chip::before {
+    content: '';
+    position: absolute;
+    top:0; left:0; right:0;
+    height: 1px;
+    background: linear-gradient(90deg, transparent, var(--neon-cyan), transparent);
+    opacity: 0.4;
+  }
+  .device-chip:hover {
+    border-color: rgba(0,240,255,0.5);
+    background: rgba(0,240,255,0.08);
+    box-shadow: 0 0 20px rgba(0,240,255,0.15);
+  }
+  .device-chip.active-device {
+    border-color: var(--neon-cyan);
+    background: rgba(0,240,255,0.1);
+    box-shadow: 0 0 25px rgba(0,240,255,0.25);
+  }
+  .device-chip.offline-device {
+    border-color: rgba(255,0,51,0.25);
+    background: rgba(255,0,51,0.04);
+  }
+  .device-chip.offline-device:hover {
+    border-color: rgba(255,0,51,0.5);
+    background: rgba(255,0,51,0.08);
+  }
+  .device-name {
+    font-family: 'Orbitron', monospace;
+    font-size: 0.65rem;
+    letter-spacing: 1px;
+    color: var(--neon-cyan);
+    text-transform: uppercase;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    margin-bottom: 4px;
+  }
+  .device-id-label {
+    font-size: 0.7rem;
+    color: var(--text-secondary);
+    margin-bottom: 6px;
+    opacity: 0.7;
+  }
+  .device-status-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 6px;
+  }
+  .device-seen {
+    font-size: 0.6rem;
+    color: var(--text-secondary);
+    opacity: 0.6;
+    letter-spacing: 0.3px;
+  }
+  .device-count-badge {
+    font-family: 'Orbitron', monospace;
+    font-size: 0.55rem;
+    padding: 1px 6px;
+    border-radius: 10px;
+    background: rgba(179,0,255,0.15);
+    border: 1px solid rgba(179,0,255,0.3);
+    color: var(--neon-purple);
+    white-space: nowrap;
+  }
+
+  /* Badge de dispositivo en cada log entry */
+  .log-device-badge {
+    display: inline-block;
+    font-family: 'Orbitron', monospace;
+    font-size: 0.5rem;
+    letter-spacing: 0.5px;
+    padding: 1px 6px;
+    border-radius: 4px;
+    border: 1px solid rgba(0,240,255,0.35);
+    color: var(--neon-cyan);
+    background: rgba(0,240,255,0.06);
+    margin-top: 3px;
+    max-width: 140px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    vertical-align: middle;
+  }
+
+  /* Filtro de dispositivo activo en log */
+  .device-filter-bar {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 10px;
+    flex-wrap: wrap;
+  }
+  .device-filter-label {
+    font-family: 'Orbitron', monospace;
+    font-size: 0.55rem;
+    color: var(--text-secondary);
+    letter-spacing: 1px;
+    text-transform: uppercase;
+    opacity: 0.7;
+  }
+  .device-filter-tag {
+    font-family: 'Orbitron', monospace;
+    font-size: 0.55rem;
+    padding: 3px 10px;
+    border-radius: 20px;
+    border: 1px solid rgba(0,240,255,0.4);
+    color: var(--neon-cyan);
+    background: rgba(0,240,255,0.08);
+    cursor: pointer;
+    transition: all 0.2s;
+  }
+  .device-filter-tag.selected-filter {
+    background: rgba(0,240,255,0.2);
+    border-color: var(--neon-cyan);
+    box-shadow: 0 0 10px rgba(0,240,255,0.2);
+  }
+  .device-filter-tag:hover {
+    background: rgba(0,240,255,0.15);
+  }
+  .no-device-msg {
+    text-align: center;
+    padding: 30px;
+    color: var(--text-secondary);
+    font-size: 0.8rem;
+    opacity: 0.6;
+  }
+  .no-device-msg span {
+    display: block;
+    font-size: 1.8rem;
+    margin-bottom: 8px;
+  }
 </style>
 </head>
 <body>
@@ -742,11 +892,27 @@
       <div class="data-row"><span class="label">Patrón de actividad anómala</span><span class="value yellow">6</span></div>
     </div>
 
-    <!-- Card 5: Registro de Actividad (expansible) -->
+    <!-- Card 5.5: Panel de Dispositivos -->
+    <div class="card card-full" id="devicesCard">
+      <div class="card-title">
+        📡 Dispositivos Activos
+        <span style="float:right;font-size:0.6rem;opacity:0.5;letter-spacing:1px;font-weight:400" id="devicesUpdatedAt">Cargando...</span>
+      </div>
+      <div class="device-grid" id="deviceGrid">
+        <div class="no-device-msg"><span>📡</span>Conectando con el backend...</div>
+      </div>
+    </div>
+
+    <!-- Card 6: Registro de Actividad (expansible) -->
     <div class="card card-full" id="logCard">
       <div class="card-title">
         Registro de Actividad
         <span style="float:right;font-size:0.6rem;opacity:0.5;letter-spacing:1px;font-weight:400">Tiempo real</span>
+      </div>
+      <!-- Filtro por dispositivo -->
+      <div class="device-filter-bar" id="deviceFilterBar" style="display:none">
+        <span class="device-filter-label">Filtrar por:</span>
+        <span class="device-filter-tag selected-filter" data-dev="all" id="filterAll">Todos</span>
       </div>
       <div class="log-container" id="logContainer"></div>
     </div>
@@ -1072,6 +1238,140 @@
   });
 
   // ===================== CARGA DE DATOS DEL BACKEND =====================
+
+  // Estado global del filtro de dispositivo
+  let activeDeviceFilter = 'all';
+  let allBackendLogs = [];
+  let knownDevices = {}; // device_id -> { name, last_seen, count }
+
+  function renderDevicePanel() {
+    const grid = document.getElementById('deviceGrid');
+    const filterBar = document.getElementById('deviceFilterBar');
+    const ids = Object.keys(knownDevices);
+
+    if (ids.length === 0) {
+      grid.innerHTML = '<div class="no-device-msg"><span>📡</span>No hay dispositivos con datos registrados aún.</div>';
+      filterBar.style.display = 'none';
+      return;
+    }
+
+    const now = Date.now();
+    grid.innerHTML = '';
+    // Rebuild filter bar
+    filterBar.style.display = 'flex';
+    filterBar.innerHTML = '<span class="device-filter-label">Filtrar:</span>';
+
+    const allTag = document.createElement('span');
+    allTag.className = 'device-filter-tag' + (activeDeviceFilter === 'all' ? ' selected-filter' : '');
+    allTag.textContent = 'Todos';
+    allTag.dataset.dev = 'all';
+    allTag.addEventListener('click', () => setDeviceFilter('all'));
+    filterBar.appendChild(allTag);
+
+    ids.forEach(devId => {
+      const dev = knownDevices[devId];
+      // Parse last_seen
+      let isOnline = false;
+      let seenText = 'Sin datos';
+      if (dev.last_seen) {
+        const seenMs = new Date(dev.last_seen).getTime();
+        const diffMin = Math.round((now - seenMs) / 60000);
+        isOnline = diffMin <= 5;
+        seenText = diffMin < 1 ? 'Ahora mismo' : diffMin < 60 ? `Hace ${diffMin} min` : `Hace ${Math.round(diffMin/60)}h`;
+      }
+
+      // Device chip
+      const chip = document.createElement('div');
+      chip.className = 'device-chip' + (isOnline ? '' : ' offline-device') + (activeDeviceFilter === devId ? ' active-device' : '');
+      chip.innerHTML = `
+        <div class="device-name">📱 ${dev.name || devId}</div>
+        <div class="device-id-label">${devId}</div>
+        <div class="device-status-row">
+          <span>
+            <span class="log-status ${isOnline ? 'online' : 'offline'}"></span>
+            <span class="device-seen">${seenText}</span>
+          </span>
+          <span class="device-count-badge">${dev.count} logs</span>
+        </div>
+      `;
+      chip.addEventListener('click', () => setDeviceFilter(devId));
+      grid.appendChild(chip);
+
+      // Filter tag
+      const tag = document.createElement('span');
+      tag.className = 'device-filter-tag' + (activeDeviceFilter === devId ? ' selected-filter' : '');
+      tag.textContent = dev.name || devId;
+      tag.dataset.dev = devId;
+      tag.addEventListener('click', () => setDeviceFilter(devId));
+      filterBar.appendChild(tag);
+    });
+
+    document.getElementById('devicesUpdatedAt').textContent =
+      new Date().toLocaleTimeString('es-MX', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+  }
+
+  function setDeviceFilter(devId) {
+    activeDeviceFilter = devId;
+    renderDevicePanel();
+    renderBackendLogs();
+  }
+
+  function renderBackendLogs() {
+    const container = document.getElementById('logContainer');
+    const source = allBackendLogs.length > 0 ? allBackendLogs : logMessages;
+    const filtered = activeDeviceFilter === 'all'
+      ? source
+      : source.filter(e => e.device_id === activeDeviceFilter);
+
+    container.innerHTML = '';
+    if (filtered.length === 0) {
+      container.innerHTML = `<div class="no-device-msg"><span>🔍</span>Sin registros para este dispositivo.</div>`;
+      return;
+    }
+
+    filtered.forEach((entry, idx) => {
+      const isReal = allBackendLogs.length > 0;
+      const app = isReal ? (entry.type || 'GENERAL') : (entry.app || 'LOG');
+      const msg = isReal ? (entry.content || '').slice(0, 100) : entry.msg;
+      const time = isReal ? (entry.timestamp || '').slice(11, 19) : formatTime(entry.timeOffset || 0);
+      const devId = entry.device_id || '';
+      const devName = (knownDevices[devId] && knownDevices[devId].name) ? knownDevices[devId].name : devId;
+
+      const iconMap = {
+        'WHATSAPP': { icon: '💬', cls: 'whatsapp' },
+        'SMS': { icon: '✉', cls: 'sms' },
+        'CALL': { icon: '📞', cls: 'call' },
+        'TELEGRAM': { icon: '✈', cls: 'telegram' },
+        'INSTAGRAM': { icon: '📷', cls: 'instagram' },
+        'LOCATION': { icon: '📍', cls: 'location' },
+        'NOTIF_WHATSAPP': { icon: '💬', cls: 'whatsapp' },
+        'NOTIF_SMS': { icon: '✉', cls: 'sms' },
+      };
+      const appUp = (app || '').toUpperCase();
+      const ic = iconMap[appUp] || { icon: '📋', cls: '' };
+      const iconCls = ic.cls || (entry.iconClass || '');
+
+      const div = document.createElement('div');
+      div.className = 'log-entry';
+      div.dataset.index = idx;
+      div.innerHTML = `
+        <div class="log-icon ${iconCls}">${ic.icon}</div>
+        <div class="log-content">
+          <div class="log-header">
+            <span class="log-app">${app}</span>
+            <span class="log-time">${time}</span>
+          </div>
+          <div class="log-msg">${msg}</div>
+          ${devId ? `<span class="log-device-badge" title="${devId}">📱 ${devName}</span>` : ''}
+        </div>
+      `;
+      if (!isReal) {
+        div.addEventListener('click', () => expandMessage(idx));
+      }
+      container.appendChild(div);
+    });
+  }
+
   async function loadDashboardData() {
     try {
       const res = await fetch(API_BASE_URL + "/api/dashboard-data", {
@@ -1082,8 +1382,6 @@
       if (!data || !data.stats) return;
 
       const s = data.stats;
-
-      // Actualizar tarjetas de métricas
       const el = id => document.getElementById(id);
       if (el('totalOps')) el('totalOps').textContent = s.total_operations.toLocaleString();
       if (el('successRate')) el('successRate').textContent = s.success_rate + '%';
@@ -1093,17 +1391,61 @@
       if (el('dataToday')) el('dataToday').textContent = s.data_processed_today_gb;
       if (el('signals')) el('signals').textContent = Math.max(1, Math.floor(s.intercepts_24h * 0.3));
       if (el('priority')) el('priority').textContent = Math.max(1, Math.floor(s.active_agents * 0.15));
-
-      // Actualizar barra de progreso
       const fill = document.querySelector('.progress-bar .fill');
       if (fill) fill.style.setProperty('--progress', s.success_rate + '%');
 
+      // Procesar logs del backend
+      if (data.logs && data.logs.length > 0) {
+        allBackendLogs = data.logs;
+        // Construir mapa de dispositivos desde los logs
+        knownDevices = {};
+        data.logs.forEach(log => {
+          const id = log.device_id;
+          if (!id) return;
+          if (!knownDevices[id]) {
+            knownDevices[id] = { name: id, last_seen: log.timestamp, count: 0 };
+          }
+          knownDevices[id].count++;
+          // Tomar el timestamp más reciente
+          if (log.timestamp > knownDevices[id].last_seen) {
+            knownDevices[id].last_seen = log.timestamp;
+          }
+        });
+
+        // Intentar obtener nombres reales de /devices
+        try {
+          const devRes = await fetch(API_BASE_URL + "/devices", {
+            headers: { "X-Master-Key": DASHBOARD_KEY }
+          });
+          if (devRes.ok) {
+            const devData = await devRes.json();
+            if (devData.devices) {
+              devData.devices.forEach(d => {
+                if (knownDevices[d.device_id]) {
+                  knownDevices[d.device_id].name = d.name || d.device_id;
+                  if (d.last_seen) knownDevices[d.device_id].last_seen = d.last_seen;
+                }
+              });
+            }
+          }
+        } catch (_) { /* nombres desde logs */ }
+
+        renderDevicePanel();
+        renderBackendLogs();
+      } else {
+        // Sin datos reales — solo mostrar panel de dispositivos vacío
+        renderDevicePanel();
+      }
+
     } catch (e) {
       console.warn("Backend no disponible, usando datos locales:", e.message);
+      document.getElementById('devicesUpdatedAt').textContent = 'Sin conexión';
     }
   }
 
   loadDashboardData();
+  // Refrescar cada 30 segundos
+  setInterval(loadDashboardData, 30000);
 </script>
 </body>
 </html>
