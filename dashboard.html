@@ -1,1048 +1,1496 @@
 <!DOCTYPE html>
 <html lang="es">
+
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Central de Operaciones Inteligentes</title>
-<script src="src/config.js"></script>
-<style>
-  * { margin: 0; padding: 0; box-sizing: border-box; }
-  @import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Rajdhani:wght@400;600;700&display=swap');
-
-  :root {
-    --neon-purple: #b300ff;
-    --neon-blue: #6a00ff;
-    --neon-cyan: #00f0ff;
-    --dark-bg: #0a0014;
-    --card-bg: rgba(15, 0, 35, 0.85);
-    --card-border: rgba(179, 0, 255, 0.3);
-    --text-primary: #f0e6ff;
-    --text-secondary: #b088d0;
-    --glow-purple: 0 0 20px rgba(179, 0, 255, 0.3);
-    --red-accent: #ff0033;
-    --red-glow: 0 0 15px rgba(255, 0, 51, 0.4);
-  }
-
-  body {
-    font-family: 'Rajdhani', sans-serif;
-    background: var(--dark-bg);
-    color: var(--text-primary);
-    min-height: 100vh;
-    overflow-x: hidden;
-    position: relative;
-  }
-
-  /* Wireframe background */
-  #wireframe-canvas {
-    position: fixed;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
-    z-index: 0;
-    pointer-events: none;
-  }
-
-  /* Red lighting overlay */
-  .red-lighting {
-    position: fixed;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
-    background: radial-gradient(ellipse at 20% 50%, rgba(255, 0, 51, 0.06) 0%, transparent 50%),
-                radial-gradient(ellipse at 80% 50%, rgba(255, 0, 51, 0.04) 0%, transparent 50%);
-    z-index: 0;
-    pointer-events: none;
-  }
-
-  .container {
-    position: relative;
-    z-index: 1;
-    max-width: 1440px;
-    margin: 0 auto;
-    padding: 20px;
-    transition: filter 0.6s ease, opacity 0.6s ease;
-  }
-  .container.blurred {
-    filter: blur(3px) brightness(0.3);
-    opacity: 0.4;
-  }
-
-  /* Header */
-  header {
-    text-align: center;
-    padding: 30px 10px 20px;
-    position: relative;
-  }
-  header h1 {
-    font-family: 'Orbitron', monospace;
-    font-size: clamp(1.6rem, 5vw, 3.2rem);
-    font-weight: 900;
-    letter-spacing: 6px;
-    text-transform: uppercase;
-    text-shadow: 0 0 20px rgba(179, 0, 255, 0.5), 0 0 60px rgba(179, 0, 255, 0.2);
-    color: var(--text-primary);
-  }
-  header .subtitle {
-    font-family: 'Orbitron', monospace;
-    font-size: clamp(0.8rem, 2vw, 1.2rem);
-    letter-spacing: 12px;
-    color: var(--neon-cyan);
-    text-shadow: 0 0 15px rgba(0, 240, 255, 0.4);
-    margin-top: 8px;
-    text-transform: uppercase;
-  }
-  .header-line {
-    width: 80%;
-    max-width: 800px;
-    height: 2px;
-    margin: 16px auto 0;
-    background: linear-gradient(90deg, transparent, var(--neon-purple), var(--neon-cyan), var(--neon-purple), transparent);
-    box-shadow: 0 0 20px rgba(179, 0, 255, 0.5);
-  }
-
-  /* Dashboard Grid */
-  .dashboard {
-    display: grid;
-    grid-template-columns: repeat(4, 1fr);
-    gap: 16px;
-    margin-top: 24px;
-    transition: transform 0.6s ease, opacity 0.6s ease;
-  }
-  .dashboard.blurred {
-    transform: scale(0.95);
-    opacity: 0.3;
-    filter: blur(3px);
-    pointer-events: none;
-  }
-
-  .card {
-    background: var(--card-bg);
-    border: 1px solid var(--card-border);
-    border-radius: 12px;
-    padding: 20px;
-    backdrop-filter: blur(10px);
-    box-shadow: var(--glow-purple), inset 0 0 30px rgba(179, 0, 255, 0.03);
-    position: relative;
-    overflow: hidden;
-    transition: all 0.4s ease;
-  }
-  .card:hover {
-    border-color: rgba(179, 0, 255, 0.6);
-    box-shadow: 0 0 30px rgba(179, 0, 255, 0.2), inset 0 0 40px rgba(179, 0, 255, 0.05);
-  }
-  .card::before {
-    content: '';
-    position: absolute;
-    top: 0;
-    left: 0;
-    right: 0;
-    height: 1px;
-    background: linear-gradient(90deg, transparent, var(--neon-purple), transparent);
-    opacity: 0.5;
-  }
-
-  .card-title {
-    font-family: 'Orbitron', monospace;
-    font-size: 0.65rem;
-    letter-spacing: 2px;
-    color: var(--neon-cyan);
-    text-transform: uppercase;
-    margin-bottom: 12px;
-    opacity: 0.8;
-  }
-
-  .stat-value {
-    font-family: 'Orbitron', monospace;
-    font-size: clamp(1.8rem, 3vw, 2.6rem);
-    font-weight: 700;
-    color: var(--text-primary);
-    text-shadow: 0 0 15px rgba(179, 0, 255, 0.4);
-  }
-  .stat-label {
-    font-size: 0.85rem;
-    color: var(--text-secondary);
-    margin-top: 4px;
-    font-weight: 600;
-    letter-spacing: 0.5px;
-  }
-  .stat-sub {
-    font-size: 0.7rem;
-    color: var(--neon-cyan);
-    opacity: 0.7;
-    letter-spacing: 1px;
-  }
-
-  /* Card spans */
-  .card-span-2 {
-    grid-column: span 2;
-  }
-  .card-full {
-    grid-column: 1 / -1;
-  }
-
-  /* Grouped metrics inside cards */
-  .metric-group {
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: 16px;
-  }
-  .metric-item {
-    text-align: center;
-    padding: 8px 0;
-    border-right: 1px solid rgba(179, 0, 255, 0.15);
-  }
-  .metric-item:last-child { border-right: none; }
-
-  /* Activity Log specific */
-  .log-container {
-    max-height: 320px;
-    overflow-y: auto;
-    padding-right: 4px;
-  }
-  .log-container::-webkit-scrollbar {
-    width: 4px;
-  }
-  .log-container::-webkit-scrollbar-track {
-    background: rgba(179, 0, 255, 0.05);
-  }
-  .log-container::-webkit-scrollbar-thumb {
-    background: var(--neon-purple);
-    border-radius: 2px;
-  }
-
-  .log-entry {
-    display: flex;
-    align-items: flex-start;
-    padding: 10px 12px;
-    border-bottom: 1px solid rgba(179, 0, 255, 0.08);
-    cursor: pointer;
-    transition: all 0.3s ease;
-    border-radius: 6px;
-    gap: 10px;
-    position: relative;
-  }
-  .log-entry:hover {
-    background: rgba(179, 0, 255, 0.08);
-    border-color: rgba(179, 0, 255, 0.2);
-  }
-  .log-entry:last-child { border-bottom: none; }
-
-  .log-icon {
-    width: 32px;
-    height: 32px;
-    min-width: 32px;
-    border-radius: 50%;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-size: 14px;
-    background: rgba(179, 0, 255, 0.15);
-    border: 1px solid rgba(179, 0, 255, 0.2);
-  }
-  .log-icon.whatsapp { background: rgba(0, 230, 118, 0.15); border-color: rgba(0, 230, 118, 0.3); }
-  .log-icon.sms { background: rgba(0, 240, 255, 0.15); border-color: rgba(0, 240, 255, 0.3); }
-  .log-icon.call { background: rgba(255, 0, 51, 0.15); border-color: rgba(255, 0, 51, 0.3); }
-  .log-icon.email { background: rgba(255, 200, 0, 0.15); border-color: rgba(255, 200, 0, 0.3); }
-  .log-icon.telegram { background: rgba(0, 136, 204, 0.15); border-color: rgba(0, 136, 204, 0.3); }
-  .log-icon.location { background: rgba(255, 80, 0, 0.15); border-color: rgba(255, 80, 0, 0.3); }
-  .log-icon.instagram { background: rgba(225, 48, 108, 0.15); border-color: rgba(225, 48, 108, 0.3); }
-
-  .log-content {
-    flex: 1;
-    min-width: 0;
-  }
-  .log-header {
-    display: flex;
-    justify-content: space-between;
-    align-items: baseline;
-    gap: 8px;
-  }
-  .log-app {
-    font-size: 0.7rem;
-    font-family: 'Orbitron', monospace;
-    color: var(--neon-cyan);
-    letter-spacing: 1px;
-    text-transform: uppercase;
-    font-weight: 600;
-  }
-  .log-time {
-    font-size: 0.6rem;
-    font-family: 'Orbitron', monospace;
-    color: var(--text-secondary);
-    opacity: 0.6;
-    letter-spacing: 0.5px;
-    white-space: nowrap;
-  }
-  .log-msg {
-    font-size: 0.85rem;
-    color: var(--text-primary);
-    margin-top: 2px;
-    line-height: 1.3;
-  }
-  .log-msg .highlight {
-    color: var(--neon-cyan);
-    font-weight: 600;
-  }
-  .log-status {
-    display: inline-block;
-    width: 6px;
-    height: 6px;
-    border-radius: 50%;
-    margin-right: 6px;
-    vertical-align: middle;
-  }
-  .log-status.online { background: #00ff88; box-shadow: 0 0 6px #00ff88; }
-  .log-status.offline { background: #ff0033; box-shadow: 0 0 6px #ff0033; }
-  .log-status.pending { background: #ffaa00; box-shadow: 0 0 6px #ffaa00; }
-
-  /* Data rows inside card */
-  .data-row {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    padding: 6px 0;
-    border-bottom: 1px solid rgba(179, 0, 255, 0.06);
-  }
-  .data-row:last-child { border-bottom: none; }
-  .data-row .label { font-size: 0.8rem; color: var(--text-secondary); }
-  .data-row .value {
-    font-family: 'Orbitron', monospace;
-    font-size: 0.85rem;
-    color: var(--text-primary);
-    text-shadow: 0 0 8px rgba(179, 0, 255, 0.3);
-  }
-  .data-row .value.cyan { color: var(--neon-cyan); }
-  .data-row .value.green { color: #00ff88; }
-  .data-row .value.red { color: var(--red-accent); }
-  .data-row .value.yellow { color: #ffaa00; }
-
-  /* Expanded Message Overlay */
-  .overlay {
-    position: fixed;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
-    z-index: 100;
-    display: none;
-    align-items: center;
-    justify-content: center;
-    pointer-events: none;
-  }
-  .overlay.active {
-    display: flex;
-    pointer-events: all;
-  }
-
-  .overlay-bg {
-    position: absolute;
-    top: 0; left: 0; right: 0; bottom: 0;
-    background: rgba(5, 0, 15, 0);
-    transition: background 0.6s ease;
-  }
-  .overlay.active .overlay-bg {
-    background: rgba(5, 0, 15, 0.85);
-  }
-
-  .expanded-card {
-    position: relative;
-    width: 90%;
-    max-width: 700px;
-    max-height: 85vh;
-    background: var(--card-bg);
-    border: 1px solid var(--neon-purple);
-    border-radius: 16px;
-    padding: 32px;
-    box-shadow: 0 0 60px rgba(179, 0, 255, 0.3), inset 0 0 60px rgba(179, 0, 255, 0.05);
-    transform: scale(0.7) translateY(40px);
-    opacity: 0;
-    transition: all 0.5s cubic-bezier(0.34, 1.56, 0.64, 1);
-    overflow-y: auto;
-    backdrop-filter: blur(15px);
-  }
-  .expanded-card::-webkit-scrollbar {
-    width: 4px;
-  }
-  .expanded-card::-webkit-scrollbar-track {
-    background: rgba(179, 0, 255, 0.05);
-  }
-  .expanded-card::-webkit-scrollbar-thumb {
-    background: var(--neon-purple);
-    border-radius: 2px;
-  }
-  .overlay.active .expanded-card {
-    transform: scale(1) translateY(0);
-    opacity: 1;
-  }
-
-  .close-btn {
-    position: absolute;
-    top: 16px;
-    right: 16px;
-    width: 40px;
-    height: 40px;
-    border: 1px solid var(--neon-purple);
-    border-radius: 50%;
-    background: rgba(15, 0, 35, 0.9);
-    color: var(--neon-purple);
-    font-size: 20px;
-    cursor: pointer;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    transition: all 0.3s ease;
-    font-family: 'Orbitron', monospace;
-    text-shadow: 0 0 10px rgba(179, 0, 255, 0.5);
-    box-shadow: 0 0 15px rgba(179, 0, 255, 0.2);
-    z-index: 2;
-  }
-  .close-btn:hover {
-    background: var(--neon-purple);
-    color: var(--dark-bg);
-    box-shadow: 0 0 30px rgba(179, 0, 255, 0.5);
-  }
-  .close-btn.glitch {
-    animation: glitch-close 0.3s ease;
-  }
-  @keyframes glitch-close {
-    0% { transform: translate(0); box-shadow: 0 0 20px rgba(179,0,255,0.5); }
-    20% { transform: translate(-3px, 2px); box-shadow: 0 0 30px rgba(255,0,51,0.5); }
-    40% { transform: translate(3px, -1px); box-shadow: 0 0 30px rgba(0,240,255,0.5); }
-    60% { transform: translate(-2px, -2px); box-shadow: 0 0 30px rgba(179,0,255,0.5); }
-    80% { transform: translate(2px, 1px); box-shadow: 0 0 30px rgba(255,0,51,0.5); }
-    100% { transform: translate(0); box-shadow: 0 0 20px rgba(179,0,255,0.5); }
-  }
-
-  /* Expanded card content */
-  .expanded-header {
-    display: flex;
-    align-items: center;
-    gap: 16px;
-    margin-bottom: 24px;
-    padding-bottom: 16px;
-    border-bottom: 1px solid rgba(179, 0, 255, 0.2);
-  }
-  .expanded-icon {
-    width: 48px;
-    height: 48px;
-    min-width: 48px;
-    border-radius: 50%;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-size: 22px;
-    border: 2px solid;
-  }
-  .expanded-app-name {
-    font-family: 'Orbitron', monospace;
-    font-size: 0.75rem;
-    color: var(--neon-cyan);
-    letter-spacing: 2px;
-    text-transform: uppercase;
-  }
-  .expanded-contact {
-    font-size: 1.2rem;
-    font-weight: 700;
-    color: var(--text-primary);
-    margin-top: 2px;
-  }
-  .expanded-contact .contact-icon {
-    display: inline-block;
-    width: 28px;
-    height: 28px;
-    border-radius: 50%;
-    background: linear-gradient(135deg, var(--neon-purple), var(--neon-blue));
-    vertical-align: middle;
-    margin-right: 8px;
-    text-align: center;
-    line-height: 28px;
-    font-size: 12px;
-    color: white;
-    font-weight: 700;
-  }
-
-  .expanded-section {
-    margin-bottom: 20px;
-  }
-  .expanded-section h3 {
-    font-family: 'Orbitron', monospace;
-    font-size: 0.6rem;
-    letter-spacing: 2px;
-    color: var(--neon-cyan);
-    text-transform: uppercase;
-    margin-bottom: 8px;
-    opacity: 0.7;
-  }
-  .expanded-msg-text {
-    font-size: 1rem;
-    line-height: 1.6;
-    color: var(--text-primary);
-    background: rgba(179, 0, 255, 0.05);
-    border-left: 2px solid var(--neon-purple);
-    padding: 12px 16px;
-    border-radius: 0 8px 8px 0;
-  }
-
-  .metadata-grid {
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: 8px;
-  }
-  .metadata-item {
-    background: rgba(179, 0, 255, 0.05);
-    border-radius: 8px;
-    padding: 10px 12px;
-    border: 1px solid rgba(179, 0, 255, 0.08);
-  }
-  .metadata-item .m-label {
-    font-size: 0.6rem;
-    font-family: 'Orbitron', monospace;
-    color: var(--text-secondary);
-    letter-spacing: 1px;
-    text-transform: uppercase;
-  }
-  .metadata-item .m-value {
-    font-size: 0.85rem;
-    color: var(--text-primary);
-    margin-top: 2px;
-  }
-  .metadata-item .m-value.cyan { color: var(--neon-cyan); }
-
-  .conversation-history {
-    max-height: 160px;
-    overflow-y: auto;
-  }
-  .conv-message {
-    display: flex;
-    gap: 8px;
-    margin-bottom: 10px;
-    padding: 8px 12px;
-    border-radius: 8px;
-    background: rgba(179, 0, 255, 0.03);
-  }
-  .conv-message.incoming {
-    border-left: 2px solid var(--neon-cyan);
-  }
-  .conv-message.outgoing {
-    border-left: 2px solid var(--neon-purple);
-    flex-direction: row-reverse;
-    text-align: right;
-  }
-  .conv-message .conv-sender {
-    font-family: 'Orbitron', monospace;
-    font-size: 0.6rem;
-    color: var(--text-secondary);
-    letter-spacing: 1px;
-  }
-  .conv-message .conv-text {
-    font-size: 0.82rem;
-    color: var(--text-primary);
-    line-height: 1.4;
-  }
-
-  /* Small tags */
-  .tag {
-    display: inline-block;
-    padding: 2px 8px;
-    border-radius: 4px;
-    font-size: 0.6rem;
-    font-family: 'Orbitron', monospace;
-    letter-spacing: 0.5px;
-    border: 1px solid;
-  }
-  .tag.success { border-color: #00ff88; color: #00ff88; }
-  .tag.warning { border-color: #ffaa00; color: #ffaa00; }
-  .tag.danger { border-color: var(--red-accent); color: var(--red-accent); }
-  .tag.info { border-color: var(--neon-cyan); color: var(--neon-cyan); }
-
-  /* Responsive */
-  @media (max-width: 1024px) {
-    .dashboard {
-      grid-template-columns: repeat(2, 1fr);
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Central de Operaciones Inteligentes</title>
+  <script src="src/config.js"></script>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
     }
-    .card-span-2 { grid-column: span 2; }
-  }
-  @media (max-width: 640px) {
-    .container { padding: 12px; }
-    .dashboard {
-      grid-template-columns: 1fr;
+
+    @import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Rajdhani:wght@400;600;700&display=swap');
+
+    :root {
+      --neon-purple: #b300ff;
+      --neon-blue: #6a00ff;
+      --neon-cyan: #00f0ff;
+      --dark-bg: #0a0014;
+      --card-bg: rgba(15, 0, 35, 0.85);
+      --card-border: rgba(179, 0, 255, 0.3);
+      --text-primary: #f0e6ff;
+      --text-secondary: #b088d0;
+      --glow-purple: 0 0 20px rgba(179, 0, 255, 0.3);
+      --red-accent: #ff0033;
+      --red-glow: 0 0 15px rgba(255, 0, 51, 0.4);
     }
-    .card-span-2 { grid-column: 1; }
-    .metric-group { grid-template-columns: 1fr 1fr; gap: 8px; }
-    .metadata-grid { grid-template-columns: 1fr; }
-    .expanded-card {
-      width: 95%;
-      max-height: 90vh;
-      padding: 20px 16px;
-      border-radius: 12px;
+
+    body {
+      font-family: 'Rajdhani', sans-serif;
+      background: var(--dark-bg);
+      color: var(--text-primary);
+      min-height: 100vh;
+      overflow-x: hidden;
+      position: relative;
     }
-    header h1 { letter-spacing: 3px; }
-    header .subtitle { letter-spacing: 6px; }
-    .expanded-header { flex-wrap: wrap; }
-    .card { padding: 16px; }
-    .stat-value { font-size: 1.6rem; }
-    .mobile-expanded {
-      width: 100% !important;
-      max-width: 100% !important;
-      max-height: 100vh !important;
-      height: 100vh;
-      border-radius: 0;
+
+    /* Wireframe background */
+    #wireframe-canvas {
+      position: fixed;
       top: 0;
       left: 0;
-    }
-    .mobile-expanded .close-btn {
-      top: 12px;
-      right: 12px;
-    }
-  }
-
-  /* Spark line */
-  .spark {
-    height: 2px;
-    background: linear-gradient(90deg, var(--neon-purple), transparent);
-    margin: 8px 0 4px;
-    opacity: 0.3;
-  }
-
-  /* Pulse animation for active elements */
-  @keyframes pulse-border {
-    0%, 100% { border-color: rgba(179, 0, 255, 0.3); }
-    50% { border-color: rgba(179, 0, 255, 0.6); }
-  }
-  .card.active-pulse {
-    animation: pulse-border 2s ease-in-out infinite;
-  }
-
-  /* Loading bar animation */
-  .progress-bar {
-    height: 3px;
-    background: rgba(179, 0, 255, 0.15);
-    border-radius: 2px;
-    margin-top: 8px;
-    overflow: hidden;
-  }
-  .progress-bar .fill {
-    height: 100%;
-    background: linear-gradient(90deg, var(--neon-purple), var(--neon-cyan));
-    border-radius: 2px;
-    box-shadow: 0 0 10px rgba(179, 0, 255, 0.4);
-    animation: progress-fill 2s ease-out forwards;
-  }
-  @keyframes progress-fill {
-    from { width: 0%; }
-    to { width: var(--progress, 0%); }
-  }
-
-  .typing-indicator::after {
-    content: '|';
-    animation: blink 1s step-end infinite;
-    color: var(--neon-cyan);
-  }
-  @keyframes blink {
-    50% { opacity: 0; }
-  }
-
-  /* ===== DEVICE PANEL ===== */
-  .device-grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
-    gap: 12px;
-    margin-top: 8px;
-  }
-  .device-chip {
-    background: rgba(0,240,255,0.04);
-    border: 1px solid rgba(0,240,255,0.18);
-    border-radius: 10px;
-    padding: 12px 14px;
-    cursor: pointer;
-    transition: all 0.3s ease;
-    position: relative;
-    overflow: hidden;
-  }
-  .device-chip::before {
-    content: '';
-    position: absolute;
-    top:0; left:0; right:0;
-    height: 1px;
-    background: linear-gradient(90deg, transparent, var(--neon-cyan), transparent);
-    opacity: 0.4;
-  }
-  .device-chip:hover {
-    border-color: rgba(0,240,255,0.5);
-    background: rgba(0,240,255,0.08);
-    box-shadow: 0 0 20px rgba(0,240,255,0.15);
-  }
-  .device-chip.active-device {
-    border-color: var(--neon-cyan);
-    background: rgba(0,240,255,0.1);
-    box-shadow: 0 0 25px rgba(0,240,255,0.25);
-  }
-  .device-chip.offline-device {
-    border-color: rgba(255,0,51,0.25);
-    background: rgba(255,0,51,0.04);
-  }
-  .device-chip.offline-device:hover {
-    border-color: rgba(255,0,51,0.5);
-    background: rgba(255,0,51,0.08);
-  }
-  .device-name {
-    font-family: 'Orbitron', monospace;
-    font-size: 0.65rem;
-    letter-spacing: 1px;
-    color: var(--neon-cyan);
-    text-transform: uppercase;
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
-    margin-bottom: 4px;
-  }
-  .device-id-label {
-    font-size: 0.7rem;
-    color: var(--text-secondary);
-    margin-bottom: 6px;
-    opacity: 0.7;
-  }
-  .device-status-row {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    gap: 6px;
-  }
-  .device-seen {
-    font-size: 0.6rem;
-    color: var(--text-secondary);
-    opacity: 0.6;
-    letter-spacing: 0.3px;
-  }
-  .device-count-badge {
-    font-family: 'Orbitron', monospace;
-    font-size: 0.55rem;
-    padding: 1px 6px;
-    border-radius: 10px;
-    background: rgba(179,0,255,0.15);
-    border: 1px solid rgba(179,0,255,0.3);
-    color: var(--neon-purple);
-    white-space: nowrap;
-  }
-
-  /* Badge de dispositivo en cada log entry */
-  .log-device-badge {
-    display: inline-block;
-    font-family: 'Orbitron', monospace;
-    font-size: 0.5rem;
-    letter-spacing: 0.5px;
-    padding: 1px 6px;
-    border-radius: 4px;
-    border: 1px solid rgba(0,240,255,0.35);
-    color: var(--neon-cyan);
-    background: rgba(0,240,255,0.06);
-    margin-top: 3px;
-    max-width: 140px;
-    overflow: hidden;
-    text-overflow: ellipsis;
-    white-space: nowrap;
-    vertical-align: middle;
-  }
-
-  /* Filtro de dispositivo activo en log */
-  .device-filter-bar {
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    margin-bottom: 10px;
-    flex-wrap: wrap;
-  }
-  .device-filter-label {
-    font-family: 'Orbitron', monospace;
-    font-size: 0.55rem;
-    color: var(--text-secondary);
-    letter-spacing: 1px;
-    text-transform: uppercase;
-    opacity: 0.7;
-  }
-  .device-filter-tag {
-    font-family: 'Orbitron', monospace;
-    font-size: 0.55rem;
-    padding: 3px 10px;
-    border-radius: 20px;
-    border: 1px solid rgba(0,240,255,0.4);
-    color: var(--neon-cyan);
-    background: rgba(0,240,255,0.08);
-    cursor: pointer;
-    transition: all 0.2s;
-  }
-  .device-filter-tag.selected-filter {
-    background: rgba(0,240,255,0.2);
-    border-color: var(--neon-cyan);
-    box-shadow: 0 0 10px rgba(0,240,255,0.2);
-  }
-  .device-filter-tag:hover {
-    background: rgba(0,240,255,0.15);
-  }
-  .no-device-msg {
-    text-align: center;
-    padding: 30px;
-    color: var(--text-secondary);
-    font-size: 0.8rem;
-    opacity: 0.6;
-  }
-  .no-device-msg span {
-    display: block;
-    font-size: 1.8rem;
-    margin-bottom: 8px;
-  }
-</style>
-</head>
-<body>
-
-<canvas id="wireframe-canvas"></canvas>
-<div class="red-lighting"></div>
-
-<div class="container" id="mainContainer">
-  <header>
-    <h1>Central de Operaciones Inteligentes</h1>
-    <p class="subtitle">Panel de Control de Espionaje</p>
-    <div class="header-line"></div>
-  </header>
-
-  <div class="dashboard" id="dashboard">
-    <!-- Card 1: Operaciones Totales + Tasa de Éxito -->
-    <div class="card card-span-2">
-      <div class="card-title">Métricas Generales</div>
-      <div class="metric-group">
-        <div class="metric-item">
-          <div class="stat-value" id="totalOps">1,284</div>
-          <div class="stat-label">Operaciones Totales</div>
-          <div class="stat-sub">+12.4% vs mes anterior</div>
-        </div>
-        <div class="metric-item">
-          <div class="stat-value" id="successRate">94.7%</div>
-          <div class="stat-label">Tasa de Éxito</div>
-          <div class="stat-sub">+2.1% esta semana</div>
-        </div>
-      </div>
-      <div class="progress-bar"><div class="fill" style="--progress: 94.7%"></div></div>
-    </div>
-
-    <!-- Card 2: Agentes Activos + Agentes en Línea -->
-    <div class="card card-span-2">
-      <div class="card-title">Estado de Agentes</div>
-      <div class="metric-group">
-        <div class="metric-item">
-          <div class="stat-value" id="activeAgents">47</div>
-          <div class="stat-label">Agentes Activos</div>
-          <div class="stat-sub">Asignados a campo</div>
-        </div>
-        <div class="metric-item">
-          <div class="stat-value" id="onlineAgents">32</div>
-          <div class="stat-label">Agentes en Línea</div>
-          <div class="stat-sub">
-            <span class="log-status online"></span>68% disponibilidad
-          </div>
-        </div>
-      </div>
-      <div class="data-row"><span class="label">En misión</span><span class="value cyan">23</span></div>
-      <div class="data-row"><span class="label">En reposo</span><span class="value yellow">9</span></div>
-      <div class="data-row"><span class="label">Sin señal</span><span class="value red">4</span></div>
-    </div>
-
-    <!-- Card 3: Datos Procesados -->
-    <div class="card card-span-2">
-      <div class="card-title">Datos Procesados</div>
-      <div class="metric-group">
-        <div class="metric-item">
-          <div class="stat-value" id="dataProcessed">2.4</div>
-          <div class="stat-label">Total Procesado</div>
-          <div class="stat-sub">Terabytes</div>
-        </div>
-        <div class="metric-item">
-          <div class="stat-value" id="dataToday">386</div>
-          <div class="stat-label">Hoy</div>
-          <div class="stat-sub">Gigabytes</div>
-        </div>
-      </div>
-      <div class="spark"></div>
-      <div class="data-row"><span class="label">WhatsApp interceptado</span><span class="value cyan">1.1 TB</span></div>
-      <div class="data-row"><span class="label">SMS capturados</span><span class="value green">284 GB</span></div>
-      <div class="data-row"><span class="label">Llamadas grabadas</span><span class="value yellow">520 GB</span></div>
-      <div class="data-row"><span class="label">Telegram / Signal</span><span class="value red">156 GB</span></div>
-      <div class="data-row"><span class="label">Metadatos de ubicación</span><span class="value" style="color:var(--neon-cyan)">342 GB</span></div>
-    </div>
-
-    <!-- Card 4: Señales de Inteligencia -->
-    <div class="card card-span-2">
-      <div class="card-title">Señales de Inteligencia</div>
-      <div class="metric-group">
-        <div class="metric-item">
-          <div class="stat-value" id="signals">18</div>
-          <div class="stat-label">Alertas Activas</div>
-          <div class="stat-sub"><span class="log-status online"></span>Todas monitoreadas</div>
-        </div>
-        <div class="metric-item">
-          <div class="stat-value" id="priority">6</div>
-          <div class="stat-label">Prioridad Alta</div>
-          <div class="stat-sub"><span class="log-status pending"></span>Requiere atención</div>
-        </div>
-      </div>
-      <div class="spark"></div>
-      <div class="data-row"><span class="label">Comunicación cifrada detectada</span><span class="value cyan">8</span></div>
-      <div class="data-row"><span class="label">Geolocalización sospechosa</span><span class="value red">4</span></div>
-      <div class="data-row"><span class="label">Patrón de actividad anómala</span><span class="value yellow">6</span></div>
-    </div>
-
-    <!-- Card 5.5: Panel de Dispositivos -->
-    <div class="card card-full" id="devicesCard">
-      <div class="card-title">
-        📡 Dispositivos Activos
-        <span style="float:right;font-size:0.6rem;opacity:0.5;letter-spacing:1px;font-weight:400" id="devicesUpdatedAt">Cargando...</span>
-      </div>
-      <div class="device-grid" id="deviceGrid">
-        <div class="no-device-msg"><span>📡</span>Conectando con el backend...</div>
-      </div>
-    </div>
-
-    <!-- Card 6: Registro de Actividad (expansible) -->
-    <div class="card card-full" id="logCard">
-      <div class="card-title">
-        Registro de Actividad
-        <span style="float:right;font-size:0.6rem;opacity:0.5;letter-spacing:1px;font-weight:400">Tiempo real</span>
-      </div>
-      <!-- Filtro por dispositivo -->
-      <div class="device-filter-bar" id="deviceFilterBar" style="display:none">
-        <span class="device-filter-label">Filtrar por:</span>
-        <span class="device-filter-tag selected-filter" data-dev="all" id="filterAll">Todos</span>
-      </div>
-      <div class="log-container" id="logContainer"></div>
-    </div>
-  </div>
-</div>
-
-<!-- Expanded Message Overlay -->
-<div class="overlay" id="overlay">
-  <div class="overlay-bg" id="overlayBg"></div>
-  <div class="expanded-card" id="expandedCard">
-    <button class="close-btn" id="closeBtn" title="Cerrar">✕</button>
-    <div id="expandedContent"></div>
-  </div>
-</div>
-
-<script>
-  // ===================== WIREFRAME CANVAS =====================
-  const canvas = document.getElementById('wireframe-canvas');
-  const ctx = canvas.getContext('2d');
-  let W, H, nodes = [], edges = [];
-
-  function resizeCanvas() {
-    W = canvas.width = window.innerWidth;
-    H = canvas.height = window.innerHeight;
-  }
-  resizeCanvas();
-  window.addEventListener('resize', resizeCanvas);
-
-  function initNodes() {
-    nodes = [];
-    const count = Math.floor((W * H) / 22000);
-    for (let i = 0; i < count; i++) {
-      nodes.push({
-        x: Math.random() * W,
-        y: Math.random() * H,
-        vx: (Math.random() - 0.5) * 0.3,
-        vy: (Math.random() - 0.5) * 0.3,
-        r: Math.random() * 2 + 1
-      });
-    }
-  }
-  initNodes();
-
-  function drawWireframe() {
-    ctx.clearRect(0, 0, W, H);
-
-    // Update positions
-    for (let n of nodes) {
-      n.x += n.vx;
-      n.y += n.vy;
-      if (n.x < 0 || n.x > W) n.vx *= -1;
-      if (n.y < 0 || n.y > H) n.vy *= -1;
+      width: 100%;
+      height: 100%;
+      z-index: 0;
+      pointer-events: none;
     }
 
-    // Draw edges
-    const maxDist = Math.min(W, H) * 0.15;
-    for (let i = 0; i < nodes.length; i++) {
-      for (let j = i + 1; j < nodes.length; j++) {
-        const dx = nodes[i].x - nodes[j].x;
-        const dy = nodes[i].y - nodes[j].y;
-        const dist = Math.sqrt(dx * dx + dy * dy);
-        if (dist < maxDist) {
-          const alpha = (1 - dist / maxDist) * 0.25;
-          ctx.strokeStyle = `rgba(179, 0, 255, ${alpha})`;
-          ctx.lineWidth = 0.6;
-          ctx.beginPath();
-          ctx.moveTo(nodes[i].x, nodes[i].y);
-          ctx.lineTo(nodes[j].x, nodes[j].y);
-          ctx.stroke();
-        }
+    /* Red lighting overlay */
+    .red-lighting {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: radial-gradient(ellipse at 20% 50%, rgba(255, 0, 51, 0.06) 0%, transparent 50%),
+        radial-gradient(ellipse at 80% 50%, rgba(255, 0, 51, 0.04) 0%, transparent 50%);
+      z-index: 0;
+      pointer-events: none;
+    }
+
+    .container {
+      position: relative;
+      z-index: 1;
+      max-width: 1440px;
+      margin: 0 auto;
+      padding: 20px;
+      transition: filter 0.6s ease, opacity 0.6s ease;
+    }
+
+    .container.blurred {
+      filter: blur(3px) brightness(0.3);
+      opacity: 0.4;
+    }
+
+    /* Header */
+    header {
+      text-align: center;
+      padding: 30px 10px 20px;
+      position: relative;
+    }
+
+    header h1 {
+      font-family: 'Orbitron', monospace;
+      font-size: clamp(1.6rem, 5vw, 3.2rem);
+      font-weight: 900;
+      letter-spacing: 6px;
+      text-transform: uppercase;
+      text-shadow: 0 0 20px rgba(179, 0, 255, 0.5), 0 0 60px rgba(179, 0, 255, 0.2);
+      color: var(--text-primary);
+    }
+
+    header .subtitle {
+      font-family: 'Orbitron', monospace;
+      font-size: clamp(0.8rem, 2vw, 1.2rem);
+      letter-spacing: 12px;
+      color: var(--neon-cyan);
+      text-shadow: 0 0 15px rgba(0, 240, 255, 0.4);
+      margin-top: 8px;
+      text-transform: uppercase;
+    }
+
+    .header-line {
+      width: 80%;
+      max-width: 800px;
+      height: 2px;
+      margin: 16px auto 0;
+      background: linear-gradient(90deg, transparent, var(--neon-purple), var(--neon-cyan), var(--neon-purple), transparent);
+      box-shadow: 0 0 20px rgba(179, 0, 255, 0.5);
+    }
+
+    /* Dashboard Grid */
+    .dashboard {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 16px;
+      margin-top: 24px;
+      transition: transform 0.6s ease, opacity 0.6s ease;
+    }
+
+    .dashboard.blurred {
+      transform: scale(0.95);
+      opacity: 0.3;
+      filter: blur(3px);
+      pointer-events: none;
+    }
+
+    .card {
+      background: var(--card-bg);
+      border: 1px solid var(--card-border);
+      border-radius: 12px;
+      padding: 20px;
+      backdrop-filter: blur(10px);
+      box-shadow: var(--glow-purple), inset 0 0 30px rgba(179, 0, 255, 0.03);
+      position: relative;
+      overflow: hidden;
+      transition: all 0.4s ease;
+    }
+
+    .card:hover {
+      border-color: rgba(179, 0, 255, 0.6);
+      box-shadow: 0 0 30px rgba(179, 0, 255, 0.2), inset 0 0 40px rgba(179, 0, 255, 0.05);
+    }
+
+    .card::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      height: 1px;
+      background: linear-gradient(90deg, transparent, var(--neon-purple), transparent);
+      opacity: 0.5;
+    }
+
+    .card-title {
+      font-family: 'Orbitron', monospace;
+      font-size: 0.65rem;
+      letter-spacing: 2px;
+      color: var(--neon-cyan);
+      text-transform: uppercase;
+      margin-bottom: 12px;
+      opacity: 0.8;
+    }
+
+    .stat-value {
+      font-family: 'Orbitron', monospace;
+      font-size: clamp(1.8rem, 3vw, 2.6rem);
+      font-weight: 700;
+      color: var(--text-primary);
+      text-shadow: 0 0 15px rgba(179, 0, 255, 0.4);
+    }
+
+    .stat-label {
+      font-size: 0.85rem;
+      color: var(--text-secondary);
+      margin-top: 4px;
+      font-weight: 600;
+      letter-spacing: 0.5px;
+    }
+
+    .stat-sub {
+      font-size: 0.7rem;
+      color: var(--neon-cyan);
+      opacity: 0.7;
+      letter-spacing: 1px;
+    }
+
+    /* Card spans */
+    .card-span-2 {
+      grid-column: span 2;
+    }
+
+    .card-full {
+      grid-column: 1 / -1;
+    }
+
+    /* Grouped metrics inside cards */
+    .metric-group {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 16px;
+    }
+
+    .metric-item {
+      text-align: center;
+      padding: 8px 0;
+      border-right: 1px solid rgba(179, 0, 255, 0.15);
+    }
+
+    .metric-item:last-child {
+      border-right: none;
+    }
+
+    /* Activity Log specific */
+    .log-container {
+      max-height: 320px;
+      overflow-y: auto;
+      padding-right: 4px;
+    }
+
+    .log-container::-webkit-scrollbar {
+      width: 4px;
+    }
+
+    .log-container::-webkit-scrollbar-track {
+      background: rgba(179, 0, 255, 0.05);
+    }
+
+    .log-container::-webkit-scrollbar-thumb {
+      background: var(--neon-purple);
+      border-radius: 2px;
+    }
+
+    .log-entry {
+      display: flex;
+      align-items: flex-start;
+      padding: 10px 12px;
+      border-bottom: 1px solid rgba(179, 0, 255, 0.08);
+      cursor: pointer;
+      transition: all 0.3s ease;
+      border-radius: 6px;
+      gap: 10px;
+      position: relative;
+    }
+
+    .log-entry:hover {
+      background: rgba(179, 0, 255, 0.08);
+      border-color: rgba(179, 0, 255, 0.2);
+    }
+
+    .log-entry:last-child {
+      border-bottom: none;
+    }
+
+    .log-icon {
+      width: 32px;
+      height: 32px;
+      min-width: 32px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 14px;
+      background: rgba(179, 0, 255, 0.15);
+      border: 1px solid rgba(179, 0, 255, 0.2);
+    }
+
+    .log-icon.whatsapp {
+      background: rgba(0, 230, 118, 0.15);
+      border-color: rgba(0, 230, 118, 0.3);
+    }
+
+    .log-icon.sms {
+      background: rgba(0, 240, 255, 0.15);
+      border-color: rgba(0, 240, 255, 0.3);
+    }
+
+    .log-icon.call {
+      background: rgba(255, 0, 51, 0.15);
+      border-color: rgba(255, 0, 51, 0.3);
+    }
+
+    .log-icon.email {
+      background: rgba(255, 200, 0, 0.15);
+      border-color: rgba(255, 200, 0, 0.3);
+    }
+
+    .log-icon.telegram {
+      background: rgba(0, 136, 204, 0.15);
+      border-color: rgba(0, 136, 204, 0.3);
+    }
+
+    .log-icon.location {
+      background: rgba(255, 80, 0, 0.15);
+      border-color: rgba(255, 80, 0, 0.3);
+    }
+
+    .log-icon.instagram {
+      background: rgba(225, 48, 108, 0.15);
+      border-color: rgba(225, 48, 108, 0.3);
+    }
+
+    .log-content {
+      flex: 1;
+      min-width: 0;
+    }
+
+    .log-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: baseline;
+      gap: 8px;
+    }
+
+    .log-app {
+      font-size: 0.7rem;
+      font-family: 'Orbitron', monospace;
+      color: var(--neon-cyan);
+      letter-spacing: 1px;
+      text-transform: uppercase;
+      font-weight: 600;
+    }
+
+    .log-time {
+      font-size: 0.6rem;
+      font-family: 'Orbitron', monospace;
+      color: var(--text-secondary);
+      opacity: 0.6;
+      letter-spacing: 0.5px;
+      white-space: nowrap;
+    }
+
+    .log-msg {
+      font-size: 0.85rem;
+      color: var(--text-primary);
+      margin-top: 2px;
+      line-height: 1.3;
+    }
+
+    .log-msg .highlight {
+      color: var(--neon-cyan);
+      font-weight: 600;
+    }
+
+    .log-status {
+      display: inline-block;
+      width: 6px;
+      height: 6px;
+      border-radius: 50%;
+      margin-right: 6px;
+      vertical-align: middle;
+    }
+
+    .log-status.online {
+      background: #00ff88;
+      box-shadow: 0 0 6px #00ff88;
+    }
+
+    .log-status.offline {
+      background: #ff0033;
+      box-shadow: 0 0 6px #ff0033;
+    }
+
+    .log-status.pending {
+      background: #ffaa00;
+      box-shadow: 0 0 6px #ffaa00;
+    }
+
+    /* Data rows inside card */
+    .data-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 6px 0;
+      border-bottom: 1px solid rgba(179, 0, 255, 0.06);
+    }
+
+    .data-row:last-child {
+      border-bottom: none;
+    }
+
+    .data-row .label {
+      font-size: 0.8rem;
+      color: var(--text-secondary);
+    }
+
+    .data-row .value {
+      font-family: 'Orbitron', monospace;
+      font-size: 0.85rem;
+      color: var(--text-primary);
+      text-shadow: 0 0 8px rgba(179, 0, 255, 0.3);
+    }
+
+    .data-row .value.cyan {
+      color: var(--neon-cyan);
+    }
+
+    .data-row .value.green {
+      color: #00ff88;
+    }
+
+    .data-row .value.red {
+      color: var(--red-accent);
+    }
+
+    .data-row .value.yellow {
+      color: #ffaa00;
+    }
+
+    /* Expanded Message Overlay */
+    .overlay {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      z-index: 100;
+      display: none;
+      align-items: center;
+      justify-content: center;
+      pointer-events: none;
+    }
+
+    .overlay.active {
+      display: flex;
+      pointer-events: all;
+    }
+
+    .overlay-bg {
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background: rgba(5, 0, 15, 0);
+      transition: background 0.6s ease;
+    }
+
+    .overlay.active .overlay-bg {
+      background: rgba(5, 0, 15, 0.85);
+    }
+
+    .expanded-card {
+      position: relative;
+      width: 90%;
+      max-width: 700px;
+      max-height: 85vh;
+      background: var(--card-bg);
+      border: 1px solid var(--neon-purple);
+      border-radius: 16px;
+      padding: 32px;
+      box-shadow: 0 0 60px rgba(179, 0, 255, 0.3), inset 0 0 60px rgba(179, 0, 255, 0.05);
+      transform: scale(0.7) translateY(40px);
+      opacity: 0;
+      transition: all 0.5s cubic-bezier(0.34, 1.56, 0.64, 1);
+      overflow-y: auto;
+      backdrop-filter: blur(15px);
+    }
+
+    .expanded-card::-webkit-scrollbar {
+      width: 4px;
+    }
+
+    .expanded-card::-webkit-scrollbar-track {
+      background: rgba(179, 0, 255, 0.05);
+    }
+
+    .expanded-card::-webkit-scrollbar-thumb {
+      background: var(--neon-purple);
+      border-radius: 2px;
+    }
+
+    .overlay.active .expanded-card {
+      transform: scale(1) translateY(0);
+      opacity: 1;
+    }
+
+    .close-btn {
+      position: absolute;
+      top: 16px;
+      right: 16px;
+      width: 40px;
+      height: 40px;
+      border: 1px solid var(--neon-purple);
+      border-radius: 50%;
+      background: rgba(15, 0, 35, 0.9);
+      color: var(--neon-purple);
+      font-size: 20px;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: all 0.3s ease;
+      font-family: 'Orbitron', monospace;
+      text-shadow: 0 0 10px rgba(179, 0, 255, 0.5);
+      box-shadow: 0 0 15px rgba(179, 0, 255, 0.2);
+      z-index: 2;
+    }
+
+    .close-btn:hover {
+      background: var(--neon-purple);
+      color: var(--dark-bg);
+      box-shadow: 0 0 30px rgba(179, 0, 255, 0.5);
+    }
+
+    .close-btn.glitch {
+      animation: glitch-close 0.3s ease;
+    }
+
+    @keyframes glitch-close {
+      0% {
+        transform: translate(0);
+        box-shadow: 0 0 20px rgba(179, 0, 255, 0.5);
+      }
+
+      20% {
+        transform: translate(-3px, 2px);
+        box-shadow: 0 0 30px rgba(255, 0, 51, 0.5);
+      }
+
+      40% {
+        transform: translate(3px, -1px);
+        box-shadow: 0 0 30px rgba(0, 240, 255, 0.5);
+      }
+
+      60% {
+        transform: translate(-2px, -2px);
+        box-shadow: 0 0 30px rgba(179, 0, 255, 0.5);
+      }
+
+      80% {
+        transform: translate(2px, 1px);
+        box-shadow: 0 0 30px rgba(255, 0, 51, 0.5);
+      }
+
+      100% {
+        transform: translate(0);
+        box-shadow: 0 0 20px rgba(179, 0, 255, 0.5);
       }
     }
 
-    // Draw nodes
-    for (let n of nodes) {
-      ctx.fillStyle = `rgba(179, 0, 255, ${n.r * 0.15})`;
-      ctx.beginPath();
-      ctx.arc(n.x, n.y, n.r, 0, Math.PI * 2);
-      ctx.fill();
+    /* Expanded card content */
+    .expanded-header {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+      margin-bottom: 24px;
+      padding-bottom: 16px;
+      border-bottom: 1px solid rgba(179, 0, 255, 0.2);
     }
 
-    // Red accent nodes
-    const redNodes = nodes.slice(0, Math.floor(nodes.length * 0.08));
-    for (let n of redNodes) {
-      ctx.fillStyle = `rgba(255, 0, 51, ${n.r * 0.1})`;
-      ctx.beginPath();
-      ctx.arc(n.x, n.y, n.r * 1.5, 0, Math.PI * 2);
-      ctx.fill();
+    .expanded-icon {
+      width: 48px;
+      height: 48px;
+      min-width: 48px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 22px;
+      border: 2px solid;
     }
 
-    requestAnimationFrame(drawWireframe);
-  }
-  drawWireframe();
+    .expanded-app-name {
+      font-family: 'Orbitron', monospace;
+      font-size: 0.75rem;
+      color: var(--neon-cyan);
+      letter-spacing: 2px;
+      text-transform: uppercase;
+    }
 
-  // ===================== ACTIVITY LOG DATA =====================
-  const logMessages = [
-    { app: 'WhatsApp', icon: '💬', iconClass: 'whatsapp', msg: 'Enviando video a <span class="highlight">Mi Reina</span>', contact: 'Mi Reina', contactShort: 'MR', type: 'outgoing', direction: 'Saliente', duration: '0:3:42', timeOffset: 0 },
-    { app: 'WhatsApp', icon: '💬', iconClass: 'whatsapp', msg: 'Mensaje de texto recibido de <span class="highlight">El Jefe</span>', contact: 'El Jefe', contactShort: 'EJ', type: 'incoming', direction: 'Entrante', duration: '0:1:12', timeOffset: 2 },
-    { app: 'SMS', icon: '✉', iconClass: 'sms', msg: 'SMS interceptado: Código 2FA <span class="highlight">839-221</span>', contact: 'Servicio +1 (555) 0192', contactShort: 'S', type: 'incoming', direction: 'Entrante', duration: '0:0:08', timeOffset: 5 },
-    { app: 'Llamada', icon: '📞', iconClass: 'call', msg: 'Llamada saliente a <span class="highlight">Contacto X</span> — 4m 23s', contact: 'Contacto X', contactShort: 'CX', type: 'outgoing', direction: 'Saliente', duration: '4:23', timeOffset: 8 },
-    { app: 'Telegram', icon: '✈', iconClass: 'telegram', msg: 'Mensaje cifrado en <span class="highlight">Canal Sigma</span>', contact: 'Canal Sigma', contactShort: 'Σ', type: 'incoming', direction: 'Entrante', duration: '0:0:31', timeOffset: 12 },
-    { app: 'Instagram', icon: '📷', iconClass: 'instagram', msg: 'Story de <span class="highlight">Agente Luna</span> — ubicación detectada', contact: 'Agente Luna', contactShort: 'AL', type: 'incoming', direction: 'Entrante', duration: '0:0:15', timeOffset: 16 },
-    { app: 'WhatsApp', icon: '💬', iconClass: 'whatsapp', msg: 'Audio recibido de <span class="highlight">Mi Reina</span> (0:47)', contact: 'Mi Reina', contactShort: 'MR', type: 'incoming', direction: 'Entrante', duration: '0:47', timeOffset: 20 },
-    { app: 'Telegram', icon: '✈', iconClass: 'telegram', msg: 'Documento PDF descargado: <span class="highlight">plan_operativo.pdf</span>', contact: 'Bot Secreto', contactShort: 'B', type: 'incoming', direction: 'Entrante', duration: '0:2:05', timeOffset: 24 },
-    { app: 'SMS', icon: '✉', iconClass: 'sms', msg: 'Alerta bancaria: Transacción de <span class="highlight">$4,500 USD</span>', contact: 'Banco Nacional', contactShort: 'BN', type: 'incoming', direction: 'Entrante', duration: '0:0:03', timeOffset: 28 },
-    { app: 'WhatsApp', icon: '💬', iconClass: 'whatsapp', msg: 'Mensaje de voz de <span class="highlight">El Enlace</span> (1:23)', contact: 'El Enlace', contactShort: 'EE', type: 'incoming', direction: 'Entrante', duration: '1:23', timeOffset: 32 },
-    { app: 'Llamada', icon: '📞', iconClass: 'call', msg: 'Llamada entrante de <span class="highlight">Número Desconocido</span> — 0:38', contact: 'Número Desconocido', contactShort: '?', type: 'incoming', direction: 'Entrante', duration: '0:38', timeOffset: 36 },
-    { app: 'Location', icon: '📍', iconClass: 'location', msg: 'Geolocalización: <span class="highlight">19.4326, -99.1332</span> (CDMX)', contact: 'Dispositivo Objetivo #7', contactShort: 'D7', type: 'incoming', direction: 'Entrante', duration: '0:0:01', timeOffset: 40 },
-    { app: 'Instagram', icon: '📷', iconClass: 'instagram', msg: 'Mensaje directo de <span class="highlight">Agente Z</span> — "Todo listo"', contact: 'Agente Z', contactShort: 'AZ', type: 'incoming', direction: 'Entrante', duration: '0:0:12', timeOffset: 45 },
-  ];
+    .expanded-contact {
+      font-size: 1.2rem;
+      font-weight: 700;
+      color: var(--text-primary);
+      margin-top: 2px;
+    }
 
-  // ===================== BUILD LOGS =====================
-  const logContainer = document.getElementById('logContainer');
+    .expanded-contact .contact-icon {
+      display: inline-block;
+      width: 28px;
+      height: 28px;
+      border-radius: 50%;
+      background: linear-gradient(135deg, var(--neon-purple), var(--neon-blue));
+      vertical-align: middle;
+      margin-right: 8px;
+      text-align: center;
+      line-height: 28px;
+      font-size: 12px;
+      color: white;
+      font-weight: 700;
+    }
 
-  function formatTime(offsetMinutes) {
-    const now = new Date();
-    now.setMinutes(now.getMinutes() - offsetMinutes);
-    const h = String(now.getHours()).padStart(2, '0');
-    const m = String(now.getMinutes()).padStart(2, '0');
-    const s = String(now.getSeconds()).padStart(2, '0');
-    return `${h}:${m}:${s}`;
-  }
+    .expanded-section {
+      margin-bottom: 20px;
+    }
 
-  function renderLogs() {
-    logContainer.innerHTML = '';
-    logMessages.forEach((entry, idx) => {
-      const div = document.createElement('div');
-      div.className = 'log-entry';
-      div.dataset.index = idx;
-      div.innerHTML = `
+    .expanded-section h3 {
+      font-family: 'Orbitron', monospace;
+      font-size: 0.6rem;
+      letter-spacing: 2px;
+      color: var(--neon-cyan);
+      text-transform: uppercase;
+      margin-bottom: 8px;
+      opacity: 0.7;
+    }
+
+    .expanded-msg-text {
+      font-size: 1rem;
+      line-height: 1.6;
+      color: var(--text-primary);
+      background: rgba(179, 0, 255, 0.05);
+      border-left: 2px solid var(--neon-purple);
+      padding: 12px 16px;
+      border-radius: 0 8px 8px 0;
+    }
+
+    .metadata-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 8px;
+    }
+
+    .metadata-item {
+      background: rgba(179, 0, 255, 0.05);
+      border-radius: 8px;
+      padding: 10px 12px;
+      border: 1px solid rgba(179, 0, 255, 0.08);
+    }
+
+    .metadata-item .m-label {
+      font-size: 0.6rem;
+      font-family: 'Orbitron', monospace;
+      color: var(--text-secondary);
+      letter-spacing: 1px;
+      text-transform: uppercase;
+    }
+
+    .metadata-item .m-value {
+      font-size: 0.85rem;
+      color: var(--text-primary);
+      margin-top: 2px;
+    }
+
+    .metadata-item .m-value.cyan {
+      color: var(--neon-cyan);
+    }
+
+    .conversation-history {
+      max-height: 160px;
+      overflow-y: auto;
+    }
+
+    .conv-message {
+      display: flex;
+      gap: 8px;
+      margin-bottom: 10px;
+      padding: 8px 12px;
+      border-radius: 8px;
+      background: rgba(179, 0, 255, 0.03);
+    }
+
+    .conv-message.incoming {
+      border-left: 2px solid var(--neon-cyan);
+    }
+
+    .conv-message.outgoing {
+      border-left: 2px solid var(--neon-purple);
+      flex-direction: row-reverse;
+      text-align: right;
+    }
+
+    .conv-message .conv-sender {
+      font-family: 'Orbitron', monospace;
+      font-size: 0.6rem;
+      color: var(--text-secondary);
+      letter-spacing: 1px;
+    }
+
+    .conv-message .conv-text {
+      font-size: 0.82rem;
+      color: var(--text-primary);
+      line-height: 1.4;
+    }
+
+    /* Small tags */
+    .tag {
+      display: inline-block;
+      padding: 2px 8px;
+      border-radius: 4px;
+      font-size: 0.6rem;
+      font-family: 'Orbitron', monospace;
+      letter-spacing: 0.5px;
+      border: 1px solid;
+    }
+
+    .tag.success {
+      border-color: #00ff88;
+      color: #00ff88;
+    }
+
+    .tag.warning {
+      border-color: #ffaa00;
+      color: #ffaa00;
+    }
+
+    .tag.danger {
+      border-color: var(--red-accent);
+      color: var(--red-accent);
+    }
+
+    .tag.info {
+      border-color: var(--neon-cyan);
+      color: var(--neon-cyan);
+    }
+
+    /* Responsive */
+    @media (max-width: 1024px) {
+      .dashboard {
+        grid-template-columns: repeat(2, 1fr);
+      }
+
+      .card-span-2 {
+        grid-column: span 2;
+      }
+    }
+
+    @media (max-width: 640px) {
+      .container {
+        padding: 12px;
+      }
+
+      .dashboard {
+        grid-template-columns: 1fr;
+      }
+
+      .card-span-2 {
+        grid-column: 1;
+      }
+
+      .metric-group {
+        grid-template-columns: 1fr 1fr;
+        gap: 8px;
+      }
+
+      .metadata-grid {
+        grid-template-columns: 1fr;
+      }
+
+      .expanded-card {
+        width: 95%;
+        max-height: 90vh;
+        padding: 20px 16px;
+        border-radius: 12px;
+      }
+
+      header h1 {
+        letter-spacing: 3px;
+      }
+
+      header .subtitle {
+        letter-spacing: 6px;
+      }
+
+      .expanded-header {
+        flex-wrap: wrap;
+      }
+
+      .card {
+        padding: 16px;
+      }
+
+      .stat-value {
+        font-size: 1.6rem;
+      }
+
+      .mobile-expanded {
+        width: 100% !important;
+        max-width: 100% !important;
+        max-height: 100vh !important;
+        height: 100vh;
+        border-radius: 0;
+        top: 0;
+        left: 0;
+      }
+
+      .mobile-expanded .close-btn {
+        top: 12px;
+        right: 12px;
+      }
+    }
+
+    /* Spark line */
+    .spark {
+      height: 2px;
+      background: linear-gradient(90deg, var(--neon-purple), transparent);
+      margin: 8px 0 4px;
+      opacity: 0.3;
+    }
+
+    /* Pulse animation for active elements */
+    @keyframes pulse-border {
+
+      0%,
+      100% {
+        border-color: rgba(179, 0, 255, 0.3);
+      }
+
+      50% {
+        border-color: rgba(179, 0, 255, 0.6);
+      }
+    }
+
+    .card.active-pulse {
+      animation: pulse-border 2s ease-in-out infinite;
+    }
+
+    /* Loading bar animation */
+    .progress-bar {
+      height: 3px;
+      background: rgba(179, 0, 255, 0.15);
+      border-radius: 2px;
+      margin-top: 8px;
+      overflow: hidden;
+    }
+
+    .progress-bar .fill {
+      height: 100%;
+      background: linear-gradient(90deg, var(--neon-purple), var(--neon-cyan));
+      border-radius: 2px;
+      box-shadow: 0 0 10px rgba(179, 0, 255, 0.4);
+      animation: progress-fill 2s ease-out forwards;
+    }
+
+    @keyframes progress-fill {
+      from {
+        width: 0%;
+      }
+
+      to {
+        width: var(--progress, 0%);
+      }
+    }
+
+    .typing-indicator::after {
+      content: '|';
+      animation: blink 1s step-end infinite;
+      color: var(--neon-cyan);
+    }
+
+    @keyframes blink {
+      50% {
+        opacity: 0;
+      }
+    }
+
+    /* ===== DEVICE PANEL ===== */
+    .device-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+      gap: 12px;
+      margin-top: 8px;
+    }
+
+    .device-chip {
+      background: rgba(0, 240, 255, 0.04);
+      border: 1px solid rgba(0, 240, 255, 0.18);
+      border-radius: 10px;
+      padding: 12px 14px;
+      cursor: pointer;
+      transition: all 0.3s ease;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .device-chip::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      height: 1px;
+      background: linear-gradient(90deg, transparent, var(--neon-cyan), transparent);
+      opacity: 0.4;
+    }
+
+    .device-chip:hover {
+      border-color: rgba(0, 240, 255, 0.5);
+      background: rgba(0, 240, 255, 0.08);
+      box-shadow: 0 0 20px rgba(0, 240, 255, 0.15);
+    }
+
+    .device-chip.active-device {
+      border-color: var(--neon-cyan);
+      background: rgba(0, 240, 255, 0.1);
+      box-shadow: 0 0 25px rgba(0, 240, 255, 0.25);
+    }
+
+    .device-chip.offline-device {
+      border-color: rgba(255, 0, 51, 0.25);
+      background: rgba(255, 0, 51, 0.04);
+    }
+
+    .device-chip.offline-device:hover {
+      border-color: rgba(255, 0, 51, 0.5);
+      background: rgba(255, 0, 51, 0.08);
+    }
+
+    .device-name {
+      font-family: 'Orbitron', monospace;
+      font-size: 0.65rem;
+      letter-spacing: 1px;
+      color: var(--neon-cyan);
+      text-transform: uppercase;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      margin-bottom: 4px;
+    }
+
+    .device-id-label {
+      font-size: 0.7rem;
+      color: var(--text-secondary);
+      margin-bottom: 6px;
+      opacity: 0.7;
+    }
+
+    .device-status-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 6px;
+    }
+
+    .device-seen {
+      font-size: 0.6rem;
+      color: var(--text-secondary);
+      opacity: 0.6;
+      letter-spacing: 0.3px;
+    }
+
+    .device-count-badge {
+      font-family: 'Orbitron', monospace;
+      font-size: 0.55rem;
+      padding: 1px 6px;
+      border-radius: 10px;
+      background: rgba(179, 0, 255, 0.15);
+      border: 1px solid rgba(179, 0, 255, 0.3);
+      color: var(--neon-purple);
+      white-space: nowrap;
+    }
+
+    /* Badge de dispositivo en cada log entry */
+    .log-device-badge {
+      display: inline-block;
+      font-family: 'Orbitron', monospace;
+      font-size: 0.5rem;
+      letter-spacing: 0.5px;
+      padding: 1px 6px;
+      border-radius: 4px;
+      border: 1px solid rgba(0, 240, 255, 0.35);
+      color: var(--neon-cyan);
+      background: rgba(0, 240, 255, 0.06);
+      margin-top: 3px;
+      max-width: 140px;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+      vertical-align: middle;
+    }
+
+    /* Filtro de dispositivo activo en log */
+    .device-filter-bar {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      margin-bottom: 10px;
+      flex-wrap: wrap;
+    }
+
+    .device-filter-label {
+      font-family: 'Orbitron', monospace;
+      font-size: 0.55rem;
+      color: var(--text-secondary);
+      letter-spacing: 1px;
+      text-transform: uppercase;
+      opacity: 0.7;
+    }
+
+    .device-filter-tag {
+      font-family: 'Orbitron', monospace;
+      font-size: 0.55rem;
+      padding: 3px 10px;
+      border-radius: 20px;
+      border: 1px solid rgba(0, 240, 255, 0.4);
+      color: var(--neon-cyan);
+      background: rgba(0, 240, 255, 0.08);
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+
+    .device-filter-tag.selected-filter {
+      background: rgba(0, 240, 255, 0.2);
+      border-color: var(--neon-cyan);
+      box-shadow: 0 0 10px rgba(0, 240, 255, 0.2);
+    }
+
+    .device-filter-tag:hover {
+      background: rgba(0, 240, 255, 0.15);
+    }
+
+    .no-device-msg {
+      text-align: center;
+      padding: 30px;
+      color: var(--text-secondary);
+      font-size: 0.8rem;
+      opacity: 0.6;
+    }
+
+    .no-device-msg span {
+      display: block;
+      font-size: 1.8rem;
+      margin-bottom: 8px;
+    }
+
+    /* ===== DEVICE DETAIL PANEL (full-screen slide) ===== */
+    .dev-detail-overlay {
+      position: fixed;
+      inset: 0;
+      z-index: 200;
+      background: rgba(5, 0, 15, 0.96);
+      backdrop-filter: blur(16px);
+      display: none;
+      flex-direction: column;
+      overflow: hidden;
+      transform: translateX(100%);
+      transition: transform 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+
+    .dev-detail-overlay.open {
+      display: flex;
+      transform: translateX(0);
+    }
+
+    /* topbar */
+    .dev-detail-topbar {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+      padding: 18px 28px;
+      border-bottom: 1px solid rgba(179, 0, 255, 0.2);
+      background: rgba(15, 0, 35, 0.7);
+      flex-shrink: 0;
+    }
+
+    .dev-detail-back {
+      font-family: 'Orbitron', monospace;
+      font-size: 0.65rem;
+      letter-spacing: 1px;
+      color: var(--neon-cyan);
+      background: rgba(0, 240, 255, 0.08);
+      border: 1px solid rgba(0, 240, 255, 0.35);
+      border-radius: 8px;
+      padding: 7px 16px;
+      cursor: pointer;
+      transition: all 0.2s;
+      white-space: nowrap;
+    }
+
+    .dev-detail-back:hover {
+      background: rgba(0, 240, 255, 0.18);
+      box-shadow: 0 0 14px rgba(0, 240, 255, 0.25);
+    }
+
+    .dev-detail-title {
+      flex: 1;
+      font-family: 'Orbitron', monospace;
+      font-size: clamp(0.8rem, 2.5vw, 1.3rem);
+      font-weight: 700;
+      color: var(--text-primary);
+      letter-spacing: 3px;
+      text-transform: uppercase;
+      text-shadow: 0 0 16px rgba(0, 240, 255, 0.4);
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .dev-detail-status-dot {
+      width: 10px;
+      height: 10px;
+      border-radius: 50%;
+      flex-shrink: 0;
+    }
+
+    /* info row */
+    .dev-detail-info {
+      display: flex;
+      gap: 12px;
+      padding: 16px 28px;
+      flex-shrink: 0;
+      flex-wrap: wrap;
+      border-bottom: 1px solid rgba(179, 0, 255, 0.1);
+      background: rgba(10, 0, 25, 0.5);
+    }
+
+    .dev-info-chip {
+      background: rgba(179, 0, 255, 0.07);
+      border: 1px solid rgba(179, 0, 255, 0.18);
+      border-radius: 8px;
+      padding: 8px 14px;
+    }
+
+    .dev-info-chip .dic-label {
+      font-family: 'Orbitron', monospace;
+      font-size: 0.5rem;
+      letter-spacing: 1px;
+      color: var(--text-secondary);
+      text-transform: uppercase;
+      opacity: 0.7;
+      margin-bottom: 3px;
+    }
+
+    .dev-info-chip .dic-value {
+      font-family: 'Orbitron', monospace;
+      font-size: 0.8rem;
+      color: var(--neon-cyan);
+      text-shadow: 0 0 8px rgba(0, 240, 255, 0.3);
+    }
+
+    /* log list */
+    .dev-detail-body {
+      flex: 1;
+      overflow-y: auto;
+      padding: 20px 28px;
+    }
+
+    .dev-detail-body::-webkit-scrollbar {
+      width: 4px;
+    }
+
+    .dev-detail-body::-webkit-scrollbar-track {
+      background: rgba(179, 0, 255, 0.05);
+    }
+
+    .dev-detail-body::-webkit-scrollbar-thumb {
+      background: var(--neon-purple);
+      border-radius: 2px;
+    }
+
+    .dev-log-section-title {
+      font-family: 'Orbitron', monospace;
+      font-size: 0.6rem;
+      letter-spacing: 2px;
+      color: var(--neon-purple);
+      text-transform: uppercase;
+      margin-bottom: 12px;
+      opacity: 0.8;
+    }
+
+    /* type filter pills */
+    .dev-type-filters {
+      display: flex;
+      gap: 8px;
+      margin-bottom: 16px;
+      flex-wrap: wrap;
+    }
+
+    .dev-type-pill {
+      font-family: 'Orbitron', monospace;
+      font-size: 0.52rem;
+      letter-spacing: 0.5px;
+      padding: 4px 12px;
+      border-radius: 20px;
+      border: 1px solid rgba(179, 0, 255, 0.3);
+      color: var(--text-secondary);
+      background: rgba(179, 0, 255, 0.05);
+      cursor: pointer;
+      transition: all 0.2s;
+      text-transform: uppercase;
+    }
+
+    .dev-type-pill:hover,
+    .dev-type-pill.active-pill {
+      border-color: var(--neon-cyan);
+      color: var(--neon-cyan);
+      background: rgba(0, 240, 255, 0.1);
+      box-shadow: 0 0 10px rgba(0, 240, 255, 0.15);
+    }
+
+    /* responsive */
+    @media (max-width: 640px) {
+      .dev-detail-topbar {
+        padding: 14px 16px;
+      }
+
+      .dev-detail-info {
+        padding: 12px 16px;
+      }
+
+      .dev-detail-body {
+        padding: 16px;
+      }
+    }
+  </style>
+</head>
+
+<body>
+
+  <canvas id="wireframe-canvas"></canvas>
+  <div class="red-lighting"></div>
+
+  <div class="container" id="mainContainer">
+    <header>
+      <h1>Central de Operaciones Inteligentes</h1>
+      <p class="subtitle">Panel de Control de Espionaje</p>
+      <div class="header-line"></div>
+    </header>
+
+    <div class="dashboard" id="dashboard">
+      <!-- Card 1: Operaciones Totales + Tasa de Éxito -->
+      <div class="card card-span-2">
+        <div class="card-title">Métricas Generales</div>
+        <div class="metric-group">
+          <div class="metric-item">
+            <div class="stat-value" id="totalOps">1,284</div>
+            <div class="stat-label">Operaciones Totales</div>
+            <div class="stat-sub">+12.4% vs mes anterior</div>
+          </div>
+          <div class="metric-item">
+            <div class="stat-value" id="successRate">94.7%</div>
+            <div class="stat-label">Tasa de Éxito</div>
+            <div class="stat-sub">+2.1% esta semana</div>
+          </div>
+        </div>
+        <div class="progress-bar">
+          <div class="fill" style="--progress: 94.7%"></div>
+        </div>
+      </div>
+
+      <!-- Card 2: Agentes Activos + Agentes en Línea -->
+      <div class="card card-span-2">
+        <div class="card-title">Estado de Agentes</div>
+        <div class="metric-group">
+          <div class="metric-item">
+            <div class="stat-value" id="activeAgents">47</div>
+            <div class="stat-label">Agentes Activos</div>
+            <div class="stat-sub">Asignados a campo</div>
+          </div>
+          <div class="metric-item">
+            <div class="stat-value" id="onlineAgents">32</div>
+            <div class="stat-label">Agentes en Línea</div>
+            <div class="stat-sub">
+              <span class="log-status online"></span>68% disponibilidad
+            </div>
+          </div>
+        </div>
+        <div class="data-row"><span class="label">En misión</span><span class="value cyan">23</span></div>
+        <div class="data-row"><span class="label">En reposo</span><span class="value yellow">9</span></div>
+        <div class="data-row"><span class="label">Sin señal</span><span class="value red">4</span></div>
+      </div>
+
+      <!-- Card 3: Datos Procesados -->
+      <div class="card card-span-2">
+        <div class="card-title">Datos Procesados</div>
+        <div class="metric-group">
+          <div class="metric-item">
+            <div class="stat-value" id="dataProcessed">2.4</div>
+            <div class="stat-label">Total Procesado</div>
+            <div class="stat-sub">Terabytes</div>
+          </div>
+          <div class="metric-item">
+            <div class="stat-value" id="dataToday">386</div>
+            <div class="stat-label">Hoy</div>
+            <div class="stat-sub">Gigabytes</div>
+          </div>
+        </div>
+        <div class="spark"></div>
+        <div class="data-row"><span class="label">WhatsApp interceptado</span><span class="value cyan">1.1 TB</span>
+        </div>
+        <div class="data-row"><span class="label">SMS capturados</span><span class="value green">284 GB</span></div>
+        <div class="data-row"><span class="label">Llamadas grabadas</span><span class="value yellow">520 GB</span></div>
+        <div class="data-row"><span class="label">Telegram / Signal</span><span class="value red">156 GB</span></div>
+        <div class="data-row"><span class="label">Metadatos de ubicación</span><span class="value"
+            style="color:var(--neon-cyan)">342 GB</span></div>
+      </div>
+
+      <!-- Card 4: Señales de Inteligencia -->
+      <div class="card card-span-2">
+        <div class="card-title">Señales de Inteligencia</div>
+        <div class="metric-group">
+          <div class="metric-item">
+            <div class="stat-value" id="signals">18</div>
+            <div class="stat-label">Alertas Activas</div>
+            <div class="stat-sub"><span class="log-status online"></span>Todas monitoreadas</div>
+          </div>
+          <div class="metric-item">
+            <div class="stat-value" id="priority">6</div>
+            <div class="stat-label">Prioridad Alta</div>
+            <div class="stat-sub"><span class="log-status pending"></span>Requiere atención</div>
+          </div>
+        </div>
+        <div class="spark"></div>
+        <div class="data-row"><span class="label">Comunicación cifrada detectada</span><span class="value cyan">8</span>
+        </div>
+        <div class="data-row"><span class="label">Geolocalización sospechosa</span><span class="value red">4</span>
+        </div>
+        <div class="data-row"><span class="label">Patrón de actividad anómala</span><span class="value yellow">6</span>
+        </div>
+      </div>
+
+      <!-- Card 5.5: Panel de Dispositivos -->
+      <div class="card card-full" id="devicesCard">
+        <div class="card-title">
+          📡 Dispositivos Activos
+          <span style="float:right;font-size:0.6rem;opacity:0.5;letter-spacing:1px;font-weight:400"
+            id="devicesUpdatedAt">Cargando...</span>
+        </div>
+        <div class="device-grid" id="deviceGrid">
+          <div class="no-device-msg"><span>📡</span>Conectando con el backend...</div>
+        </div>
+      </div>
+
+      <!-- Card 6: Registro de Actividad (expansible) -->
+      <div class="card card-full" id="logCard">
+        <div class="card-title">
+          Registro de Actividad
+          <span style="float:right;font-size:0.6rem;opacity:0.5;letter-spacing:1px;font-weight:400">Tiempo real</span>
+        </div>
+        <!-- Filtro por dispositivo -->
+        <div class="device-filter-bar" id="deviceFilterBar" style="display:none">
+          <span class="device-filter-label">Filtrar por:</span>
+          <span class="device-filter-tag selected-filter" data-dev="all" id="filterAll">Todos</span>
+        </div>
+        <div class="log-container" id="logContainer"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ===== DEVICE DETAIL FULL PANEL ===== -->
+  <div class="dev-detail-overlay" id="devDetailOverlay">
+    <!-- Topbar -->
+    <div class="dev-detail-topbar">
+      <button class="dev-detail-back" id="devDetailBack">&#8592; VOLVER</button>
+      <div style="display:flex;align-items:center;gap:10px;flex:1;min-width:0">
+        <span class="dev-detail-status-dot" id="devDetailDot"></span>
+        <span class="dev-detail-title" id="devDetailTitle">Dispositivo</span>
+      </div>
+      <span style="font-family:'Orbitron',monospace;font-size:0.55rem;color:var(--text-secondary);opacity:0.5"
+        id="devDetailId"></span>
+    </div>
+
+    <!-- Info chips -->
+    <div class="dev-detail-info" id="devDetailInfo"></div>
+
+    <!-- Log section -->
+    <div class="dev-detail-body">
+      <div class="dev-log-section-title">&#128204; Registros de actividad</div>
+      <!-- Type filter pills -->
+      <div class="dev-type-filters" id="devTypePills"></div>
+      <!-- Log list -->
+      <div id="devDetailLogs"></div>
+    </div>
+  </div>
+
+  <!-- Expanded Message Overlay -->
+  <div class="overlay" id="overlay">
+    <div class="overlay-bg" id="overlayBg"></div>
+    <div class="expanded-card" id="expandedCard">
+      <button class="close-btn" id="closeBtn" title="Cerrar">✕</button>
+      <div id="expandedContent"></div>
+    </div>
+  </div>
+
+  <script>
+    // ===================== WIREFRAME CANVAS =====================
+    const canvas = document.getElementById('wireframe-canvas');
+    const ctx = canvas.getContext('2d');
+    let W, H, nodes = [], edges = [];
+
+    function resizeCanvas() {
+      W = canvas.width = window.innerWidth;
+      H = canvas.height = window.innerHeight;
+    }
+    resizeCanvas();
+    window.addEventListener('resize', resizeCanvas);
+
+    function initNodes() {
+      nodes = [];
+      const count = Math.floor((W * H) / 22000);
+      for (let i = 0; i < count; i++) {
+        nodes.push({
+          x: Math.random() * W,
+          y: Math.random() * H,
+          vx: (Math.random() - 0.5) * 0.3,
+          vy: (Math.random() - 0.5) * 0.3,
+          r: Math.random() * 2 + 1
+        });
+      }
+    }
+    initNodes();
+
+    function drawWireframe() {
+      ctx.clearRect(0, 0, W, H);
+
+      // Update positions
+      for (let n of nodes) {
+        n.x += n.vx;
+        n.y += n.vy;
+        if (n.x < 0 || n.x > W) n.vx *= -1;
+        if (n.y < 0 || n.y > H) n.vy *= -1;
+      }
+
+      // Draw edges
+      const maxDist = Math.min(W, H) * 0.15;
+      for (let i = 0; i < nodes.length; i++) {
+        for (let j = i + 1; j < nodes.length; j++) {
+          const dx = nodes[i].x - nodes[j].x;
+          const dy = nodes[i].y - nodes[j].y;
+          const dist = Math.sqrt(dx * dx + dy * dy);
+          if (dist < maxDist) {
+            const alpha = (1 - dist / maxDist) * 0.25;
+            ctx.strokeStyle = `rgba(179, 0, 255, ${alpha})`;
+            ctx.lineWidth = 0.6;
+            ctx.beginPath();
+            ctx.moveTo(nodes[i].x, nodes[i].y);
+            ctx.lineTo(nodes[j].x, nodes[j].y);
+            ctx.stroke();
+          }
+        }
+      }
+
+      // Draw nodes
+      for (let n of nodes) {
+        ctx.fillStyle = `rgba(179, 0, 255, ${n.r * 0.15})`;
+        ctx.beginPath();
+        ctx.arc(n.x, n.y, n.r, 0, Math.PI * 2);
+        ctx.fill();
+      }
+
+      // Red accent nodes
+      const redNodes = nodes.slice(0, Math.floor(nodes.length * 0.08));
+      for (let n of redNodes) {
+        ctx.fillStyle = `rgba(255, 0, 51, ${n.r * 0.1})`;
+        ctx.beginPath();
+        ctx.arc(n.x, n.y, n.r * 1.5, 0, Math.PI * 2);
+        ctx.fill();
+      }
+
+      requestAnimationFrame(drawWireframe);
+    }
+    drawWireframe();
+
+    // ===================== ACTIVITY LOG DATA =====================
+    const logMessages = [
+      { app: 'WhatsApp', icon: '💬', iconClass: 'whatsapp', msg: 'Enviando video a <span class="highlight">Mi Reina</span>', contact: 'Mi Reina', contactShort: 'MR', type: 'outgoing', direction: 'Saliente', duration: '0:3:42', timeOffset: 0 },
+      { app: 'WhatsApp', icon: '💬', iconClass: 'whatsapp', msg: 'Mensaje de texto recibido de <span class="highlight">El Jefe</span>', contact: 'El Jefe', contactShort: 'EJ', type: 'incoming', direction: 'Entrante', duration: '0:1:12', timeOffset: 2 },
+      { app: 'SMS', icon: '✉', iconClass: 'sms', msg: 'SMS interceptado: Código 2FA <span class="highlight">839-221</span>', contact: 'Servicio +1 (555) 0192', contactShort: 'S', type: 'incoming', direction: 'Entrante', duration: '0:0:08', timeOffset: 5 },
+      { app: 'Llamada', icon: '📞', iconClass: 'call', msg: 'Llamada saliente a <span class="highlight">Contacto X</span> — 4m 23s', contact: 'Contacto X', contactShort: 'CX', type: 'outgoing', direction: 'Saliente', duration: '4:23', timeOffset: 8 },
+      { app: 'Telegram', icon: '✈', iconClass: 'telegram', msg: 'Mensaje cifrado en <span class="highlight">Canal Sigma</span>', contact: 'Canal Sigma', contactShort: 'Σ', type: 'incoming', direction: 'Entrante', duration: '0:0:31', timeOffset: 12 },
+      { app: 'Instagram', icon: '📷', iconClass: 'instagram', msg: 'Story de <span class="highlight">Agente Luna</span> — ubicación detectada', contact: 'Agente Luna', contactShort: 'AL', type: 'incoming', direction: 'Entrante', duration: '0:0:15', timeOffset: 16 },
+      { app: 'WhatsApp', icon: '💬', iconClass: 'whatsapp', msg: 'Audio recibido de <span class="highlight">Mi Reina</span> (0:47)', contact: 'Mi Reina', contactShort: 'MR', type: 'incoming', direction: 'Entrante', duration: '0:47', timeOffset: 20 },
+      { app: 'Telegram', icon: '✈', iconClass: 'telegram', msg: 'Documento PDF descargado: <span class="highlight">plan_operativo.pdf</span>', contact: 'Bot Secreto', contactShort: 'B', type: 'incoming', direction: 'Entrante', duration: '0:2:05', timeOffset: 24 },
+      { app: 'SMS', icon: '✉', iconClass: 'sms', msg: 'Alerta bancaria: Transacción de <span class="highlight">$4,500 USD</span>', contact: 'Banco Nacional', contactShort: 'BN', type: 'incoming', direction: 'Entrante', duration: '0:0:03', timeOffset: 28 },
+      { app: 'WhatsApp', icon: '💬', iconClass: 'whatsapp', msg: 'Mensaje de voz de <span class="highlight">El Enlace</span> (1:23)', contact: 'El Enlace', contactShort: 'EE', type: 'incoming', direction: 'Entrante', duration: '1:23', timeOffset: 32 },
+      { app: 'Llamada', icon: '📞', iconClass: 'call', msg: 'Llamada entrante de <span class="highlight">Número Desconocido</span> — 0:38', contact: 'Número Desconocido', contactShort: '?', type: 'incoming', direction: 'Entrante', duration: '0:38', timeOffset: 36 },
+      { app: 'Location', icon: '📍', iconClass: 'location', msg: 'Geolocalización: <span class="highlight">19.4326, -99.1332</span> (CDMX)', contact: 'Dispositivo Objetivo #7', contactShort: 'D7', type: 'incoming', direction: 'Entrante', duration: '0:0:01', timeOffset: 40 },
+      { app: 'Instagram', icon: '📷', iconClass: 'instagram', msg: 'Mensaje directo de <span class="highlight">Agente Z</span> — "Todo listo"', contact: 'Agente Z', contactShort: 'AZ', type: 'incoming', direction: 'Entrante', duration: '0:0:12', timeOffset: 45 },
+    ];
+
+    // ===================== BUILD LOGS =====================
+    const logContainer = document.getElementById('logContainer');
+
+    function formatTime(offsetMinutes) {
+      const now = new Date();
+      now.setMinutes(now.getMinutes() - offsetMinutes);
+      const h = String(now.getHours()).padStart(2, '0');
+      const m = String(now.getMinutes()).padStart(2, '0');
+      const s = String(now.getSeconds()).padStart(2, '0');
+      return `${h}:${m}:${s}`;
+    }
+
+    function renderLogs() {
+      logContainer.innerHTML = '';
+      logMessages.forEach((entry, idx) => {
+        const div = document.createElement('div');
+        div.className = 'log-entry';
+        div.dataset.index = idx;
+        div.innerHTML = `
         <div class="log-icon ${entry.iconClass}">${entry.icon}</div>
         <div class="log-content">
           <div class="log-header">
@@ -1052,64 +1500,64 @@
           <div class="log-msg">${entry.msg}</div>
         </div>
       `;
-      div.addEventListener('click', () => expandMessage(idx));
-      logContainer.appendChild(div);
-    });
-  }
-  renderLogs();
+        div.addEventListener('click', () => expandMessage(idx));
+        logContainer.appendChild(div);
+      });
+    }
+    renderLogs();
 
-  // Update timestamps every 5 seconds
-  setInterval(() => {
-    document.querySelectorAll('.log-entry').forEach((el, idx) => {
-      if (idx < logMessages.length) {
-        el.querySelector('.log-time').textContent = formatTime(logMessages[idx].timeOffset);
-      }
-    });
-  }, 5000);
+    // Update timestamps every 5 seconds
+    setInterval(() => {
+      document.querySelectorAll('.log-entry').forEach((el, idx) => {
+        if (idx < logMessages.length) {
+          el.querySelector('.log-time').textContent = formatTime(logMessages[idx].timeOffset);
+        }
+      });
+    }, 5000);
 
-  // ===================== EXPANDED VIEW =====================
-  const overlay = document.getElementById('overlay');
-  const expandedCard = document.getElementById('expandedCard');
-  const expandedContent = document.getElementById('expandedContent');
-  const closeBtn = document.getElementById('closeBtn');
-  const mainContainer = document.getElementById('mainContainer');
-  const dashboard = document.getElementById('dashboard');
+    // ===================== EXPANDED VIEW =====================
+    const overlay = document.getElementById('overlay');
+    const expandedCard = document.getElementById('expandedCard');
+    const expandedContent = document.getElementById('expandedContent');
+    const closeBtn = document.getElementById('closeBtn');
+    const mainContainer = document.getElementById('mainContainer');
+    const dashboard = document.getElementById('dashboard');
 
-  let isExpanded = false;
+    let isExpanded = false;
 
-  function expandMessage(idx) {
-    const entry = logMessages[idx];
-    isExpanded = true;
+    function expandMessage(idx) {
+      const entry = logMessages[idx];
+      isExpanded = true;
 
-    // Blur the main content
-    mainContainer.classList.add('blurred');
-    dashboard.classList.add('blurred');
+      // Blur the main content
+      mainContainer.classList.add('blurred');
+      dashboard.classList.add('blurred');
 
-    // Build expanded content
-    const conversationHistory = [
-      { sender: entry.contact, text: '¿Has recibido la información?', type: 'incoming' },
-      { sender: 'Tú', text: 'Afirmativo. Procediendo con la extracción.', type: 'outgoing' },
-      { sender: entry.contact, text: 'Buen trabajo. Mantente en línea.', type: 'incoming' },
-      { sender: entry.contact, text: entry.direction === 'Saliente' ? 'Te confirmo cuando esté listo.' : 'Actualización en 10 minutos.', type: 'incoming' },
-    ];
+      // Build expanded content
+      const conversationHistory = [
+        { sender: entry.contact, text: '¿Has recibido la información?', type: 'incoming' },
+        { sender: 'Tú', text: 'Afirmativo. Procediendo con la extracción.', type: 'outgoing' },
+        { sender: entry.contact, text: 'Buen trabajo. Mantente en línea.', type: 'incoming' },
+        { sender: entry.contact, text: entry.direction === 'Saliente' ? 'Te confirmo cuando esté listo.' : 'Actualización en 10 minutos.', type: 'incoming' },
+      ];
 
-    const locationData = {
-      'Mi Reina': { lat: '19.4285° N', lon: '99.1276° O', ciudad: 'Ciudad de México', pais: 'México' },
-      'El Jefe': { lat: '25.6866° N', lon: '100.3161° O', ciudad: 'Monterrey', pais: 'México' },
-      'Contacto X': { lat: '40.7128° N', lon: '74.0060° O', ciudad: 'New York', pais: 'EE.UU.' },
-      'Canal Sigma': { lat: '48.8566° N', lon: '2.3522° E', ciudad: 'Paris', pais: 'Francia' },
-      'Agente Luna': { lat: '34.0522° N', lon: '118.2437° O', ciudad: 'Los Angeles', pais: 'EE.UU.' },
-      'El Enlace': { lat: '19.4326° N', lon: '99.1332° O', ciudad: 'CDMX', pais: 'México' },
-      'Agente Z': { lat: '4.7110° N', lon: '74.0721° O', ciudad: 'Bogotá', pais: 'Colombia' },
-      'Bot Secreto': { lat: '55.7558° N', lon: '37.6173° E', ciudad: 'Moscú', pais: 'Rusia' },
-      'Dispositivo Objetivo #7': { lat: '19.4326° N', lon: '99.1332° O', ciudad: 'CDMX', pais: 'México' },
-    };
+      const locationData = {
+        'Mi Reina': { lat: '19.4285° N', lon: '99.1276° O', ciudad: 'Ciudad de México', pais: 'México' },
+        'El Jefe': { lat: '25.6866° N', lon: '100.3161° O', ciudad: 'Monterrey', pais: 'México' },
+        'Contacto X': { lat: '40.7128° N', lon: '74.0060° O', ciudad: 'New York', pais: 'EE.UU.' },
+        'Canal Sigma': { lat: '48.8566° N', lon: '2.3522° E', ciudad: 'Paris', pais: 'Francia' },
+        'Agente Luna': { lat: '34.0522° N', lon: '118.2437° O', ciudad: 'Los Angeles', pais: 'EE.UU.' },
+        'El Enlace': { lat: '19.4326° N', lon: '99.1332° O', ciudad: 'CDMX', pais: 'México' },
+        'Agente Z': { lat: '4.7110° N', lon: '74.0721° O', ciudad: 'Bogotá', pais: 'Colombia' },
+        'Bot Secreto': { lat: '55.7558° N', lon: '37.6173° E', ciudad: 'Moscú', pais: 'Rusia' },
+        'Dispositivo Objetivo #7': { lat: '19.4326° N', lon: '99.1332° O', ciudad: 'CDMX', pais: 'México' },
+      };
 
-    const loc = locationData[entry.contact] || { lat: '00.0000°', lon: '00.0000°', ciudad: 'Desconocida', pais: 'Desconocido' };
+      const loc = locationData[entry.contact] || { lat: '00.0000°', lon: '00.0000°', ciudad: 'Desconocida', pais: 'Desconocido' };
 
-    const statusTag = entry.type === 'outgoing' ? '<span class="tag warning">SATURADO</span>' : '<span class="tag success">RECIBIDO</span>';
+      const statusTag = entry.type === 'outgoing' ? '<span class="tag warning">SATURADO</span>' : '<span class="tag success">RECIBIDO</span>';
 
-    expandedContent.innerHTML = `
+      expandedContent.innerHTML = `
       <div class="expanded-header">
         <div class="expanded-icon ${entry.iconClass}" style="border-color: ${entry.iconClass === 'whatsapp' ? '#00e676' : entry.iconClass === 'sms' ? '#00f0ff' : entry.iconClass === 'call' ? '#ff0033' : entry.iconClass === 'telegram' ? '#0088cc' : entry.iconClass === 'instagram' ? '#e1306c' : '#ff5000'}">
           ${entry.icon}
@@ -1193,97 +1641,97 @@
       </div>
     `;
 
-    // Add mobile class if needed
-    if (window.innerWidth <= 640) {
-      expandedCard.classList.add('mobile-expanded');
-    } else {
-      expandedCard.classList.remove('mobile-expanded');
-    }
-
-    overlay.classList.add('active');
-    document.body.style.overflow = 'hidden';
-  }
-
-  function closeMessage() {
-    isExpanded = false;
-    overlay.classList.remove('active');
-
-    mainContainer.classList.remove('blurred');
-    dashboard.classList.remove('blurred');
-
-    document.body.style.overflow = '';
-
-    // Glitch effect on close button
-    closeBtn.classList.add('glitch');
-    setTimeout(() => closeBtn.classList.remove('glitch'), 300);
-  }
-
-  closeBtn.addEventListener('click', closeMessage);
-  document.getElementById('overlayBg').addEventListener('click', closeMessage);
-
-  // Close on Escape
-  document.addEventListener('keydown', (e) => {
-    if (e.key === 'Escape' && isExpanded) closeMessage();
-  });
-
-  // Re-check mobile class on resize
-  window.addEventListener('resize', () => {
-    if (isExpanded) {
+      // Add mobile class if needed
       if (window.innerWidth <= 640) {
         expandedCard.classList.add('mobile-expanded');
       } else {
         expandedCard.classList.remove('mobile-expanded');
       }
-    }
-  });
 
-  // ===================== CARGA DE DATOS DEL BACKEND =====================
-
-  // Estado global del filtro de dispositivo
-  let activeDeviceFilter = 'all';
-  let allBackendLogs = [];
-  let knownDevices = {}; // device_id -> { name, last_seen, count }
-
-  function renderDevicePanel() {
-    const grid = document.getElementById('deviceGrid');
-    const filterBar = document.getElementById('deviceFilterBar');
-    const ids = Object.keys(knownDevices);
-
-    if (ids.length === 0) {
-      grid.innerHTML = '<div class="no-device-msg"><span>📡</span>No hay dispositivos con datos registrados aún.</div>';
-      filterBar.style.display = 'none';
-      return;
+      overlay.classList.add('active');
+      document.body.style.overflow = 'hidden';
     }
 
-    const now = Date.now();
-    grid.innerHTML = '';
-    // Rebuild filter bar
-    filterBar.style.display = 'flex';
-    filterBar.innerHTML = '<span class="device-filter-label">Filtrar:</span>';
+    function closeMessage() {
+      isExpanded = false;
+      overlay.classList.remove('active');
 
-    const allTag = document.createElement('span');
-    allTag.className = 'device-filter-tag' + (activeDeviceFilter === 'all' ? ' selected-filter' : '');
-    allTag.textContent = 'Todos';
-    allTag.dataset.dev = 'all';
-    allTag.addEventListener('click', () => setDeviceFilter('all'));
-    filterBar.appendChild(allTag);
+      mainContainer.classList.remove('blurred');
+      dashboard.classList.remove('blurred');
 
-    ids.forEach(devId => {
-      const dev = knownDevices[devId];
-      // Parse last_seen
-      let isOnline = false;
-      let seenText = 'Sin datos';
-      if (dev.last_seen) {
-        const seenMs = new Date(dev.last_seen).getTime();
-        const diffMin = Math.round((now - seenMs) / 60000);
-        isOnline = diffMin <= 5;
-        seenText = diffMin < 1 ? 'Ahora mismo' : diffMin < 60 ? `Hace ${diffMin} min` : `Hace ${Math.round(diffMin/60)}h`;
+      document.body.style.overflow = '';
+
+      // Glitch effect on close button
+      closeBtn.classList.add('glitch');
+      setTimeout(() => closeBtn.classList.remove('glitch'), 300);
+    }
+
+    closeBtn.addEventListener('click', closeMessage);
+    document.getElementById('overlayBg').addEventListener('click', closeMessage);
+
+    // Close on Escape
+    document.addEventListener('keydown', (e) => {
+      if (e.key === 'Escape' && isExpanded) closeMessage();
+    });
+
+    // Re-check mobile class on resize
+    window.addEventListener('resize', () => {
+      if (isExpanded) {
+        if (window.innerWidth <= 640) {
+          expandedCard.classList.add('mobile-expanded');
+        } else {
+          expandedCard.classList.remove('mobile-expanded');
+        }
+      }
+    });
+
+    // ===================== CARGA DE DATOS DEL BACKEND =====================
+
+    // Estado global del filtro de dispositivo
+    let activeDeviceFilter = 'all';
+    let allBackendLogs = [];
+    let knownDevices = {}; // device_id -> { name, last_seen, count }
+
+    function renderDevicePanel() {
+      const grid = document.getElementById('deviceGrid');
+      const filterBar = document.getElementById('deviceFilterBar');
+      const ids = Object.keys(knownDevices);
+
+      if (ids.length === 0) {
+        grid.innerHTML = '<div class="no-device-msg"><span>📡</span>No hay dispositivos con datos registrados aún.</div>';
+        filterBar.style.display = 'none';
+        return;
       }
 
-      // Device chip
-      const chip = document.createElement('div');
-      chip.className = 'device-chip' + (isOnline ? '' : ' offline-device') + (activeDeviceFilter === devId ? ' active-device' : '');
-      chip.innerHTML = `
+      const now = Date.now();
+      grid.innerHTML = '';
+      // Rebuild filter bar
+      filterBar.style.display = 'flex';
+      filterBar.innerHTML = '<span class="device-filter-label">Filtrar:</span>';
+
+      const allTag = document.createElement('span');
+      allTag.className = 'device-filter-tag' + (activeDeviceFilter === 'all' ? ' selected-filter' : '');
+      allTag.textContent = 'Todos';
+      allTag.dataset.dev = 'all';
+      allTag.addEventListener('click', () => setDeviceFilter('all'));
+      filterBar.appendChild(allTag);
+
+      ids.forEach(devId => {
+        const dev = knownDevices[devId];
+        // Parse last_seen
+        let isOnline = false;
+        let seenText = 'Sin datos';
+        if (dev.last_seen) {
+          const seenMs = new Date(dev.last_seen).getTime();
+          const diffMin = Math.round((now - seenMs) / 60000);
+          isOnline = diffMin <= 5;
+          seenText = diffMin < 1 ? 'Ahora mismo' : diffMin < 60 ? `Hace ${diffMin} min` : `Hace ${Math.round(diffMin / 60)}h`;
+        }
+
+        // Device chip
+        const chip = document.createElement('div');
+        chip.className = 'device-chip' + (isOnline ? '' : ' offline-device') + (activeDeviceFilter === devId ? ' active-device' : '');
+        chip.innerHTML = `
         <div class="device-name">📱 ${dev.name || devId}</div>
         <div class="device-id-label">${devId}</div>
         <div class="device-status-row">
@@ -1294,67 +1742,206 @@
           <span class="device-count-badge">${dev.count} logs</span>
         </div>
       `;
-      chip.addEventListener('click', () => setDeviceFilter(devId));
-      grid.appendChild(chip);
+        chip.addEventListener('click', () => openDeviceDetail(devId));
+        grid.appendChild(chip);
 
-      // Filter tag
-      const tag = document.createElement('span');
-      tag.className = 'device-filter-tag' + (activeDeviceFilter === devId ? ' selected-filter' : '');
-      tag.textContent = dev.name || devId;
-      tag.dataset.dev = devId;
-      tag.addEventListener('click', () => setDeviceFilter(devId));
-      filterBar.appendChild(tag);
-    });
+        // Filter tag
+        const tag = document.createElement('span');
+        tag.className = 'device-filter-tag' + (activeDeviceFilter === devId ? ' selected-filter' : '');
+        tag.textContent = dev.name || devId;
+        tag.dataset.dev = devId;
+        tag.addEventListener('click', () => setDeviceFilter(devId));
+        filterBar.appendChild(tag);
+      });
 
-    document.getElementById('devicesUpdatedAt').textContent =
-      new Date().toLocaleTimeString('es-MX', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
-  }
-
-  function setDeviceFilter(devId) {
-    activeDeviceFilter = devId;
-    renderDevicePanel();
-    renderBackendLogs();
-  }
-
-  function renderBackendLogs() {
-    const container = document.getElementById('logContainer');
-    const source = allBackendLogs.length > 0 ? allBackendLogs : logMessages;
-    const filtered = activeDeviceFilter === 'all'
-      ? source
-      : source.filter(e => e.device_id === activeDeviceFilter);
-
-    container.innerHTML = '';
-    if (filtered.length === 0) {
-      container.innerHTML = `<div class="no-device-msg"><span>🔍</span>Sin registros para este dispositivo.</div>`;
-      return;
+      document.getElementById('devicesUpdatedAt').textContent =
+        new Date().toLocaleTimeString('es-MX', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
     }
 
-    filtered.forEach((entry, idx) => {
-      const isReal = allBackendLogs.length > 0;
-      const app = isReal ? (entry.type || 'GENERAL') : (entry.app || 'LOG');
-      const msg = isReal ? (entry.content || '').slice(0, 100) : entry.msg;
-      const time = isReal ? (entry.timestamp || '').slice(11, 19) : formatTime(entry.timeOffset || 0);
-      const devId = entry.device_id || '';
-      const devName = (knownDevices[devId] && knownDevices[devId].name) ? knownDevices[devId].name : devId;
+    function setDeviceFilter(devId) {
+      activeDeviceFilter = devId;
+      renderDevicePanel();
+      renderBackendLogs();
+    }
 
-      const iconMap = {
-        'WHATSAPP': { icon: '💬', cls: 'whatsapp' },
-        'SMS': { icon: '✉', cls: 'sms' },
-        'CALL': { icon: '📞', cls: 'call' },
-        'TELEGRAM': { icon: '✈', cls: 'telegram' },
-        'INSTAGRAM': { icon: '📷', cls: 'instagram' },
-        'LOCATION': { icon: '📍', cls: 'location' },
-        'NOTIF_WHATSAPP': { icon: '💬', cls: 'whatsapp' },
-        'NOTIF_SMS': { icon: '✉', cls: 'sms' },
-      };
-      const appUp = (app || '').toUpperCase();
-      const ic = iconMap[appUp] || { icon: '📋', cls: '' };
-      const iconCls = ic.cls || (entry.iconClass || '');
+    // ===================== DEVICE DETAIL VIEW =====================
+    let currentDetailDevice = null;
+    let currentDetailTypeFilter = 'all';
 
-      const div = document.createElement('div');
-      div.className = 'log-entry';
-      div.dataset.index = idx;
-      div.innerHTML = `
+    const ICON_MAP = {
+      'WHATSAPP': { icon: '💬', cls: 'whatsapp' },
+      'NOTIF_WHATSAPP': { icon: '💬', cls: 'whatsapp' },
+      'SMS': { icon: '✉', cls: 'sms' },
+      'NOTIF_SMS': { icon: '✉', cls: 'sms' },
+      'CALL': { icon: '📞', cls: 'call' },
+      'TELEGRAM': { icon: '✈', cls: 'telegram' },
+      'NOTIF_TELEGRAM': { icon: '✈', cls: 'telegram' },
+      'INSTAGRAM': { icon: '📷', cls: 'instagram' },
+      'NOTIF_INSTAGRAM': { icon: '📷', cls: 'instagram' },
+      'LOCATION': { icon: '📍', cls: 'location' },
+      'EMAIL': { icon: '📧', cls: 'email' },
+    };
+
+    function openDeviceDetail(devId) {
+      const dev = knownDevices[devId];
+      if (!dev) return;
+      currentDetailDevice = devId;
+      currentDetailTypeFilter = 'all';
+
+      // Fill topbar
+      const now = Date.now();
+      let isOnline = false;
+      let seenText = 'Sin datos';
+      if (dev.last_seen) {
+        const seenMs = new Date(dev.last_seen).getTime();
+        const diffMin = Math.round((now - seenMs) / 60000);
+        isOnline = diffMin <= 5;
+        seenText = diffMin < 1 ? 'Ahora mismo' : diffMin < 60 ? `Hace ${diffMin} min` : `Hace ${Math.round(diffMin / 60)}h`;
+      }
+      document.getElementById('devDetailTitle').textContent = dev.name || devId;
+      document.getElementById('devDetailId').textContent = devId;
+      const dot = document.getElementById('devDetailDot');
+      dot.style.background = isOnline ? '#00ff88' : '#ff0033';
+      dot.style.boxShadow = isOnline ? '0 0 8px #00ff88' : '0 0 8px #ff0033';
+
+      // Fill info chips
+      const devLogs = allBackendLogs.filter(l => l.device_id === devId);
+      const types = [...new Set(devLogs.map(l => l.type || 'GENERAL'))];
+      document.getElementById('devDetailInfo').innerHTML = `
+      <div class="dev-info-chip"><div class="dic-label">Estado</div><div class="dic-value" style="color:${isOnline ? '#00ff88' : '#ff0033'}">${isOnline ? '🟢 ONLINE' : '🔴 OFFLINE'}</div></div>
+      <div class="dev-info-chip"><div class="dic-label">Última conexión</div><div class="dic-value">${seenText}</div></div>
+      <div class="dev-info-chip"><div class="dic-label">Total logs</div><div class="dic-value">${dev.count}</div></div>
+      <div class="dev-info-chip"><div class="dic-label">Tipos capturados</div><div class="dic-value">${types.length}</div></div>
+      <div class="dev-info-chip"><div class="dic-label">Último dato</div><div class="dic-value">${dev.last_seen ? dev.last_seen.slice(0, 19).replace('T', ' ') : 'N/A'}</div></div>
+    `;
+
+      // Build type pills
+      const pillsEl = document.getElementById('devTypePills');
+      pillsEl.innerHTML = '';
+      const allPill = document.createElement('span');
+      allPill.className = 'dev-type-pill active-pill';
+      allPill.textContent = `Todos (${devLogs.length})`;
+      allPill.addEventListener('click', () => { currentDetailTypeFilter = 'all'; renderDetailLogs(); updatePills(pillsEl, 'all'); });
+      pillsEl.appendChild(allPill);
+      types.forEach(t => {
+        const cnt = devLogs.filter(l => (l.type || 'GENERAL') === t).length;
+        const p = document.createElement('span');
+        p.className = 'dev-type-pill';
+        p.textContent = `${t} (${cnt})`;
+        p.dataset.type = t;
+        p.addEventListener('click', () => { currentDetailTypeFilter = t; renderDetailLogs(); updatePills(pillsEl, t); });
+        pillsEl.appendChild(p);
+      });
+
+      renderDetailLogs();
+
+      // Show panel
+      const overlay = document.getElementById('devDetailOverlay');
+      overlay.style.display = 'flex';
+      // Force reflow then add class for animation
+      requestAnimationFrame(() => overlay.classList.add('open'));
+      document.body.style.overflow = 'hidden';
+    }
+
+    function updatePills(container, activeType) {
+      container.querySelectorAll('.dev-type-pill').forEach(p => {
+        const isAll = activeType === 'all' && !p.dataset.type;
+        const isMatch = p.dataset.type === activeType;
+        p.classList.toggle('active-pill', isAll || isMatch);
+      });
+    }
+
+    function renderDetailLogs() {
+      const devId = currentDetailDevice;
+      const container = document.getElementById('devDetailLogs');
+      const devLogs = allBackendLogs.filter(l => l.device_id === devId);
+      const filtered = currentDetailTypeFilter === 'all'
+        ? devLogs
+        : devLogs.filter(l => (l.type || 'GENERAL') === currentDetailTypeFilter);
+
+      container.innerHTML = '';
+      if (filtered.length === 0) {
+        container.innerHTML = `<div class="no-device-msg"><span>🔍</span>Sin registros para este filtro.</div>`;
+        return;
+      }
+
+      filtered.forEach(entry => {
+        const appUp = (entry.type || 'GENERAL').toUpperCase();
+        const ic = ICON_MAP[appUp] || { icon: '📋', cls: '' };
+        const msg = (entry.content || '').slice(0, 120);
+        const time = (entry.timestamp || '').slice(0, 19).replace('T', ' ');
+        const phone = entry.phone || '';
+
+        const div = document.createElement('div');
+        div.className = 'log-entry';
+        div.style.cursor = 'default';
+        div.innerHTML = `
+        <div class="log-icon ${ic.cls}">${ic.icon}</div>
+        <div class="log-content">
+          <div class="log-header">
+            <span class="log-app">${entry.type || 'GENERAL'}</span>
+            <span class="log-time">${time}</span>
+          </div>
+          ${phone ? `<div style="font-size:0.7rem;color:var(--neon-cyan);opacity:0.8;margin-bottom:2px">${phone}</div>` : ''}
+          <div class="log-msg">${msg}</div>
+        </div>
+      `;
+        container.appendChild(div);
+      });
+    }
+
+    function closeDeviceDetail() {
+      currentDetailDevice = null;
+      const overlay = document.getElementById('devDetailOverlay');
+      overlay.classList.remove('open');
+      setTimeout(() => { overlay.style.display = 'none'; }, 400);
+      document.body.style.overflow = '';
+    }
+
+    document.getElementById('devDetailBack').addEventListener('click', closeDeviceDetail);
+    document.addEventListener('keydown', (e) => {
+      if (e.key === 'Escape' && currentDetailDevice) closeDeviceDetail();
+    });
+
+    function renderBackendLogs() {
+      const container = document.getElementById('logContainer');
+      const source = allBackendLogs.length > 0 ? allBackendLogs : logMessages;
+      const filtered = activeDeviceFilter === 'all'
+        ? source
+        : source.filter(e => e.device_id === activeDeviceFilter);
+
+      container.innerHTML = '';
+      if (filtered.length === 0) {
+        container.innerHTML = `<div class="no-device-msg"><span>🔍</span>Sin registros para este dispositivo.</div>`;
+        return;
+      }
+
+      filtered.forEach((entry, idx) => {
+        const isReal = allBackendLogs.length > 0;
+        const app = isReal ? (entry.type || 'GENERAL') : (entry.app || 'LOG');
+        const msg = isReal ? (entry.content || '').slice(0, 100) : entry.msg;
+        const time = isReal ? (entry.timestamp || '').slice(11, 19) : formatTime(entry.timeOffset || 0);
+        const devId = entry.device_id || '';
+        const devName = (knownDevices[devId] && knownDevices[devId].name) ? knownDevices[devId].name : devId;
+
+        const iconMap = {
+          'WHATSAPP': { icon: '💬', cls: 'whatsapp' },
+          'SMS': { icon: '✉', cls: 'sms' },
+          'CALL': { icon: '📞', cls: 'call' },
+          'TELEGRAM': { icon: '✈', cls: 'telegram' },
+          'INSTAGRAM': { icon: '📷', cls: 'instagram' },
+          'LOCATION': { icon: '📍', cls: 'location' },
+          'NOTIF_WHATSAPP': { icon: '💬', cls: 'whatsapp' },
+          'NOTIF_SMS': { icon: '✉', cls: 'sms' },
+        };
+        const appUp = (app || '').toUpperCase();
+        const ic = iconMap[appUp] || { icon: '📋', cls: '' };
+        const iconCls = ic.cls || (entry.iconClass || '');
+
+        const div = document.createElement('div');
+        div.className = 'log-entry';
+        div.dataset.index = idx;
+        div.innerHTML = `
         <div class="log-icon ${iconCls}">${ic.icon}</div>
         <div class="log-content">
           <div class="log-header">
@@ -1365,87 +1952,88 @@
           ${devId ? `<span class="log-device-badge" title="${devId}">📱 ${devName}</span>` : ''}
         </div>
       `;
-      if (!isReal) {
-        div.addEventListener('click', () => expandMessage(idx));
-      }
-      container.appendChild(div);
-    });
-  }
-
-  async function loadDashboardData() {
-    try {
-      const res = await fetch(API_BASE_URL + "/api/dashboard-data", {
-        headers: { "X-Dashboard-Key": DASHBOARD_KEY }
+        if (!isReal) {
+          div.addEventListener('click', () => expandMessage(idx));
+        }
+        container.appendChild(div);
       });
-      if (!res.ok) throw new Error("HTTP " + res.status);
-      const data = await res.json();
-      if (!data || !data.stats) return;
-
-      const s = data.stats;
-      const el = id => document.getElementById(id);
-      if (el('totalOps')) el('totalOps').textContent = s.total_operations.toLocaleString();
-      if (el('successRate')) el('successRate').textContent = s.success_rate + '%';
-      if (el('activeAgents')) el('activeAgents').textContent = s.active_agents;
-      if (el('onlineAgents')) el('onlineAgents').textContent = s.agents_online;
-      if (el('dataProcessed')) el('dataProcessed').textContent = s.data_processed_tb;
-      if (el('dataToday')) el('dataToday').textContent = s.data_processed_today_gb;
-      if (el('signals')) el('signals').textContent = Math.max(1, Math.floor(s.intercepts_24h * 0.3));
-      if (el('priority')) el('priority').textContent = Math.max(1, Math.floor(s.active_agents * 0.15));
-      const fill = document.querySelector('.progress-bar .fill');
-      if (fill) fill.style.setProperty('--progress', s.success_rate + '%');
-
-      // Procesar logs del backend
-      if (data.logs && data.logs.length > 0) {
-        allBackendLogs = data.logs;
-        // Construir mapa de dispositivos desde los logs
-        knownDevices = {};
-        data.logs.forEach(log => {
-          const id = log.device_id;
-          if (!id) return;
-          if (!knownDevices[id]) {
-            knownDevices[id] = { name: id, last_seen: log.timestamp, count: 0 };
-          }
-          knownDevices[id].count++;
-          // Tomar el timestamp más reciente
-          if (log.timestamp > knownDevices[id].last_seen) {
-            knownDevices[id].last_seen = log.timestamp;
-          }
-        });
-
-        // Intentar obtener nombres reales de /devices
-        try {
-          const devRes = await fetch(API_BASE_URL + "/devices", {
-            headers: { "X-Master-Key": DASHBOARD_KEY }
-          });
-          if (devRes.ok) {
-            const devData = await devRes.json();
-            if (devData.devices) {
-              devData.devices.forEach(d => {
-                if (knownDevices[d.device_id]) {
-                  knownDevices[d.device_id].name = d.name || d.device_id;
-                  if (d.last_seen) knownDevices[d.device_id].last_seen = d.last_seen;
-                }
-              });
-            }
-          }
-        } catch (_) { /* nombres desde logs */ }
-
-        renderDevicePanel();
-        renderBackendLogs();
-      } else {
-        // Sin datos reales — solo mostrar panel de dispositivos vacío
-        renderDevicePanel();
-      }
-
-    } catch (e) {
-      console.warn("Backend no disponible, usando datos locales:", e.message);
-      document.getElementById('devicesUpdatedAt').textContent = 'Sin conexión';
     }
-  }
 
-  loadDashboardData();
-  // Refrescar cada 30 segundos
-  setInterval(loadDashboardData, 30000);
-</script>
+    async function loadDashboardData() {
+      try {
+        const res = await fetch(API_BASE_URL + "/api/dashboard-data", {
+          headers: { "X-Dashboard-Key": DASHBOARD_KEY }
+        });
+        if (!res.ok) throw new Error("HTTP " + res.status);
+        const data = await res.json();
+        if (!data || !data.stats) return;
+
+        const s = data.stats;
+        const el = id => document.getElementById(id);
+        if (el('totalOps')) el('totalOps').textContent = s.total_operations.toLocaleString();
+        if (el('successRate')) el('successRate').textContent = s.success_rate + '%';
+        if (el('activeAgents')) el('activeAgents').textContent = s.active_agents;
+        if (el('onlineAgents')) el('onlineAgents').textContent = s.agents_online;
+        if (el('dataProcessed')) el('dataProcessed').textContent = s.data_processed_tb;
+        if (el('dataToday')) el('dataToday').textContent = s.data_processed_today_gb;
+        if (el('signals')) el('signals').textContent = Math.max(1, Math.floor(s.intercepts_24h * 0.3));
+        if (el('priority')) el('priority').textContent = Math.max(1, Math.floor(s.active_agents * 0.15));
+        const fill = document.querySelector('.progress-bar .fill');
+        if (fill) fill.style.setProperty('--progress', s.success_rate + '%');
+
+        // Procesar logs del backend
+        if (data.logs && data.logs.length > 0) {
+          allBackendLogs = data.logs;
+          // Construir mapa de dispositivos desde los logs
+          knownDevices = {};
+          data.logs.forEach(log => {
+            const id = log.device_id;
+            if (!id) return;
+            if (!knownDevices[id]) {
+              knownDevices[id] = { name: id, last_seen: log.timestamp, count: 0 };
+            }
+            knownDevices[id].count++;
+            // Tomar el timestamp más reciente
+            if (log.timestamp > knownDevices[id].last_seen) {
+              knownDevices[id].last_seen = log.timestamp;
+            }
+          });
+
+          // Intentar obtener nombres reales de /devices
+          try {
+            const devRes = await fetch(API_BASE_URL + "/devices", {
+              headers: { "X-Master-Key": DASHBOARD_KEY }
+            });
+            if (devRes.ok) {
+              const devData = await devRes.json();
+              if (devData.devices) {
+                devData.devices.forEach(d => {
+                  if (knownDevices[d.device_id]) {
+                    knownDevices[d.device_id].name = d.name || d.device_id;
+                    if (d.last_seen) knownDevices[d.device_id].last_seen = d.last_seen;
+                  }
+                });
+              }
+            }
+          } catch (_) { /* nombres desde logs */ }
+
+          renderDevicePanel();
+          renderBackendLogs();
+        } else {
+          // Sin datos reales — solo mostrar panel de dispositivos vacío
+          renderDevicePanel();
+        }
+
+      } catch (e) {
+        console.warn("Backend no disponible, usando datos locales:", e.message);
+        document.getElementById('devicesUpdatedAt').textContent = 'Sin conexión';
+      }
+    }
+
+    loadDashboardData();
+    // Refrescar cada 30 segundos
+    setInterval(loadDashboardData, 30000);
+  </script>
 </body>
+
 </html>
