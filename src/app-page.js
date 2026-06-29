@@ -47,6 +47,14 @@ const APP_PAGE_CONFIG = {
     appKey: 'tiktok',
     matchKeys: ['tiktok', 'tik tok'],
   },
+  google: {
+    title: 'Google',
+    description: 'Búsquedas, actividad de cuenta y registros de servicios.',
+    icon: 'G',
+    headerColor: '#4285f4',
+    appKey: 'google',
+    matchKeys: ['google', 'gmail', 'search', 'chrome'],
+  },
 };
 
 function createAppPageState(config) {

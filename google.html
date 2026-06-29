@@ -1,0 +1,77 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Google – Actividad</title>
+  <script src="src/config.js" defer></script>
+  <script src="src/app-page.js" defer></script>
+  <link rel="stylesheet" href="src/app-page.css" />
+</head>
+<body style="--brand-color:#4285f4; --brand-color-soft:rgba(66,133,244,0.18);">
+  <div class="page">
+    <div class="header">
+      <div class="brand">
+        <div class="brand-icon">G</div>
+        <div class="brand-info">
+          <h1>Google</h1>
+          <p>Búsquedas, actividad de cuenta y registros de servicios.</p>
+        </div>
+      </div>
+      <a class="back-link" href="dashboard.html">← Volver al dashboard</a>
+    </div>
+
+    <div class="toolbar">
+      <div class="search-box">
+        <label for="searchInput">Buscar por consulta o actividad</label>
+        <div class="search-row">
+          <input id="searchInput" type="search" placeholder="Ej. búsqueda, correo, alerta..." />
+          <button id="clearSearch" type="button">Limpiar</button>
+        </div>
+      </div>
+      <div class="actions-row">
+        <button id="sortContactBtn" class="action-button active">Ordenar por servicio</button>
+        <button id="sortMessageBtn" class="action-button">Ordenar por actividad</button>
+      </div>
+    </div>
+
+    <div class="content">
+      <aside class="sidebar">
+        <h2>Indicadores</h2>
+        <div class="stats-grid">
+          <div class="stat-card"><strong id="countMessages">0</strong><span>Registros</span></div>
+          <div class="stat-card"><strong id="countAlerts">0</strong><span>Alertas</span></div>
+          <div class="stat-card"><strong id="countContacts">—</strong><span>Servicios</span></div>
+        </div>
+        <div class="filter-group">
+          <h3>Filtrar por tipo</h3>
+          <button class="filter-pill active" data-type="all">Todos</button>
+          <button class="filter-pill" data-type="message">Actividad</button>
+          <button class="filter-pill" data-type="notificacion">Notificaciones</button>
+        </div>
+      </aside>
+
+      <section class="panel">
+        <div class="panel-header">
+          <div>
+            <h2>Google</h2>
+            <p class="panel-subtitle">Filtra búsquedas, alertas de seguridad y registros de cuenta.</p>
+          </div>
+          <span id="resultCount" class="result-count">0 elementos</span>
+        </div>
+        <div id="app-list" class="chat-list">Cargando...</div>
+      </section>
+    </div>
+  </div>
+
+  <script>
+    const fallbackSample = [
+      { contact: 'Google Search', msg: 'Búsqueda reciente capturada en el navegador.', timestamp: '2026-06-28T14:15:00', type: 'message' },
+      { contact: 'Google Account', msg: 'Alerta de nuevo inicio de sesión detectado.', timestamp: '2026-06-28T11:30:00', type: 'notificacion' },
+    ];
+
+    const appState = createAppPageState(APP_PAGE_CONFIG.google);
+    appState.loadPage(fallbackSample);
+  </script>
+</body>
+</html>
