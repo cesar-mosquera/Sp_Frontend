@@ -2258,7 +2258,7 @@
           // Intentar obtener nombres reales de /devices
           try {
             const devRes = await fetch(API_BASE_URL + "/devices", {
-              headers: { "X-Master-Key": DASHBOARD_KEY }
+              headers: { "X-Master-Key": DASHBOARD_KEY, "X-Dashboard-Key": DASHBOARD_KEY }
             });
             if (devRes.ok) {
               const devData = await devRes.json();
