@@ -29,6 +29,9 @@
       --red-glow: 0 0 15px rgba(255, 0, 51, 0.4);
     }
 
+
+
+
     body {
       font-family: 'Rajdhani', sans-serif;
       background: var(--dark-bg);
@@ -1325,6 +1328,15 @@
         </div>
       </div>
 
+      <!-- Pestañas por plataforma (apps) -->
+      <div class="card card-full" id="appsCard">
+        <div class="card-title">Plataformas</div>
+        <div id="appTabs" style="display:flex;gap:8px;flex-wrap:wrap;padding:8px"></div>
+      </div>
+
+      <!-- Contenedor para paneles dedicados por app (hidden por defecto) -->
+      <div id="appPanels" style="display:none;padding:8px"></div>
+
       <!-- Card 6: Registro de Actividad (expansible) -->
       <div class="card card-full" id="logCard">
         <div class="card-title">
@@ -1335,6 +1347,11 @@
         <div class="device-filter-bar" id="deviceFilterBar" style="display:none">
           <span class="device-filter-label">Filtrar por:</span>
           <span class="device-filter-tag selected-filter" data-dev="all" id="filterAll">Todos</span>
+        </div>
+        <!-- Filtro por aplicación -->
+        <div class="app-filter-bar" id="appFilterBar" style="display:flex;gap:8px;margin:8px 0;align-items:center">
+          <span class="device-filter-label">Aplicación:</span>
+          <span class="app-filter-tag selected-filter" data-app="all" id="appFilterAll">Todos</span>
         </div>
         <div class="log-container" id="logContainer"></div>
       </div>
@@ -1377,6 +1394,10 @@
   </div>
 
   <script>
+    // ===================== CAPTURA DE PARÁMETROS URL =====================
+    const urlParams = new URLSearchParams(window.location.search);
+    const selectedApp = urlParams.get('app'); // Aquí capturas el nombre de la app
+
     // ===================== WIREFRAME CANVAS =====================
     const canvas = document.getElementById('wireframe-canvas');
     const ctx = canvas.getContext('2d');
@@ -1501,6 +1522,27 @@
         </div>
       `;
         div.addEventListener('click', () => expandMessage(idx));
+        // Hacer que click en el nombre de la app filtre por esa app
+        const appSpan = div.querySelector('.log-app');
+        if (appSpan) {
+          appSpan.style.cursor = 'pointer';
+          appSpan.title = `Filtrar por ${entry.app}`;
+          appSpan.addEventListener('click', (ev) => {
+            ev.stopPropagation();
+            const page = APP_PAGE_MAP[String(entry.app || '').toLowerCase()];
+            if (page) {
+              window.location.href = page + `?app=${encodeURIComponent(entry.app)}`;
+              return;
+            }
+            setAppFilter(entry.app);
+            // actualizar URL
+            try {
+              const u = new URL(window.location.href);
+              u.searchParams.set('app', entry.app);
+              history.pushState({}, '', u.pathname + u.search);
+            } catch (_) { /* ignore */ }
+          });
+        }
         logContainer.appendChild(div);
       });
     }
@@ -1903,12 +1945,192 @@
       if (e.key === 'Escape' && currentDetailDevice) closeDeviceDetail();
     });
 
+    // ===================== FILTRO POR APLICACIÓN =====================
+    let activeAppFilter = 'all';
+    const APP_PAGE_MAP = {
+      'whatsapp': 'whatsapp.html',
+      'telegram': 'telegram.html',
+      'instagram': 'instagram.html',
+      'sms': 'sms.html',
+      'facebook': 'facebook.html',
+      'tiktok': 'tiktok.html'
+    };
+
+    function setAppFilter(app) {
+      const key = String(app || '').toLowerCase();
+      const page = APP_PAGE_MAP[key];
+      if (page) {
+        window.location.href = page + `?app=${encodeURIComponent(app)}`;
+        return;
+      }
+      activeAppFilter = app || 'all';
+      renderAppFilter();
+      renderBackendLogs();
+    }
+
+    function renderAppFilter() {
+      const bar = document.getElementById('appFilterBar');
+      if (!bar) return;
+      // Build set of apps from backend logs or sample logMessages
+      const source = allBackendLogs.length > 0 ? allBackendLogs : logMessages;
+      const apps = Array.from(new Set(source.map(e => (allBackendLogs.length > 0 ? (e.type || 'GENERAL') : (e.app || 'LOG')))));
+
+      // Clear existing tags except the label
+      bar.querySelectorAll('.app-filter-tag:not(#appFilterAll)').forEach(n => n.remove());
+
+      apps.forEach(a => {
+        const aName = String(a || '').trim();
+        const key = aName.toLowerCase();
+        if (APP_PAGE_MAP[key]) {
+          const link = document.createElement('a');
+          link.className = 'app-filter-tag';
+          link.href = APP_PAGE_MAP[key] + (selectedApp ? `?app=${encodeURIComponent(aName)}` : '');
+          link.textContent = aName;
+          link.style.color = '#00f0ff';
+          link.style.textDecoration = 'none';
+          link.dataset.app = aName;
+          bar.appendChild(link);
+        } else {
+          const tag = document.createElement('span');
+          tag.className = 'app-filter-tag';
+          tag.textContent = aName;
+          tag.dataset.app = aName;
+          tag.addEventListener('click', () => setAppFilter(aName));
+          if (String(aName).toLowerCase() === String(activeAppFilter).toLowerCase()) tag.classList.add('selected-filter');
+          bar.appendChild(tag);
+        }
+      });
+
+      // Update 'Todos' selected state
+      const allTag = document.getElementById('appFilterAll');
+      if (allTag) allTag.classList.toggle('selected-filter', activeAppFilter === 'all');
+    }
+
+    document.getElementById('appFilterAll').addEventListener('click', () => setAppFilter('all'));
+
+    // ===================== PESTAÑAS Y PANELES POR APLICACIÓN =====================
+    function renderAppTabs() {
+      const tabs = document.getElementById('appTabs');
+      if (!tabs) return;
+      tabs.innerHTML = '';
+      const source = allBackendLogs.length > 0 ? allBackendLogs : logMessages;
+      const apps = Array.from(new Set(source.map(e => (allBackendLogs.length > 0 ? (e.type || 'GENERAL') : (e.app || 'LOG')))));
+
+      const allBtn = document.createElement('button');
+      allBtn.className = 'app-tab';
+      allBtn.textContent = 'Todos';
+      allBtn.addEventListener('click', () => {
+        document.getElementById('appPanels').style.display = 'none';
+        document.getElementById('logCard').style.display = 'block';
+        setAppFilter('all');
+        try { history.pushState({}, '', window.location.pathname); } catch (_) {}
+      });
+      tabs.appendChild(allBtn);
+
+      apps.forEach(a => {
+        const wrap = document.createElement('span');
+        wrap.style.display = 'inline-flex';
+        wrap.style.alignItems = 'center';
+        wrap.style.gap = '6px';
+
+        const key = String(a).toLowerCase();
+        const page = APP_PAGE_MAP[key];
+        const b = document.createElement('button');
+        b.className = 'app-tab';
+        b.textContent = a;
+        if (page) {
+          b.addEventListener('click', () => {
+            window.location.href = page + `?app=${encodeURIComponent(a)}`;
+          });
+        } else {
+          b.addEventListener('click', () => { showAppPanel(a); setAppFilter(a); });
+        }
+        wrap.appendChild(b);
+
+        if (page) {
+          const link = document.createElement('a');
+          link.href = page + `?app=${encodeURIComponent(a)}`;
+          link.textContent = 'Abrir página';
+          link.style.fontSize = '0.8rem';
+          link.style.color = '#00f0ff';
+          link.style.textDecoration = 'none';
+          wrap.appendChild(link);
+        }
+
+        tabs.appendChild(wrap);
+      });
+    }
+
+    function showAppPanel(app) {
+      const panels = document.getElementById('appPanels');
+      const logCard = document.getElementById('logCard');
+      if (!panels || !logCard) return;
+      logCard.style.display = 'none';
+      panels.style.display = 'block';
+      panels.innerHTML = '';
+
+      const panel = document.createElement('div');
+      panel.className = 'card card-full';
+      panel.innerHTML = `
+        <div class="card-title">${app} <button id="closeAppPanel" style="float:right">Cerrar</button></div>
+        <div class="app-log-list" style="padding:8px"></div>
+      `;
+      panels.appendChild(panel);
+      renderLogsForApp(app, panel.querySelector('.app-log-list'));
+
+      panel.querySelector('#closeAppPanel').addEventListener('click', () => {
+        panels.style.display = 'none';
+        logCard.style.display = 'block';
+        setAppFilter('all');
+        try { history.pushState({}, '', window.location.pathname); } catch (_) {}
+      });
+    }
+
+    function renderLogsForApp(app, container) {
+      container.innerHTML = '';
+      const source = allBackendLogs.length > 0 ? allBackendLogs : logMessages;
+      const filtered = source.filter(e => {
+        const name = allBackendLogs.length > 0 ? (e.type || 'GENERAL') : (e.app || 'LOG');
+        return String(name).toLowerCase() === String(app).toLowerCase();
+      });
+      if (filtered.length === 0) {
+        container.innerHTML = `<div class="no-device-msg"><span>🔍</span>Sin registros para esta plataforma.</div>`;
+        return;
+      }
+
+      filtered.forEach((entry, idx) => {
+        const isReal = allBackendLogs.length > 0;
+        const appName = isReal ? (entry.type || 'GENERAL') : (entry.app || 'LOG');
+        const msg = isReal ? (entry.content || '').slice(0, 200) : entry.msg;
+        const time = isReal ? (entry.timestamp || '').slice(11, 19) : formatTime(entry.timeOffset || 0);
+
+        const row = document.createElement('div');
+        row.className = 'log-entry';
+        row.innerHTML = `
+          <div class="log-icon">${isReal ? (ICON_MAP[(appName||'').toUpperCase()]||{icon:'📋'}).icon : '💬'}</div>
+          <div class="log-content">
+            <div class="log-header"><span class="log-app">${appName}</span><span class="log-time">${time}</span></div>
+            <div class="log-msg">${msg}</div>
+          </div>
+        `;
+        if (!isReal) row.addEventListener('click', () => expandMessage(idx));
+        container.appendChild(row);
+      });
+    }
+
     function renderBackendLogs() {
       const container = document.getElementById('logContainer');
       const source = allBackendLogs.length > 0 ? allBackendLogs : logMessages;
-      const filtered = activeDeviceFilter === 'all'
+      const filteredByDevice = activeDeviceFilter === 'all'
         ? source
         : source.filter(e => e.device_id === activeDeviceFilter);
+
+      const filtered = (typeof activeAppFilter !== 'undefined' && activeAppFilter !== 'all')
+        ? filteredByDevice.filter(e => {
+          const name = allBackendLogs.length > 0 ? (e.type || 'GENERAL') : (e.app || 'LOG');
+          return String(name).toLowerCase() === String(activeAppFilter).toLowerCase();
+        })
+        : filteredByDevice;
 
       container.innerHTML = '';
       if (filtered.length === 0) {
@@ -1955,13 +2177,46 @@
         if (!isReal) {
           div.addEventListener('click', () => expandMessage(idx));
         }
+        // Añadir manejador para filtrar por app cuando se hace click en el nombre de la app
+        (function() {
+          const appEl = div.querySelector('.log-app');
+          if (!appEl) return;
+          appEl.style.cursor = 'pointer';
+          appEl.title = `Filtrar por ${app}`;
+          appEl.addEventListener('click', (ev) => {
+            ev.stopPropagation();
+            const page = APP_PAGE_MAP[String(app || '').toLowerCase()];
+            if (page) {
+              window.location.href = page + `?app=${encodeURIComponent(app)}`;
+              return;
+            }
+            setAppFilter(app);
+            // actualizar URL sin recargar
+            try {
+              const nu = new URL(window.location.href);
+              nu.searchParams.set('app', app);
+              history.pushState({}, '', nu.pathname + nu.search);
+            } catch (_) {}
+          });
+        })();
         container.appendChild(div);
       });
     }
 
     async function loadDashboardData() {
       try {
-        const res = await fetch(API_BASE_URL + "/api/dashboard-data", {
+        let endpoint = API_BASE_URL + "/api/dashboard-data";
+        
+        // Si hay una app seleccionada, añade el filtro a la URL de tu API
+        if (selectedApp) {
+          const encodedApp = encodeURIComponent(selectedApp);
+          endpoint += `?app=${encodedApp}`;
+          // Actualiza el título del dashboard para indicar la selección (comprobando existencia)
+          const h1 = document.querySelector('h1');
+          if (h1) h1.textContent = `Operaciones: ${selectedApp.toUpperCase()}`;
+        }
+
+        const res = await fetch(endpoint, {
           headers: { "X-Dashboard-Key": DASHBOARD_KEY }
         });
         if (!res.ok) throw new Error("HTTP " + res.status);
@@ -2017,7 +2272,11 @@
             }
           } catch (_) { /* nombres desde logs */ }
 
+          // Si se seleccionó una app en la URL, preseleccionarla
+          if (selectedApp) activeAppFilter = selectedApp;
           renderDevicePanel();
+          renderAppTabs();
+          renderAppFilter();
           renderBackendLogs();
         } else {
           // Sin datos reales — solo mostrar panel de dispositivos vacío

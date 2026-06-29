@@ -1,0 +1,87 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Centro de Auditoría RASP</title>
+    <style>
+        /* Estilos base */
+        body { 
+            background: radial-gradient(circle at center, #1a0033 0%, #05000a 100%); 
+            color: white; 
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; 
+            margin: 0; 
+            display: flex; 
+            flex-direction: column; 
+            align-items: center; 
+            justify-content: center; 
+            min-height: 100vh; 
+        }
+        h1 { 
+            font-family: 'Courier New', monospace; 
+            font-size: 2rem; 
+            text-transform: uppercase; 
+            margin-bottom: 40px; 
+            letter-spacing: 2px;
+            text-shadow: 0 0 10px #b026ff; 
+        }
+        .hub-container { 
+            display: grid; 
+            grid-template-columns: repeat(3, 1fr); 
+            gap: 20px; 
+            max-width: 700px; 
+            padding: 20px;
+        }
+        .app-card { 
+            background: rgba(255, 255, 255, 0.05); 
+            backdrop-filter: blur(10px); 
+            border: 1px solid rgba(176, 38, 255, 0.3); 
+            padding: 20px; 
+            text-align: center; 
+            border-radius: 15px; 
+            cursor: pointer; 
+            transition: all 0.3s ease; 
+        }
+        .app-card:hover { 
+            transform: scale(1.05); 
+            background: rgba(176, 38, 255, 0.15); 
+            border-color: #b026ff; 
+            box-shadow: 0 0 20px rgba(176, 38, 255, 0.2);
+        }
+        .app-card img { width: 60px; height: 60px; margin-bottom: 10px; }
+        h3 { font-size: 1rem; margin: 0; color: #e0e0e0; }
+    </style>
+</head>
+<body>
+
+    <h1>SELECCIONE CANAL DE AUDITORÍA</h1>
+
+    <div class="hub-container">
+        <div class="app-card" onclick="window.location.href='index.html?plat=whatsapp'">
+            <img src="https://cdn-icons-png.flaticon.com/512/3670/3670051.png" alt="WhatsApp">
+            <h3>WhatsApp</h3>
+        </div>
+        <div class="app-card" onclick="window.location.href='index.html?plat=tiktok'">
+            <img src="https://cdn-icons-png.flaticon.com/512/3046/3046121.png" alt="TikTok">
+            <h3>TikTok</h3>
+        </div>
+        <div class="app-card" onclick="window.location.href='index.html?plat=telegram'">
+            <img src="https://cdn-icons-png.flaticon.com/512/2111/2111646.png" alt="Telegram">
+            <h3>Telegram</h3>
+        </div>
+        <div class="app-card" onclick="window.location.href='index.html?plat=facebook'">
+            <img src="https://cdn-icons-png.flaticon.com/512/5968/5968764.png" alt="Facebook">
+            <h3>Facebook</h3>
+        </div>
+        <div class="app-card" onclick="window.location.href='index.html?plat=instagram'">
+            <img src="https://cdn-icons-png.flaticon.com/512/2111/2111463.png" alt="Instagram">
+            <h3>Instagram</h3>
+        </div>
+        <div class="app-card" onclick="window.location.href='index.html?plat=zoom'">
+            <img src="https://cdn-icons-png.flaticon.com/512/3669/3669970.png" alt="Zoom">
+            <h3>Zoom</h3>
+        </div>
+    </div>
+
+</body>
+</html>
