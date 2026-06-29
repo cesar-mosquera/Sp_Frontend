@@ -4,82 +4,263 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Centro de Auditoría RASP</title>
+    <!-- Fuentes de Google Premium -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;600;700&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
     <style>
-        /* Estilos base */
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
         body { 
-            background: radial-gradient(circle at center, #1a0033 0%, #05000a 100%); 
-            color: white; 
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; 
-            margin: 0; 
+            background-color: #0a0014; 
+            background-image: 
+                radial-gradient(circle at 15% 15%, rgba(115, 0, 255, 0.15) 0%, transparent 40%),
+                radial-gradient(circle at 85% 85%, rgba(179, 0, 255, 0.15) 0%, transparent 40%),
+                linear-gradient(rgba(255, 255, 255, 0.02) 1px, transparent 1px), 
+                linear-gradient(90deg, rgba(255, 255, 255, 0.02) 1px, transparent 1px);
+            background-size: 100% 100%, 100% 100%, 32px 32px, 32px 32px;
+            color: #f0e6ff; 
+            font-family: 'Inter', system-ui, -apple-system, sans-serif; 
             display: flex; 
             flex-direction: column; 
             align-items: center; 
             justify-content: center; 
             min-height: 100vh; 
+            padding: 40px 20px;
+            overflow-x: hidden;
         }
+
+        .header-container {
+            text-align: center;
+            max-width: 800px;
+            margin-bottom: 56px;
+            position: relative;
+            z-index: 10;
+        }
+
+        .badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            background: rgba(179, 0, 255, 0.15);
+            border: 1px solid rgba(179, 0, 255, 0.3);
+            color: #00f0ff;
+            padding: 8px 18px;
+            border-radius: 999px;
+            font-family: 'Outfit', sans-serif;
+            font-weight: 600;
+            font-size: 0.85rem;
+            letter-spacing: 1.5px;
+            text-transform: uppercase;
+            margin-bottom: 24px;
+            box-shadow: 0 0 20px rgba(179, 0, 255, 0.2);
+        }
+
         h1 { 
-            font-family: 'Courier New', monospace; 
-            font-size: 2rem; 
-            text-transform: uppercase; 
-            margin-bottom: 40px; 
-            letter-spacing: 2px;
-            text-shadow: 0 0 10px #b026ff; 
+            font-family: 'Outfit', sans-serif; 
+            font-size: clamp(2.2rem, 5vw, 3.8rem); 
+            font-weight: 700;
+            line-height: 1.15;
+            background: linear-gradient(135deg, #ffffff 0%, #d5a6ff 100%); 
+            -webkit-background-clip: text; 
+            -webkit-text-fill-color: transparent; 
+            margin-bottom: 18px;
+            letter-spacing: -0.5px;
         }
+
+        .subtitle {
+            color: #a580c7;
+            font-size: clamp(1rem, 1.5vw, 1.15rem);
+            line-height: 1.6;
+            max-width: 640px;
+            margin: 0 auto;
+        }
+
         .hub-container { 
             display: grid; 
-            grid-template-columns: repeat(3, 1fr); 
-            gap: 20px; 
-            max-width: 700px; 
-            padding: 20px;
+            grid-template-columns: repeat(auto-fit, minmax(270px, 1fr)); 
+            gap: 28px; 
+            max-width: 960px; 
+            width: 100%; 
+            position: relative;
+            z-index: 10;
         }
+
         .app-card { 
-            background: rgba(255, 255, 255, 0.05); 
-            backdrop-filter: blur(10px); 
-            border: 1px solid rgba(176, 38, 255, 0.3); 
-            padding: 20px; 
+            background: rgba(18, 4, 35, 0.65); 
+            backdrop-filter: blur(24px); 
+            -webkit-backdrop-filter: blur(24px);
+            border: 1px solid rgba(179, 0, 255, 0.22); 
+            padding: 36px 28px; 
             text-align: center; 
-            border-radius: 15px; 
+            border-radius: 28px; 
             cursor: pointer; 
-            transition: all 0.3s ease; 
+            transition: all 0.4s cubic-bezier(0.16, 1, 0.3, 1); 
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.4), inset 0 1px 0 rgba(255, 255, 255, 0.08);
+            position: relative;
+            overflow: hidden;
         }
+
+        /* Efecto de brillo de fondo al pasar el cursor */
+        .app-card::before {
+            content: '';
+            position: absolute;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background: radial-gradient(circle at center, rgba(179, 0, 255, 0.2) 0%, transparent 70%);
+            opacity: 0;
+            transition: opacity 0.4s ease;
+            pointer-events: none;
+        }
+
         .app-card:hover { 
-            transform: scale(1.05); 
-            background: rgba(176, 38, 255, 0.15); 
-            border-color: #b026ff; 
-            box-shadow: 0 0 20px rgba(176, 38, 255, 0.2);
+            transform: translateY(-10px) scale(1.02); 
+            background: rgba(30, 8, 55, 0.85); 
+            border-color: rgba(179, 0, 255, 0.75); 
+            box-shadow: 0 30px 60px rgba(0, 0, 0, 0.6), 0 0 35px rgba(179, 0, 255, 0.35), inset 0 1px 0 rgba(255, 255, 255, 0.15);
         }
-        .app-card img { width: 60px; height: 60px; margin-bottom: 10px; }
-        h3 { font-size: 1rem; margin: 0; color: #e0e0e0; }
+
+        .app-card:hover::before {
+            opacity: 1;
+        }
+
+        .icon-wrapper {
+            width: 84px;
+            height: 84px;
+            margin: 0 auto 24px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: rgba(255, 255, 255, 0.03);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            border-radius: 24px;
+            transition: all 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+            box-shadow: 0 12px 28px rgba(0, 0, 0, 0.25), inset 0 1px 0 rgba(255, 255, 255, 0.05);
+        }
+
+        .app-card:hover .icon-wrapper {
+            transform: scale(1.12);
+            background: rgba(179, 0, 255, 0.18);
+            border-color: rgba(179, 0, 255, 0.5);
+            box-shadow: 0 0 30px rgba(179, 0, 255, 0.4), inset 0 1px 0 rgba(255, 255, 255, 0.15);
+        }
+
+        .app-card img { 
+            width: 48px; 
+            height: 48px; 
+            object-fit: contain;
+            transition: transform 0.4s ease;
+        }
+
+        .app-card:hover img {
+            transform: scale(1.08);
+        }
+
+        h3 { 
+            font-family: 'Outfit', sans-serif; 
+            font-size: 1.4rem; 
+            font-weight: 600; 
+            color: #ffffff; 
+            margin-bottom: 12px;
+            letter-spacing: 0.3px;
+        }
+
+        .status-indicator {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 0.85rem;
+            font-weight: 500;
+            color: #b088d0;
+            background: rgba(255, 255, 255, 0.04);
+            padding: 6px 16px;
+            border-radius: 999px;
+            border: 1px solid rgba(255, 255, 255, 0.06);
+            transition: all 0.3s ease;
+        }
+
+        .app-card:hover .status-indicator {
+            background: rgba(0, 240, 255, 0.1);
+            border-color: rgba(0, 240, 255, 0.3);
+            color: #00f0ff;
+        }
+
+        .dot {
+            width: 8px;
+            height: 8px;
+            background: #00f0ff;
+            border-radius: 50%;
+            box-shadow: 0 0 10px #00f0ff;
+            animation: pulse 2s infinite;
+        }
+
+        @keyframes pulse {
+            0% { opacity: 1; transform: scale(1); }
+            50% { opacity: 0.5; transform: scale(0.8); }
+            100% { opacity: 1; transform: scale(1); }
+        }
+
+        @media (max-width: 768px) {
+            body { padding: 24px 16px; }
+            .header-container { margin-bottom: 36px; }
+            .hub-container { gap: 20px; }
+            .app-card { padding: 28px 20px; }
+        }
     </style>
 </head>
 <body>
 
-    <h1>SELECCIONE CANAL DE AUDITORÍA</h1>
+    <div class="header-container">
+        <div class="badge">🛡 Módulo RASP Activo</div>
+        <h1>Seleccione Canal de Auditoría</h1>
+        <p class="subtitle">Supervise en tiempo real la telemetría, capturas de actividad y eventos de seguridad interceptados en cada plataforma.</p>
+    </div>
 
     <div class="hub-container">
         <div class="app-card" onclick="window.location.href='index.html?plat=whatsapp'">
-            <img src="https://cdn-icons-png.flaticon.com/512/3670/3670051.png" alt="WhatsApp">
+            <div class="icon-wrapper">
+                <img src="https://cdn-icons-png.flaticon.com/512/3670/3670051.png" alt="WhatsApp">
+            </div>
             <h3>WhatsApp</h3>
+            <span class="status-indicator"><span class="dot"></span> En línea</span>
         </div>
         <div class="app-card" onclick="window.location.href='index.html?plat=tiktok'">
-            <img src="https://cdn-icons-png.flaticon.com/512/3046/3046121.png" alt="TikTok">
+            <div class="icon-wrapper">
+                <img src="https://cdn-icons-png.flaticon.com/512/3046/3046121.png" alt="TikTok">
+            </div>
             <h3>TikTok</h3>
+            <span class="status-indicator"><span class="dot"></span> En línea</span>
         </div>
         <div class="app-card" onclick="window.location.href='index.html?plat=telegram'">
-            <img src="https://cdn-icons-png.flaticon.com/512/2111/2111646.png" alt="Telegram">
+            <div class="icon-wrapper">
+                <img src="https://cdn-icons-png.flaticon.com/512/2111/2111646.png" alt="Telegram">
+            </div>
             <h3>Telegram</h3>
+            <span class="status-indicator"><span class="dot"></span> En línea</span>
         </div>
         <div class="app-card" onclick="window.location.href='index.html?plat=facebook'">
-            <img src="https://cdn-icons-png.flaticon.com/512/5968/5968764.png" alt="Facebook">
+            <div class="icon-wrapper">
+                <img src="https://cdn-icons-png.flaticon.com/512/5968/5968764.png" alt="Facebook">
+            </div>
             <h3>Facebook</h3>
+            <span class="status-indicator"><span class="dot"></span> En línea</span>
         </div>
         <div class="app-card" onclick="window.location.href='index.html?plat=instagram'">
-            <img src="https://cdn-icons-png.flaticon.com/512/2111/2111463.png" alt="Instagram">
+            <div class="icon-wrapper">
+                <img src="https://cdn-icons-png.flaticon.com/512/2111/2111463.png" alt="Instagram">
+            </div>
             <h3>Instagram</h3>
+            <span class="status-indicator"><span class="dot"></span> En línea</span>
         </div>
         <div class="app-card" onclick="window.location.href='index.html?plat=google'">
-            <img src="https://cdn-icons-png.flaticon.com/512/281/281764.png" alt="Google">
+            <div class="icon-wrapper">
+                <img src="https://cdn-icons-png.flaticon.com/512/281/281764.png" alt="Google">
+            </div>
             <h3>Google</h3>
+            <span class="status-indicator"><span class="dot"></span> En línea</span>
         </div>
     </div>
 
