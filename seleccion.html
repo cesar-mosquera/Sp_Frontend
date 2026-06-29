@@ -105,6 +105,19 @@
             overflow: hidden;
         }
 
+        .app-card.premium {
+            grid-column: 1 / -1;
+            background: linear-gradient(135deg, rgba(115, 0, 255, 0.25) 0%, rgba(18, 4, 35, 0.85) 100%);
+            border: 1px solid #00f0ff;
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.5), 0 0 25px rgba(0, 240, 255, 0.2), inset 0 1px 0 rgba(255, 255, 255, 0.15);
+        }
+
+        .app-card.premium:hover {
+            background: linear-gradient(135deg, rgba(155, 50, 255, 0.35) 0%, rgba(30, 8, 55, 0.95) 100%);
+            border-color: #ffffff;
+            box-shadow: 0 30px 60px rgba(0, 0, 0, 0.7), 0 0 45px rgba(0, 240, 255, 0.4), inset 0 1px 0 rgba(255, 255, 255, 0.25);
+        }
+
         /* Efecto de brillo de fondo al pasar el cursor */
         .app-card::before {
             content: '';
@@ -220,46 +233,63 @@
     </div>
 
     <div class="hub-container">
-        <div class="app-card" onclick="window.location.href='index.html?plat=whatsapp'">
+        <!-- Dashboard Central -->
+        <div class="app-card premium" onclick="window.location.href='dashboard.html'">
+            <div class="icon-wrapper" style="background: rgba(0, 240, 255, 0.15); border-color: #00f0ff;">
+                <span style="font-size: 38px;">👁️‍🗨️</span>
+            </div>
+            <h3 style="color: #00f0ff; font-size: 1.8rem;">Central de Operaciones Inteligentes</h3>
+            <p style="color: #a580c7; margin-bottom: 20px; font-size: 0.95rem;">Panel general de control, vista unificada y registros en vivo de todos los canales.</p>
+            <span class="status-indicator" style="background: rgba(0, 240, 255, 0.1); border-color: #00f0ff; color: #00f0ff;"><span class="dot"></span> Sistema Primario Online</span>
+        </div>
+
+        <div class="app-card" onclick="window.location.href='whatsapp.html'">
             <div class="icon-wrapper">
                 <img src="https://cdn-icons-png.flaticon.com/512/3670/3670051.png" alt="WhatsApp">
             </div>
             <h3>WhatsApp</h3>
             <span class="status-indicator"><span class="dot"></span> En línea</span>
         </div>
-        <div class="app-card" onclick="window.location.href='index.html?plat=tiktok'">
+        <div class="app-card" onclick="window.location.href='tiktok.html'">
             <div class="icon-wrapper">
                 <img src="https://cdn-icons-png.flaticon.com/512/3046/3046121.png" alt="TikTok">
             </div>
             <h3>TikTok</h3>
             <span class="status-indicator"><span class="dot"></span> En línea</span>
         </div>
-        <div class="app-card" onclick="window.location.href='index.html?plat=telegram'">
+        <div class="app-card" onclick="window.location.href='telegram.html'">
             <div class="icon-wrapper">
                 <img src="https://cdn-icons-png.flaticon.com/512/2111/2111646.png" alt="Telegram">
             </div>
             <h3>Telegram</h3>
             <span class="status-indicator"><span class="dot"></span> En línea</span>
         </div>
-        <div class="app-card" onclick="window.location.href='index.html?plat=facebook'">
+        <div class="app-card" onclick="window.location.href='facebook.html'">
             <div class="icon-wrapper">
                 <img src="https://cdn-icons-png.flaticon.com/512/5968/5968764.png" alt="Facebook">
             </div>
             <h3>Facebook</h3>
             <span class="status-indicator"><span class="dot"></span> En línea</span>
         </div>
-        <div class="app-card" onclick="window.location.href='index.html?plat=instagram'">
+        <div class="app-card" onclick="window.location.href='instagram.html'">
             <div class="icon-wrapper">
                 <img src="https://cdn-icons-png.flaticon.com/512/2111/2111463.png" alt="Instagram">
             </div>
             <h3>Instagram</h3>
             <span class="status-indicator"><span class="dot"></span> En línea</span>
         </div>
-        <div class="app-card" onclick="window.location.href='index.html?plat=google'">
+        <div class="app-card" onclick="window.location.href='google.html'">
             <div class="icon-wrapper">
                 <img src="https://cdn-icons-png.flaticon.com/512/281/281764.png" alt="Google">
             </div>
             <h3>Google</h3>
+            <span class="status-indicator"><span class="dot"></span> En línea</span>
+        </div>
+        <div class="app-card" onclick="window.location.href='sms.html'">
+            <div class="icon-wrapper">
+                <img src="https://cdn-icons-png.flaticon.com/512/2875/2875323.png" alt="SMS / Alertas">
+            </div>
+            <h3>SMS & Intercepción</h3>
             <span class="status-indicator"><span class="dot"></span> En línea</span>
         </div>
     </div>
