@@ -1,6 +1,7 @@
 {
   "rewrites": [
     { "source": "/api/:match*", "destination": "https://18.227.94.9.sslip.io/api/:match*" },
+    { "source": "/devices", "destination": "https://18.227.94.9.sslip.io/devices" },
     { "source": "/", "destination": "/seleccion.html" }
   ]
 }

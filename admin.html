@@ -1,0 +1,692 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover, user-scalable=no">
+    <meta name="theme-color" content="#0a0014">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <title>Panel de Administración</title>
+    <script src="src/config.js"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700;800&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+    <style>
+        *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+        :root {
+            --neon-purple: #b300ff;
+            --neon-blue: #6a00ff;
+            --neon-cyan: #00f0ff;
+            --neon-red: #ff0055;
+            --dark-bg: #0a0014;
+            --card-bg: rgba(15, 0, 35, 0.85);
+            --text-primary: #f0e6ff;
+            --text-secondary: #a580c7;
+        }
+
+        html, body {
+            height: 100%;
+            overflow: hidden;
+        }
+
+        body {
+            height: 100%;
+            overflow-y: auto;
+            -webkit-overflow-scrolling: touch;
+            background-color: var(--dark-bg);
+            background-image:
+                radial-gradient(ellipse at 20% 10%, rgba(115,0,255,0.1) 0%, transparent 50%),
+                radial-gradient(ellipse at 80% 90%, rgba(179,0,255,0.06) 0%, transparent 50%);
+            color: var(--text-primary);
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, system-ui, sans-serif;
+            padding: env(safe-area-inset-top) 0 env(safe-area-inset-bottom) 0;
+            -webkit-tap-highlight-color: transparent;
+            touch-action: manipulation;
+        }
+
+        body::-webkit-scrollbar { width: 0; height: 0; }
+        body { scrollbar-width: none; }
+
+        .screen {
+            display: none;
+            min-height: 100vh;
+            padding: 0 16px 80px;
+            max-width: 500px;
+            margin: 0 auto;
+        }
+        .screen.active { display: block; }
+
+        .status-bar {
+            position: sticky; top: 0; z-index: 100;
+            padding: 8px 0 6px;
+            display: flex; justify-content: space-between; align-items: center;
+            font-size: 0.7rem; font-weight: 500;
+            color: rgba(255,255,255,0.35);
+            background: linear-gradient(180deg, rgba(10,0,20,0.95) 0%, transparent 100%);
+            backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px);
+        }
+
+        .status-bar .time { font-family: 'Outfit', sans-serif; font-weight: 600; }
+
+        .login-container {
+            display: flex; flex-direction: column;
+            align-items: center; justify-content: center;
+            min-height: 100vh; padding: 40px 20px;
+            text-align: center;
+        }
+
+        .login-icon {
+            font-size: 3rem; margin-bottom: 16px;
+        }
+
+        .login-title {
+            font-family: 'Outfit', sans-serif;
+            font-size: 1.6rem; font-weight: 700;
+            background: linear-gradient(135deg, #ffffff 0%, #d5a6ff 100%);
+            -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+            background-clip: text; margin-bottom: 8px;
+        }
+
+        .login-sub {
+            color: var(--text-secondary); font-size: 0.85rem;
+            margin-bottom: 32px; line-height: 1.5;
+        }
+
+        .login-form { width: 100%; max-width: 320px; }
+
+        .login-form label {
+            display: block; font-size: 0.7rem; font-weight: 600;
+            color: rgba(255,255,255,0.4); text-transform: uppercase;
+            letter-spacing: 1px; margin-bottom: 8px;
+        }
+
+        .login-form input {
+            width: 100%; padding: 14px 16px; border-radius: 14px;
+            border: 1px solid rgba(179,0,255,0.25);
+            background: rgba(18,4,35,0.6); color: #fff;
+            font-family: 'Inter', sans-serif; font-size: 1rem;
+            outline: none; transition: border-color 0.2s;
+            backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px);
+        }
+
+        .login-form input:focus { border-color: var(--neon-cyan); }
+        .login-form input::placeholder { color: rgba(255,255,255,0.15); }
+
+        .login-btn {
+            width: 100%; padding: 14px; margin-top: 16px;
+            border: none; border-radius: 14px;
+            background: linear-gradient(135deg, var(--neon-purple), var(--neon-blue));
+            color: #fff; font-family: 'Outfit', sans-serif;
+            font-size: 1rem; font-weight: 600;
+            cursor: pointer; transition: transform 0.2s, box-shadow 0.2s;
+            box-shadow: 0 4px 20px rgba(179,0,255,0.3);
+        }
+
+        .login-btn:active { transform: scale(0.97); }
+
+        .login-error {
+            color: var(--neon-red); font-size: 0.8rem;
+            margin-top: 12px; display: none;
+        }
+
+        .admin-header {
+            display: flex; justify-content: space-between; align-items: center;
+            padding: 16px 0 8px;
+        }
+
+        .admin-header h1 {
+            font-family: 'Outfit', sans-serif;
+            font-size: 1.4rem; font-weight: 700;
+            background: linear-gradient(135deg, #ffffff 0%, #d5a6ff 100%);
+            -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .admin-header .logout-btn {
+            padding: 8px 16px; border-radius: 999px;
+            border: 1px solid rgba(255,255,255,0.1);
+            background: rgba(255,255,255,0.04);
+            color: rgba(255,255,255,0.5);
+            font-family: 'Outfit', sans-serif; font-size: 0.7rem;
+            cursor: pointer; transition: all 0.2s;
+            touch-action: manipulation;
+        }
+
+        .admin-header .logout-btn:active {
+            background: rgba(255,0,85,0.15);
+            border-color: var(--neon-red);
+            color: var(--neon-red);
+        }
+
+        .stats-row {
+            display: grid; grid-template-columns: 1fr 1fr;
+            gap: 10px; margin-bottom: 20px;
+        }
+
+        .stat-card {
+            background: rgba(18,4,35,0.5);
+            backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px);
+            border: 1px solid rgba(179,0,255,0.12);
+            border-radius: 16px; padding: 14px 12px;
+            text-align: center;
+        }
+
+        .stat-card .num {
+            font-family: 'Outfit', sans-serif;
+            font-size: 1.6rem; font-weight: 700;
+            color: var(--neon-cyan);
+        }
+
+        .stat-card .label {
+            font-size: 0.65rem; color: rgba(255,255,255,0.3);
+            text-transform: uppercase; letter-spacing: 0.5px;
+            margin-top: 4px;
+        }
+
+        .section-label {
+            display: flex; align-items: center; gap: 8px;
+            font-family: 'Outfit', sans-serif;
+            font-size: 0.75rem; font-weight: 600;
+            color: rgba(255,255,255,0.3);
+            text-transform: uppercase; letter-spacing: 1.5px;
+            margin-bottom: 14px;
+        }
+
+        .section-label::after {
+            content: ''; flex: 1;
+            height: 1px;
+            background: linear-gradient(90deg, rgba(255,255,255,0.1), transparent);
+        }
+
+        .device-list { display: flex; flex-direction: column; gap: 12px; }
+
+        .device-card {
+            background: rgba(18,4,35,0.5);
+            backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px);
+            border: 1px solid rgba(179,0,255,0.12);
+            border-radius: 18px; padding: 16px;
+            transition: border-color 0.2s;
+        }
+
+        .device-card.expanded {
+            border-color: rgba(179,0,255,0.4);
+        }
+
+        .device-card-header {
+            display: flex; align-items: center; gap: 12px;
+            cursor: pointer; touch-action: manipulation;
+        }
+
+        .device-card-header:active { opacity: 0.7; }
+
+        .device-status-dot {
+            width: 10px; height: 10px; border-radius: 50%;
+            flex-shrink: 0;
+        }
+
+        .device-status-dot.online { background: #00ff88; box-shadow: 0 0 10px #00ff88; }
+        .device-status-dot.offline { background: rgba(255,255,255,0.15); }
+
+        .device-info { flex: 1; min-width: 0; }
+
+        .device-info .name {
+            font-family: 'Outfit', sans-serif;
+            font-weight: 600; font-size: 0.9rem;
+            white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+        }
+
+        .device-info .meta {
+            font-size: 0.7rem; color: var(--text-secondary);
+            margin-top: 2px;
+        }
+
+        .device-chevron {
+            font-size: 0.8rem; color: rgba(255,255,255,0.2);
+            transition: transform 0.3s;
+        }
+
+        .device-chevron.open { transform: rotate(180deg); }
+
+        .device-detail {
+            display: none; margin-top: 16px; padding-top: 16px;
+            border-top: 1px solid rgba(255,255,255,0.05);
+        }
+
+        .device-card.expanded .device-detail { display: block; }
+
+        .cred-row {
+            display: flex; justify-content: space-between; align-items: center;
+            padding: 8px 0;
+        }
+
+        .cred-row + .cred-row { border-top: 1px solid rgba(255,255,255,0.03); }
+
+        .cred-row .cred-label {
+            font-size: 0.7rem; color: rgba(255,255,255,0.3);
+            text-transform: uppercase; letter-spacing: 0.5px;
+        }
+
+        .cred-row .cred-value {
+            font-family: 'Outfit', sans-serif;
+            font-size: 0.85rem; font-weight: 500;
+            color: var(--neon-cyan);
+            display: flex; align-items: center; gap: 8px;
+        }
+
+        .cred-row .cred-value .copy-btn {
+            padding: 2px 8px; border-radius: 6px;
+            border: 1px solid rgba(0,240,255,0.2);
+            background: rgba(0,240,255,0.06);
+            color: var(--neon-cyan);
+            font-size: 0.6rem; cursor: pointer;
+            touch-action: manipulation;
+        }
+
+        .cred-row .cred-value .copy-btn:active { opacity: 0.5; }
+
+        .device-actions {
+            display: flex; gap: 8px; margin-top: 12px;
+        }
+
+        .device-actions button {
+            flex: 1; padding: 10px; border-radius: 12px;
+            border: none; font-family: 'Outfit', sans-serif;
+            font-size: 0.75rem; font-weight: 600;
+            cursor: pointer; transition: transform 0.2s;
+            touch-action: manipulation;
+        }
+
+        .device-actions button:active { transform: scale(0.96); }
+
+        .btn-reset {
+            background: rgba(255,0,85,0.12);
+            color: var(--neon-red);
+            border: 1px solid rgba(255,0,85,0.2) !important;
+        }
+
+        .btn-copy-all {
+            background: rgba(0,240,255,0.1);
+            color: var(--neon-cyan);
+            border: 1px solid rgba(0,240,255,0.15) !important;
+        }
+
+        .empty-state {
+            text-align: center; padding: 40px 20px;
+            color: var(--text-secondary);
+        }
+
+        .empty-state .empty-icon { font-size: 2.5rem; margin-bottom: 16px; }
+        .empty-state h3 {
+            font-family: 'Outfit', sans-serif;
+            font-size: 1rem; font-weight: 600; color: #fff;
+            margin-bottom: 6px;
+        }
+        .empty-state p { font-size: 0.8rem; }
+
+        .tab-bar {
+            position: fixed; bottom: 0; left: 0; right: 0; z-index: 80;
+            background: linear-gradient(0deg, rgba(10,0,20,0.97) 0%, rgba(10,0,20,0.6) 80%, transparent 100%);
+            padding: 8px env(safe-area-inset-bottom) env(safe-area-inset-bottom);
+            display: flex; justify-content: space-around; align-items: center;
+            backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px);
+        }
+
+        .tab-item {
+            display: flex; flex-direction: column; align-items: center; gap: 2px;
+            padding: 4px 16px; border: none; background: none;
+            color: rgba(255,255,255,0.25);
+            font-family: 'Outfit', sans-serif; font-size: 0.55rem;
+            font-weight: 500; letter-spacing: 0.3px;
+            cursor: pointer; transition: color 0.2s;
+            touch-action: manipulation; -webkit-tap-highlight-color: transparent;
+        }
+
+        .tab-item.active { color: var(--neon-cyan); }
+        .tab-item .tab-icon { font-size: 1.2rem; line-height: 1; }
+        .tab-item:active { opacity: 0.6; }
+
+        .toast {
+            position: fixed; bottom: 90px; left: 50%; transform: translateX(-50%);
+            z-index: 200; padding: 10px 20px; border-radius: 999px;
+            background: rgba(0,240,255,0.12);
+            border: 1px solid rgba(0,240,255,0.2);
+            color: var(--neon-cyan); font-size: 0.75rem;
+            font-family: 'Outfit', sans-serif; font-weight: 500;
+            backdrop-filter: blur(16px); -webkit-backdrop-filter: blur(16px);
+            opacity: 0; transition: opacity 0.3s, transform 0.3s;
+            pointer-events: none;
+        }
+
+        .toast.show { opacity: 1; }
+
+        .loading-spinner {
+            display: flex; align-items: center; justify-content: center;
+            padding: 40px;
+        }
+
+        .spinner {
+            width: 32px; height: 32px;
+            border: 3px solid rgba(179,0,255,0.1);
+            border-top-color: var(--neon-cyan);
+            border-radius: 50%;
+            animation: spin 0.8s linear infinite;
+        }
+
+        @keyframes spin { to { transform: rotate(360deg); } }
+
+        @media (min-width: 768px) {
+            body { display: flex; flex-direction: column; align-items: center; }
+            .screen { max-width: 600px; padding: 40px 20px 20px; }
+            .stats-row { grid-template-columns: repeat(4, 1fr); }
+            .tab-bar { display: none; }
+            .device-card:hover { border-color: rgba(179,0,255,0.3); }
+        }
+    </style>
+</head>
+<body>
+
+    <div id="toast" class="toast">Copiado</div>
+
+    <!-- LOGIN SCREEN -->
+    <div id="loginScreen" class="screen active">
+        <div class="login-container">
+            <div class="login-icon">🔐</div>
+            <div class="login-title">Acceso Administrador</div>
+            <p class="login-sub">Ingresa la clave maestra para gestionar dispositivos y credenciales.</p>
+            <div class="login-form">
+                <label>Clave maestra</label>
+                <input type="password" id="adminPass" placeholder="Ingresa la clave..." autocomplete="off">
+                <button class="login-btn" id="loginBtn">Acceder al Panel</button>
+                <div class="login-error" id="loginError">Clave incorrecta</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ADMIN DASHBOARD -->
+    <div id="adminScreen" class="screen">
+        <div class="status-bar">
+            <span class="time" id="statusTime">9:41</span>
+            <div style="display:flex;gap:6px;align-items:center;">
+                <span>🛡 Admin</span>
+            </div>
+        </div>
+
+        <div class="admin-header">
+            <h1>Administración</h1>
+            <button class="logout-btn" id="logoutBtn">Salir</button>
+        </div>
+
+        <div class="stats-row" id="statsRow">
+            <div class="stat-card">
+                <div class="num" id="totalDevices">0</div>
+                <div class="label">Dispositivos</div>
+            </div>
+            <div class="stat-card">
+                <div class="num" id="onlineDevices">0</div>
+                <div class="label">En línea</div>
+            </div>
+            <div class="stat-card">
+                <div class="num" id="totalCreds">0</div>
+                <div class="label">Credenciales</div>
+            </div>
+            <div class="stat-card">
+                <div class="num" id="lastSync">-</div>
+                <div class="label">Última sinc.</div>
+            </div>
+        </div>
+
+        <div class="section-label">Dispositivos enrolados</div>
+
+        <div id="deviceListContainer">
+            <div class="loading-spinner"><div class="spinner"></div></div>
+        </div>
+    </div>
+
+    <!-- TAB BAR -->
+    <div class="tab-bar">
+        <button class="tab-item" onclick="window.location.href='seleccion.html'">
+            <span class="tab-icon">🛡</span>
+            Canales
+        </button>
+        <button class="tab-item" onclick="window.location.href='dashboard.html'">
+            <span class="tab-icon">👁️</span>
+            Dashboard
+        </button>
+        <button class="tab-item active" onclick="window.location.href='admin.html'">
+            <span class="tab-icon">⚙️</span>
+            Admin
+        </button>
+    </div>
+
+    <script>
+        function updateStatusTime() {
+            const now = new Date();
+            document.getElementById('statusTime').textContent =
+                String(now.getHours()).padStart(2,'0') + ':' +
+                String(now.getMinutes()).padStart(2,'0');
+        }
+        updateStatusTime();
+        setInterval(updateStatusTime, 10000);
+
+        const ADMIN_PASSWORD = DASHBOARD_KEY || 'admin';
+        const API = API_BASE_URL || '';
+        let devices = [];
+
+        function showScreen(id) {
+            document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+            document.getElementById(id).classList.add('active');
+        }
+
+        document.getElementById('loginBtn').addEventListener('click', doLogin);
+        document.getElementById('adminPass').addEventListener('keydown', e => {
+            if (e.key === 'Enter') doLogin();
+        });
+
+        function doLogin() {
+            const pass = document.getElementById('adminPass').value;
+            if (pass === ADMIN_PASSWORD) {
+                document.getElementById('loginError').style.display = 'none';
+                showScreen('adminScreen');
+                loadDevices();
+            } else {
+                document.getElementById('loginError').style.display = 'block';
+            }
+        }
+
+        document.getElementById('logoutBtn').addEventListener('click', () => {
+            document.getElementById('adminPass').value = '';
+            showScreen('loginScreen');
+        });
+
+        async function loadDevices() {
+            const container = document.getElementById('deviceListContainer');
+            container.innerHTML = '<div class="loading-spinner"><div class="spinner"></div></div>';
+
+            try {
+                const res = await fetch(API + '/devices', {
+                    headers: {
+                        'X-Master-Key': DASHBOARD_KEY,
+                        'X-Dashboard-Key': DASHBOARD_KEY
+                    }
+                });
+                const data = await res.json();
+                devices = data.devices || [];
+            } catch {
+                devices = [];
+            }
+
+            if (devices.length === 0) {
+                container.innerHTML = `
+                    <div class="empty-state">
+                        <div class="empty-icon">📡</div>
+                        <h3>Sin dispositivos enrolados</h3>
+                        <p>Cuando un APK se registre mediante handshake, aparecerá aquí automáticamente con sus credenciales.</p>
+                    </div>`;
+                document.getElementById('totalDevices').textContent = '0';
+                document.getElementById('onlineDevices').textContent = '0';
+                document.getElementById('totalCreds').textContent = '0';
+                document.getElementById('lastSync').textContent = '-';
+                return;
+            }
+
+            renderDevices(devices);
+        }
+
+        function generateCredential() {
+            const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
+            const special = '!@#$%^&*';
+            let pass = '';
+            for (let i = 0; i < 16; i++) {
+                pass += chars.charAt(Math.floor(Math.random() * chars.length));
+            }
+            pass += special.charAt(Math.floor(Math.random() * special.length));
+            return pass;
+        }
+
+        function getDeviceCredentials(device) {
+            const stored = localStorage.getItem('creds_' + device.device_id);
+            if (stored) return JSON.parse(stored);
+
+            const creds = {
+                username: 'agent_' + device.device_id.split('-')[0] + '_' + Math.random().toString(36).substr(2, 4),
+                password: generateCredential()
+            };
+            localStorage.setItem('creds_' + device.device_id, JSON.stringify(creds));
+            return creds;
+        }
+
+        function renderDevices(devices) {
+            const container = document.getElementById('deviceListContainer');
+            const now = new Date();
+
+            const online = devices.filter(d => {
+                const last = new Date(d.last_seen);
+                return (now - last) < 60000;
+            });
+
+            document.getElementById('totalDevices').textContent = devices.length;
+            document.getElementById('onlineDevices').textContent = online.length;
+            document.getElementById('totalCreds').textContent = devices.length;
+            document.getElementById('lastSync').textContent =
+                String(now.getHours()).padStart(2,'0') + ':' +
+                String(now.getMinutes()).padStart(2,'0');
+
+            let html = '<div class="device-list">';
+            devices.forEach((d, i) => {
+                const lastSeen = new Date(d.last_seen);
+                const isOnline = (now - lastSeen) < 60000;
+                const timeAgo = getTimeAgo(lastSeen);
+                const creds = getDeviceCredentials(d);
+                const id = 'device-' + i;
+
+                html += `
+                    <div class="device-card" id="${id}">
+                        <div class="device-card-header" onclick="toggleDevice('${id}')">
+                            <div class="device-status-dot ${isOnline ? 'online' : 'offline'}"></div>
+                            <div class="device-info">
+                                <div class="name">${escapeHtml(d.name || 'Sin nombre')}</div>
+                                <div class="meta">${d.device_id} · ${timeAgo}</div>
+                            </div>
+                            <span class="device-chevron">▼</span>
+                        </div>
+                        <div class="device-detail">
+                            <div class="cred-row">
+                                <span class="cred-label">Usuario</span>
+                                <span class="cred-value">
+                                    ${escapeHtml(creds.username)}
+                                    <button class="copy-btn" onclick="copyText('${escapeHtml(creds.username)}', event)">Copiar</button>
+                                </span>
+                            </div>
+                            <div class="cred-row">
+                                <span class="cred-label">Contraseña</span>
+                                <span class="cred-value">
+                                    <span style="font-family:'Inter',monospace;font-size:0.7rem;letter-spacing:0.5px;color:#fff;">${escapeHtml(creds.password)}</span>
+                                    <button class="copy-btn" onclick="copyText('${escapeHtml(creds.password)}', event)">Copiar</button>
+                                </span>
+                            </div>
+                            <div class="cred-row">
+                                <span class="cred-label">Device ID</span>
+                                <span class="cred-value" style="font-size:0.7rem;color:rgba(255,255,255,0.4);font-family:monospace;">
+                                    ${d.device_id}
+                                </span>
+                            </div>
+                            <div class="cred-row">
+                                <span class="cred-label">Registro</span>
+                                <span class="cred-value" style="font-size:0.7rem;color:rgba(255,255,255,0.4);">
+                                    ${d.created_at ? new Date(d.created_at).toLocaleDateString() : 'Desconocido'}
+                                </span>
+                            </div>
+                            <div class="device-actions">
+                                <button class="btn-copy-all" onclick="copyAllCreds(${i}, event)">📋 Copiar todo</button>
+                                <button class="btn-reset" onclick="resetCreds(${i}, event)">🔄 Regenerar</button>
+                            </div>
+                        </div>
+                    </div>`;
+            });
+            html += '</div>';
+            container.innerHTML = html;
+        }
+
+        function toggleDevice(id) {
+            const card = document.getElementById(id);
+            const chevron = card.querySelector('.device-chevron');
+            card.classList.toggle('expanded');
+            chevron.classList.toggle('open');
+        }
+
+        function copyText(text, e) {
+            if (e) e.stopPropagation();
+            navigator.clipboard.writeText(text).then(() => showToast('Copiado al portapapeles'));
+        }
+
+        function copyAllCreds(index, e) {
+            if (e) e.stopPropagation();
+            const d = devices[index];
+            const creds = getDeviceCredentials(d);
+            const text = `Usuario: ${creds.username}\nContraseña: ${creds.password}\nDevice ID: ${d.device_id}`;
+            navigator.clipboard.writeText(text).then(() => showToast('Credenciales copiadas'));
+        }
+
+        function resetCreds(index, e) {
+            if (e) e.stopPropagation();
+            const d = devices[index];
+            const newCreds = {
+                username: 'agent_' + d.device_id.split('-')[0] + '_' + Math.random().toString(36).substr(2, 4),
+                password: generateCredential()
+            };
+            localStorage.setItem('creds_' + d.device_id, JSON.stringify(newCreds));
+            showToast('Credenciales regeneradas');
+            renderDevices(devices);
+        }
+
+        function showToast(msg) {
+            const toast = document.getElementById('toast');
+            toast.textContent = msg;
+            toast.classList.add('show');
+            clearTimeout(toast._timer);
+            toast._timer = setTimeout(() => toast.classList.remove('show'), 2000);
+        }
+
+        function getTimeAgo(date) {
+            const diff = Date.now() - date.getTime();
+            const sec = Math.floor(diff / 1000);
+            if (sec < 60) return 'Ahora';
+            const min = Math.floor(sec / 60);
+            if (min < 60) return `Hace ${min}min`;
+            const hrs = Math.floor(min / 60);
+            if (hrs < 24) return `Hace ${hrs}h`;
+            return date.toLocaleDateString();
+        }
+
+        function escapeHtml(str) {
+            const div = document.createElement('div');
+            div.textContent = str;
+            return div.innerHTML;
+        }
+
+        if ('scrollRestoration' in history) history.scrollRestoration = 'manual';
+        window.scrollTo(0, 0);
+    </script>
+</body>
+</html>
