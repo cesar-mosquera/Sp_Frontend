@@ -13,5 +13,5 @@
 //  ⚠️  CAMBIA la IP por la de tu VPS antes de subir a Netlify
 // ============================================================
 
-const API_BASE_URL = "https://18.227.94.9.sslip.io";   // URL segura HTTPS generada
+const API_BASE_URL = "";   // URL vacía para utilizar el proxy inverso de Vercel
 const DASHBOARD_KEY = "DashK3y_SpyFront_2026_Secure!"; // ← Igual al .env del backend
