@@ -1,38 +1,12 @@
 <!DOCTYPE html>
 <html lang="es">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Central de Operaciones Inteligentes</title>
-    <script>
-        // Capturar parámetro 'plat' y redirigir a dashboard.html con el parámetro 'app'
-        const urlParams = new URLSearchParams(window.location.search);
-        const plat = urlParams.get('plat');
-        const appPages = {
-            whatsapp: 'whatsapp.html',
-            telegram: 'telegram.html',
-            instagram: 'instagram.html',
-            sms: 'sms.html',
-            facebook: 'facebook.html',
-            tiktok: 'tiktok.html',
-            google: 'google.html'
-        };
-
-        if (plat) {
-            const key = plat.toString().toLowerCase();
-            if (appPages[key]) {
-                window.location.replace(appPages[key]);
-            } else {
-                window.location.replace(`dashboard.html?app=${encodeURIComponent(plat)}`);
-            }
-        } else {
-            window.location.replace('seleccion.html');
-        }
-    </script>
-</head>
-<body>
-    <p style="font-family:monospace;color:#b300ff;background:#0a0014;padding:20px">
-        Redirigiendo... <a href="seleccion.html" style="color:#00f0ff">ir a selección de canales</a>
-    </p>
-</body>
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Spy Proyect</title>
+  </head>
+  <body>
+    <div id="root"></div>
+    <script type="module" src="/src/main.tsx"></script>
+  </body>
 </html>

@@ -1,0 +1,1 @@
+@keyframes shimmer{0%{background-position:200% 0}to{background-position:-200% 0}}@keyframes pulse{0%,to{opacity:1;transform:scale(1)}50%{opacity:.7;transform:scale(1.1)}}

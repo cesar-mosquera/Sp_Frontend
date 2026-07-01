@@ -1,0 +1,1 @@
+{"name":"Spy Frontend","short_name":"Spy","description":"Panel de monitoreo y administración de dispositivos","start_url":"/","display":"standalone","background_color":"#0a0014","theme_color":"#0a0014","lang":"en","scope":"/","icons":[{"src":"/icons/icon-192x192.png","sizes":"192x192","type":"image/png"},{"src":"/icons/icon-512x512.png","sizes":"512x512","type":"image/png"}]}
