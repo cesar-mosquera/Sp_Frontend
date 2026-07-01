@@ -22,7 +22,7 @@ export default function Login() {
     }
 
     // Admin fallback / hardcoded master key
-    if (trimmedUser === 'admin' && trimmedPass === '0504319310_cesar') {
+    if (trimmedUser.toLowerCase() === 'admin' && trimmedPass === '0504319310_cesar') {
       loginAsAdmin();
       return;
     }
