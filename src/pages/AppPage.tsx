@@ -4,6 +4,7 @@ import { APP_PAGE_CONFIG, API_BASE_URL, DASHBOARD_KEY } from '../config';
 import { useSSE } from '../hooks/useSSE';
 import { usePagination } from '../hooks/usePagination';
 import { normalize, formatTimestamp, matchesApp, mapBackendLogs, type LogEntry, type BackendLog } from '../appPage';
+import { useAuthStore } from '../store';
 import React, { Suspense } from 'react';
 const DeviceMap = React.lazy(() => import('../components/DeviceMap'));
 import '../app-page.css';
@@ -47,6 +48,9 @@ export default function AppPage({ appKey }: Props) {
     { contact: 'Bot Secreto', msg: 'Documento PDF plan_operativo.pdf descargado', timestamp: '2026-06-28T13:35:00', type: 'notificacion' },
   ];
 
+  const token = useAuthStore(s => s.token);
+  const role = useAuthStore(s => s.role);
+
   const loadData = useCallback(async () => {
     setIsLoading(true);
     setConnectionError(null);
@@ -62,7 +66,10 @@ export default function AppPage({ appKey }: Props) {
       params.append('limit', limit.toString());
       const endpoint = `${API_BASE_URL}/api/dashboard-data?${params.toString()}`;
       const response = await fetch(endpoint, {
-        headers: { 'X-Dashboard-Key': DASHBOARD_KEY },
+        headers: { 
+          'X-Dashboard-Key': role === 'admin' ? DASHBOARD_KEY : '',
+          'X-Session-Token': token || ''
+        },
         signal: controller.signal,
       });
       clearTimeout(timeoutId);

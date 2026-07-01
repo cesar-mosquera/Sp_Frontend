@@ -3,20 +3,44 @@ import { persist } from 'zustand/middleware';
 
 interface AuthState {
   isAuthenticated: boolean;
-  password: string;
-  login: (pass: string) => void;
+  token: string | null;
+  role: 'admin' | 'user' | null;
+  username: string | null;
+  deviceId: string | null;
+  loginAsAdmin: () => void;
+  loginAsUser: (token: string, username: string, deviceId: string) => void;
   logout: () => void;
 }
-
-const ADMIN_PASSWORD = '0504319310_cesar';
 
 export const useAuthStore = create<AuthState>()(
   persist(
     (set) => ({
       isAuthenticated: false,
-      password: '',
-      login: (pass: string) => set({ isAuthenticated: pass === ADMIN_PASSWORD, password: pass }),
-      logout: () => set({ isAuthenticated: false, password: '' }),
+      token: null,
+      role: null,
+      username: null,
+      deviceId: null,
+      loginAsAdmin: () => set({ 
+        isAuthenticated: true, 
+        role: 'admin', 
+        token: null, 
+        username: 'admin',
+        deviceId: null
+      }),
+      loginAsUser: (token: string, username: string, deviceId: string) => set({ 
+        isAuthenticated: true, 
+        role: 'user', 
+        token, 
+        username,
+        deviceId 
+      }),
+      logout: () => set({ 
+        isAuthenticated: false, 
+        token: null, 
+        role: null, 
+        username: null,
+        deviceId: null 
+      }),
     }),
     {
       name: 'auth-storage',

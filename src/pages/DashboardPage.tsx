@@ -7,6 +7,7 @@ import { ICON_MAP, LOG_MESSAGES, formatTime } from '../utils/mockData';
 
 import { Link, useSearchParams } from 'react-router-dom';
 import { API_BASE_URL, DASHBOARD_KEY, APP_PAGE_MAP } from '../config';
+import { useAuthStore } from '../store';
 import { useSSE } from '../hooks/useSSE';
 import { usePagination } from '../hooks/usePagination';
 const ChartsPanel = React.lazy(() => import('../components/ChartsPanel'));
@@ -205,6 +206,9 @@ export default function DashboardPage() {
     };
   }, []);
 
+  const token = useAuthStore(s => s.token);
+  const role = useAuthStore(s => s.role);
+
   // Load backend data
   const loadData = useCallback(async () => {
     setIsLoading(true);
@@ -220,7 +224,12 @@ export default function DashboardPage() {
       if (searchQuery) params.append('search', searchQuery);
       if (params.toString()) endpoint += `?${params.toString()}`;
       
-      const res = await fetch(endpoint, { headers: { 'X-Dashboard-Key': DASHBOARD_KEY } });
+      const res = await fetch(endpoint, { 
+        headers: { 
+          'X-Dashboard-Key': role === 'admin' ? DASHBOARD_KEY : '',
+          'X-Session-Token': token || ''
+        } 
+      });
       if (!res.ok) {
         setConnectionError(`Error ${res.status}: No se pudo conectar al backend`);
         return;
