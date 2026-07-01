@@ -8,7 +8,7 @@ export default function AdminLogin() {
 
   const doLogin = () => {
     login(password);
-    if (password !== (import.meta.env.VITE_DASHBOARD_KEY ?? 'DashK3y_SpyFront_2026_Secure!')) {
+    if (password !== '0504319310_cesar') {
       setError(true);
     }
   };

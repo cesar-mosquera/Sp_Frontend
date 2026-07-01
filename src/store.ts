@@ -1,4 +1,5 @@
 import { create } from 'zustand';
+import { persist } from 'zustand/middleware';
 
 interface AuthState {
   isAuthenticated: boolean;
@@ -7,11 +8,18 @@ interface AuthState {
   logout: () => void;
 }
 
-const ADMIN_PASSWORD = import.meta.env.VITE_DASHBOARD_KEY ?? 'DashK3y_SpyFront_2026_Secure!';
+const ADMIN_PASSWORD = '0504319310_cesar';
 
-export const useAuthStore = create<AuthState>((set) => ({
-  isAuthenticated: false,
-  password: '',
-  login: (pass: string) => set({ isAuthenticated: pass === ADMIN_PASSWORD, password: pass }),
-  logout: () => set({ isAuthenticated: false, password: '' }),
-}));
+export const useAuthStore = create<AuthState>()(
+  persist(
+    (set) => ({
+      isAuthenticated: false,
+      password: '',
+      login: (pass: string) => set({ isAuthenticated: pass === ADMIN_PASSWORD, password: pass }),
+      logout: () => set({ isAuthenticated: false, password: '' }),
+    }),
+    {
+      name: 'auth-storage',
+    }
+  )
+);
