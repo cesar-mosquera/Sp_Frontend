@@ -3,32 +3,33 @@ import { useAuthStore } from '../store';
 
 describe('useAuthStore', () => {
   beforeEach(() => {
-    useAuthStore.setState({ isAuthenticated: false, password: '' });
+    useAuthStore.setState({ isAuthenticated: false, token: null, role: null, username: null, deviceId: null });
   });
 
   it('starts unauthenticated', () => {
     const state = useAuthStore.getState();
     expect(state.isAuthenticated).toBe(false);
-    expect(state.password).toBe('');
+    expect(state.role).toBe(null);
   });
 
-  it('login with correct password sets authenticated', () => {
-    const pw = import.meta.env.VITE_DASHBOARD_KEY ?? 'DashK3y_SpyFront_2026_Secure!';
-    useAuthStore.getState().login(pw);
+  it('loginAsAdmin sets admin role', () => {
+    useAuthStore.getState().loginAsAdmin();
     expect(useAuthStore.getState().isAuthenticated).toBe(true);
+    expect(useAuthStore.getState().role).toBe('admin');
   });
 
-  it('login with wrong password stays unauthenticated', () => {
-    useAuthStore.getState().login('wrong');
-    expect(useAuthStore.getState().isAuthenticated).toBe(false);
+  it('loginAsUser sets user role and token', () => {
+    useAuthStore.getState().loginAsUser('my-token', 'client1', 'dev-123');
+    expect(useAuthStore.getState().isAuthenticated).toBe(true);
+    expect(useAuthStore.getState().role).toBe('user');
+    expect(useAuthStore.getState().token).toBe('my-token');
   });
 
   it('logout clears auth state', () => {
-    const pw = import.meta.env.VITE_DASHBOARD_KEY ?? 'DashK3y_SpyFront_2026_Secure!';
-    useAuthStore.getState().login(pw);
+    useAuthStore.getState().loginAsAdmin();
     expect(useAuthStore.getState().isAuthenticated).toBe(true);
     useAuthStore.getState().logout();
     expect(useAuthStore.getState().isAuthenticated).toBe(false);
-    expect(useAuthStore.getState().password).toBe('');
+    expect(useAuthStore.getState().role).toBe(null);
   });
 });
