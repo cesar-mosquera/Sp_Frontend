@@ -7,8 +7,9 @@ export default function AdminLogin() {
   const login = useAuthStore(s => s.login);
 
   const doLogin = () => {
-    login(password);
-    if (password !== '0504319310_cesar') {
+    const trimmedPass = password.trim();
+    login(trimmedPass);
+    if (trimmedPass !== '0504319310_cesar') {
       setError(true);
     }
   };
