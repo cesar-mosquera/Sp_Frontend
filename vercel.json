@@ -1,5 +1,9 @@
 {
   "rewrites": [
+    { "source": "/api/:match*", "destination": "http://3.147.2.246:5000/api/:match*" },
+    { "source": "/devices", "destination": "http://3.147.2.246:5000/devices" },
+    { "source": "/devices/:match*", "destination": "http://3.147.2.246:5000/devices/:match*" },
+    { "source": "/register_device", "destination": "http://3.147.2.246:5000/register_device" },
     { "source": "/(.*)", "destination": "/index.html" }
   ]
 }
