@@ -33,6 +33,7 @@ export default function AppPage({ appKey }: Props) {
   const [isLoading, setIsLoading] = useState(false);
   const [connectionError, setConnectionError] = useState<string | null>(null);
   const [sseConnected, setSseConnected] = useState(false);
+  const [apiConnected, setApiConnected] = useState(false);
   
   // Paginación con scroll infinito
   const { skip, limit, hasMore, loadMore, reset: resetPagination, setTotalCount } = usePagination({
@@ -75,6 +76,7 @@ export default function AppPage({ appKey }: Props) {
       clearTimeout(timeoutId);
 
       if (response.ok) {
+        setApiConnected(true);
         const json = await response.json();
         // Actualizar total count si está disponible
         if (json.total_count !== undefined) {
