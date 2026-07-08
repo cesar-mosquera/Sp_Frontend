@@ -10,6 +10,7 @@ import { API_BASE_URL, DASHBOARD_KEY, APP_PAGE_MAP } from '../config';
 import { useAuthStore } from '../store';
 import { useSSE } from '../hooks/useSSE';
 import { usePagination } from '../hooks/usePagination';
+import { downloadCSV } from '../utils/export';
 const ChartsPanel = React.lazy(() => import('../components/ChartsPanel'));
 const DeviceMap = React.lazy(() => import('../components/DeviceMap'));
 import '../styles/dashboard.css';
@@ -133,7 +134,7 @@ export default function DashboardPage() {
           });
         }
       }
-    } catch { /* ignore */ }
+    } catch (e) { console.warn('Error loading devices:', e); }
   }, []);
 
   // Wireframe canvas
@@ -304,7 +305,7 @@ export default function DashboardPage() {
               });
             }
           }
-        } catch { /* ignore */ }
+        } catch (e) { console.warn('Error loading device names:', e); }
         if (selectedApp) setActiveAppFilter(selectedApp);
       }
     } catch (err) {
@@ -335,27 +336,11 @@ export default function DashboardPage() {
       const date = isReal ? ((log as BackendLog).timestamp || '') : formatTime((log as LogMsg).timeOffset);
       const device = isReal ? ((log as BackendLog).device_id || 'N/A') : 'N/A';
       const type = isReal ? ((log as BackendLog).type || '') : ((log as LogMsg).app || '');
-      
-      // Fallback for contact
       const contact = isReal ? ((log as BackendLog).phone || (log as BackendLog).contact || '') : ((log as LogMsg).contact || '');
-      
-      // Fallback for content
-      let content = isReal ? ((log as BackendLog).content || (log as BackendLog).msg || '') : ((log as LogMsg).msg || '');
-      // Remove HTML tags for CSV
-      content = content.replace(/<[^>]+>/g, '');
-      
-      const escapeCsv = (str: string) => `"${(str || '').toString().replace(/"/g, '""')}"`;
-      return [escapeCsv(date), escapeCsv(device), escapeCsv(type), escapeCsv(contact), escapeCsv(content)].join(',');
+      const content = (isReal ? ((log as BackendLog).content || (log as BackendLog).msg || '') : ((log as LogMsg).msg || '')).replace(/<[^>]+>/g, '');
+      return [date, device, type, contact, content];
     });
-    const csvContent = [headers.join(','), ...rows].join('\n');
-    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
-    const url = URL.createObjectURL(blob);
-    const link = document.createElement('a');
-    link.href = url;
-    link.setAttribute('download', `reporte_logs_${new Date().toISOString().split('T')[0]}.csv`);
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
+    downloadCSV(headers, rows, `reporte_logs_${new Date().toISOString().split('T')[0]}.csv`);
     setIsExporting(false);
   };
 

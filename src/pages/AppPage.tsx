@@ -4,6 +4,7 @@ import { APP_PAGE_CONFIG, API_BASE_URL, DASHBOARD_KEY } from '../config';
 import { useSSE } from '../hooks/useSSE';
 import { usePagination } from '../hooks/usePagination';
 import { normalize, formatTimestamp, matchesApp, mapBackendLogs, type LogEntry, type BackendLog } from '../appPage';
+import { downloadCSV } from '../utils/export';
 import { useAuthStore } from '../store';
 import React, { Suspense } from 'react';
 const DeviceMap = React.lazy(() => import('../components/DeviceMap'));
@@ -168,24 +169,10 @@ export default function AppPage({ appKey }: Props) {
 
   const exportToCSV = () => {
     const headers = ['Fecha', 'Contacto', 'Tipo', 'Mensaje'];
-    const rows = filtered.map(log => {
-      const date = log.timestamp;
-      const type = log.type;
-      const contact = log.contact;
-      let content = log.msg;
-      content = content.replace(/<[^>]+>/g, '');
-      const escapeCsv = (str: string) => `"${(str || '').toString().replace(/"/g, '""')}"`;
-      return [escapeCsv(date), escapeCsv(contact), escapeCsv(type), escapeCsv(content)].join(',');
-    });
-    const csvContent = [headers.join(','), ...rows].join('\n');
-    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
-    const url = URL.createObjectURL(blob);
-    const link = document.createElement('a');
-    link.href = url;
-    link.setAttribute('download', `${appKey}_logs_${new Date().toISOString().split('T')[0]}.csv`);
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
+    const rows = filtered.map(log => [
+      log.timestamp, log.contact, log.type, log.msg.replace(/<[^>]+>/g, ''),
+    ]);
+    downloadCSV(headers, rows, `${appKey}_logs_${new Date().toISOString().split('T')[0]}.csv`);
   };
 
   // Intersection Observer para scroll infinito

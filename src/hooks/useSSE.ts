@@ -52,25 +52,25 @@ export function useSSE(path: string, onEvent: EventHandler, enabled = true): Use
       try {
         const data = JSON.parse(event.data);
         handlerRef.current({ type: 'message', data });
-      } catch { /* ignore malformed */ }
+      } catch (e) { console.warn('SSE message parse error:', e); }
     };
 
     source.addEventListener('new_data', (event: MessageEvent) => {
       try {
         handlerRef.current({ type: 'new_data', data: JSON.parse(event.data) });
-      } catch { /* ignore */ }
+      } catch (e) { console.warn('SSE new_data parse error:', e); }
     });
 
     source.addEventListener('device_registered', (event: MessageEvent) => {
       try {
         handlerRef.current({ type: 'device_registered', data: JSON.parse(event.data) });
-      } catch { /* ignore */ }
+      } catch (e) { console.warn('SSE device_registered parse error:', e); }
     });
 
     source.addEventListener('log_entry', (event: MessageEvent) => {
       try {
         handlerRef.current({ type: 'log_entry', data: JSON.parse(event.data) });
-      } catch { /* ignore */ }
+      } catch (e) { console.warn('SSE log_entry parse error:', e); }
     });
 
     source.onerror = (error) => {

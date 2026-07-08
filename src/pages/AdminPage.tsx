@@ -18,7 +18,7 @@ interface Subscription {
   app_name: string;
   display_name?: string;
   active: boolean;
-  expires_at?: number;
+  expires_at?: string;
 }
 
 interface Device {
@@ -193,7 +193,7 @@ export default function AdminPage() {
     try {
       await navigator.clipboard.writeText(text);
       showToast('Copiado al portapapeles');
-    } catch { /* noop */ }
+    } catch (e) { console.warn('Error copying to clipboard:', e); }
   };
 
   const copyAllCreds = async (idx: number) => {
@@ -202,7 +202,7 @@ export default function AdminPage() {
     try {
       await navigator.clipboard.writeText(text);
       showToast('Credenciales copiadas');
-    } catch { /* noop */ }
+    } catch (e) { console.warn('Error copying all creds:', e); }
   };
 
   const resetCreds = async (idx: number) => {
@@ -730,7 +730,7 @@ export default function AdminPage() {
                             </span>
                           </td>
                           <td style={{ fontSize: '0.8rem', color: 'rgba(255,255,255,0.5)' }}>
-                            {s.expires_at ? new Date(s.expires_at * 1000).toLocaleDateString() : '-'}
+                            {s.expires_at ? new Date(s.expires_at).toLocaleDateString() : '-'}
                           </td>
                         </tr>
                       ))}
@@ -951,7 +951,7 @@ export default function AdminPage() {
                         </span>
                       </td>
                       <td style={{ fontSize: '0.8rem', color: 'rgba(255,255,255,0.5)' }}>
-                        {s.expires_at ? new Date(s.expires_at * 1000).toLocaleDateString() : '-'}
+                        {s.expires_at ? new Date(s.expires_at).toLocaleDateString() : '-'}
                       </td>
                       <td>
                         <button 

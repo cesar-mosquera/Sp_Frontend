@@ -1,5 +1,5 @@
 export const API_BASE_URL = import.meta.env.VITE_API_URL ?? '';
-export const DASHBOARD_KEY = '0504319310_cesar';
+export const DASHBOARD_KEY = import.meta.env.VITE_DASHBOARD_KEY ?? '0504319310_cesar';
 
 export interface AppPageConfig {
   title: string;
