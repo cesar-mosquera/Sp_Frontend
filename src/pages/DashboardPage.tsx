@@ -32,6 +32,7 @@ export default function DashboardPage() {
   const [isLoading, setIsLoading] = useState(false);
   const [connectionError, setConnectionError] = useState<string | null>(null);
   const [sseConnected, setSseConnected] = useState(false);
+  const [apiConnected, setApiConnected] = useState(false);
   // Ref to pause canvas animation
   const isModalOpenRef = useRef(false);
   useEffect(() => {
@@ -241,6 +242,7 @@ export default function DashboardPage() {
         setConnectionError('Datos inválidos recibidos del backend');
         return;
       }
+      setApiConnected(true);
 
       // Actualizar total count si está disponible
       if (data.total_count !== undefined) {
@@ -486,16 +488,16 @@ export default function DashboardPage() {
                 width: 8,
                 height: 8,
                 borderRadius: '50%',
-                background: sseConnected ? '#00ff88' : '#ff0033',
-                boxShadow: sseConnected ? '0 0 8px #00ff88' : '0 0 8px #ff0033',
-                animation: sseConnected ? 'pulse 2s ease-in-out infinite' : 'none'
+                background: sseConnected || apiConnected ? '#00ff88' : '#ff0033',
+                boxShadow: sseConnected || apiConnected ? '0 0 8px #00ff88' : '0 0 8px #ff0033',
+                animation: sseConnected || apiConnected ? 'pulse 2s ease-in-out infinite' : 'none'
               }}
             />
             <span style={{ 
-              color: sseConnected ? '#00ff88' : '#ff0033',
+              color: sseConnected || apiConnected ? '#00ff88' : '#ff0033',
               opacity: 0.8
             }}>
-              {sseConnected ? 'CONECTADO - TIEMPO REAL' : 'DESCONECTADO - MODO OFFLINE'}
+              {sseConnected ? 'CONECTADO - TIEMPO REAL' : apiConnected ? 'CONECTADO' : 'DESCONECTADO - MODO OFFLINE'}
             </span>
           </div>
         </header>
