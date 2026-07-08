@@ -36,7 +36,6 @@ export default function AppPage({ appKey }: Props) {
   // Paginación con scroll infinito
   const { skip, limit, hasMore, loadMore, reset: resetPagination, setTotalCount } = usePagination({
     initialLimit: 50,
-    maxLimit: 500,
   });
   const listRef = useRef<HTMLDivElement>(null);
   const observerRef = useRef<IntersectionObserver | null>(null);

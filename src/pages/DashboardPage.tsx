@@ -43,11 +43,11 @@ export default function DashboardPage() {
   const [endDate, setEndDate] = useState('');
   const [searchQuery, setSearchQuery] = useState('');
   const [isExporting, setIsExporting] = useState(false);
+  const [refreshCounter, setRefreshCounter] = useState(0);
   
   // Paginación
   const { skip, limit, hasMore, loadMore, reset: resetPagination, setTotalCount, totalCount } = usePagination({
     initialLimit: 50,
-    maxLimit: 500,
   });
 
   useEffect(() => {
@@ -68,16 +68,18 @@ export default function DashboardPage() {
 
   // SSE connection for real-time updates
   const { isConnected: sseIsConnected } = useSSE('/api/sse', (event) => {
-    if (event.type === 'log_entry' || event.type === 'new_data') {
+    if (event.type === 'new_data') {
+      // new_data solo trae {device_id, type, count}, no es un log completo
+      // Incrementar contador para forzar recarga desde el principio
+      resetPagination();
+      setRefreshCounter(c => c + 1);
+    } else if (event.type === 'log_entry') {
       const newLog = event.data as BackendLog;
+      if (!newLog || !newLog.id) return;
       setAllBackendLogs(prev => {
-        // Evitar duplicados por ID
         if (prev.some(log => log.id === newLog.id)) return prev;
-        // Agregar nuevo log al inicio
         return [newLog, ...prev].slice(0, 100);
       });
-
-      // Actualizar dispositivos si el log tiene device_id
       if (newLog.device_id) {
         const deviceId = newLog.device_id;
         setKnownDevices(prev => {
@@ -97,7 +99,6 @@ export default function DashboardPage() {
         });
       }
     } else if (event.type === 'device_registered') {
-      // Recargar dispositivos cuando se registra uno nuevo
       loadDevices();
     }
   }, true);
@@ -260,14 +261,29 @@ export default function DashboardPage() {
       if (fill) fill.style.width = (s.success_rate ?? 94.7) + '%';
 
       if (data.logs?.length) {
-        setAllBackendLogs(data.logs);
-        const devs: Record<string, DeviceInfo> = {};
-        data.logs.forEach((log: BackendLog) => {
-          const id = log.device_id;
-          if (!id) return;
-          if (!devs[id]) devs[id] = { name: id, last_seen: log.timestamp ?? '', count: 0 };
-          devs[id].count++;
-          if ((log.timestamp ?? '') > devs[id].last_seen) devs[id].last_seen = log.timestamp ?? '';
+        if (skip > 0) {
+          setAllBackendLogs(prev => {
+            const existingIds = new Set(prev.map(l => l.id));
+            const newLogs = data.logs.filter((l: BackendLog) => l.id && !existingIds.has(l.id));
+            return [...prev, ...newLogs];
+          });
+        } else {
+          setAllBackendLogs(data.logs);
+        }
+        setKnownDevices(prev => {
+          const updated = { ...prev };
+          data.logs.forEach((log: BackendLog) => {
+            const devId = log.device_id;
+            if (!devId) return;
+            if (!updated[devId]) {
+              updated[devId] = { name: devId, last_seen: log.timestamp ?? '', count: 0 };
+            }
+            updated[devId].count++;
+            if ((log.timestamp ?? '') > updated[devId].last_seen) {
+              updated[devId].last_seen = log.timestamp ?? '';
+            }
+          });
+          return updated;
         });
         try {
           const devRes = await fetch(API_BASE_URL + '/devices', {
@@ -276,16 +292,19 @@ export default function DashboardPage() {
           if (devRes.ok) {
             const devData = await devRes.json();
             if (devData.devices) {
-              devData.devices.forEach((d: { device_id: string; name?: string; last_seen?: string }) => {
-                if (devs[d.device_id]) {
-                  devs[d.device_id].name = d.name || d.device_id;
-                  if (d.last_seen) devs[d.device_id].last_seen = d.last_seen;
-                }
+              setKnownDevices(prev => {
+                const updated = { ...prev };
+                devData.devices.forEach((d: { device_id: string; name?: string; last_seen?: string }) => {
+                  if (updated[d.device_id]) {
+                    updated[d.device_id].name = d.name || d.device_id;
+                    if (d.last_seen) updated[d.device_id].last_seen = d.last_seen;
+                  }
+                });
+                return updated;
               });
             }
           }
         } catch { /* ignore */ }
-        setKnownDevices(devs);
         if (selectedApp) setActiveAppFilter(selectedApp);
       }
     } catch (err) {
@@ -300,12 +319,12 @@ export default function DashboardPage() {
     loadData();
     const interval = setInterval(loadData, 30000);
     return () => clearInterval(interval);
-  }, [loadData]);
+  }, [loadData, refreshCounter]);
 
   // Handle Search Trigger
   const handleSearch = () => {
     resetPagination();
-    loadData();
+    setRefreshCounter(c => c + 1);
   };
 
   const exportToCSV = () => {
@@ -361,6 +380,8 @@ export default function DashboardPage() {
     return result;
   }, [sourceLogs, activeDeviceFilter, activeAppFilter, isReal]);
 
+  const stripHtml = (str: string) => str.replace(/<[^>]+>/g, '');
+
   const renderLogEntry = (entry: BackendLog | LogMsg, idx: number) => {
     const app = isReal ? (entry as BackendLog).type || 'GENERAL' : (entry as LogMsg).app || 'LOG';
     const msg = isReal ? ((entry as BackendLog).content || '').slice(0, 100) : (entry as LogMsg).msg;
@@ -390,7 +411,7 @@ export default function DashboardPage() {
             </span>
             <span className="log-time">{timeStr}</span>
           </div>
-          <div className="log-msg" dangerouslySetInnerHTML={{ __html: msg }} />
+          <div className="log-msg">{stripHtml(msg)}</div>
           {devId ? <span className="log-device-badge" title={devId}>📱 {devName}</span> : null}
         </div>
       </div>

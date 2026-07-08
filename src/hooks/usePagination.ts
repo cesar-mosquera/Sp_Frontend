@@ -16,10 +16,10 @@ interface UsePaginationReturn {
 }
 
 export function usePagination(options: UsePaginationOptions = {}): UsePaginationReturn {
-  const { initialLimit = 50, maxLimit = 500 } = options;
+  const { initialLimit = 50 } = options;
   
   const [skip, setSkip] = useState(0);
-  const [limit, setLimit] = useState(initialLimit);
+  const limit = initialLimit;
   const [totalCount, setTotalCount] = useState<number | null>(null);
   const isLoadingMoreRef = useRef(false);
 
@@ -27,25 +27,18 @@ export function usePagination(options: UsePaginationOptions = {}): UsePagination
 
   const loadMore = useCallback(() => {
     if (isLoadingMoreRef.current || !hasMore) return;
-    
     isLoadingMoreRef.current = true;
-    
-    // Incrementar el límite en lugar de cambiar skip para mantener todos los datos cargados
-    const newLimit = Math.min(limit + initialLimit, maxLimit);
-    setLimit(newLimit);
-    
-    // Reset loading flag después de un breve delay
+    setSkip(s => s + limit);
     setTimeout(() => {
       isLoadingMoreRef.current = false;
     }, 300);
-  }, [limit, initialLimit, maxLimit, hasMore]);
+  }, [limit, hasMore]);
 
   const reset = useCallback(() => {
     setSkip(0);
-    setLimit(initialLimit);
     setTotalCount(null);
     isLoadingMoreRef.current = false;
-  }, [initialLimit]);
+  }, []);
 
   return {
     skip,
