@@ -8,7 +8,7 @@ interface AuthState {
   username: string | null;
   deviceId: string | null;
   loginAsAdmin: () => void;
-  loginAsUser: (token: string, username: string, deviceId: string) => void;
+  loginAsUser: (token: string, username: string, deviceId: string, role?: 'admin' | 'user') => void;
   logout: () => void;
 }
 
@@ -27,13 +27,13 @@ export const useAuthStore = create<AuthState>()(
         username: 'admin',
         deviceId: null
       }),
-      loginAsUser: (token: string, username: string, deviceId: string) => set({ 
-        isAuthenticated: true, 
-        role: 'user', 
-        token, 
-        username,
-        deviceId 
-      }),
+  loginAsUser: (token: string, username: string, deviceId: string, role?: 'admin' | 'user') => set({ 
+    isAuthenticated: true, 
+    role: role ?? 'user', 
+    token, 
+    username,
+    deviceId 
+  }),
       logout: () => set({ 
         isAuthenticated: false, 
         token: null, 

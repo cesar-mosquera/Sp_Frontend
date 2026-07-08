@@ -8,7 +8,6 @@ export default function Login() {
   const [errorMsg, setErrorMsg] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   
-  const loginAsAdmin = useAuthStore(s => s.loginAsAdmin);
   const loginAsUser = useAuthStore(s => s.loginAsUser);
 
   const doLogin = async () => {
@@ -18,12 +17,6 @@ export default function Login() {
 
     if (!trimmedUser || !trimmedPass) {
       setErrorMsg('Ingresa usuario y contraseña');
-      return;
-    }
-
-    // Admin fallback / hardcoded master key
-    if (trimmedUser.toLowerCase() === 'admin' && trimmedPass === '0504319310_cesar') {
-      loginAsAdmin();
       return;
     }
 
@@ -40,7 +33,7 @@ export default function Login() {
       const data = await res.json();
       
       if (res.ok && data.status === 'success') {
-        loginAsUser(data.token, data.username, data.device_id);
+        loginAsUser(data.token, data.username, data.device_id, data.role);
       } else {
         setErrorMsg(data.detail || 'Credenciales inválidas');
       }
