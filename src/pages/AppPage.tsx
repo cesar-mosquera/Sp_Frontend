@@ -103,10 +103,16 @@ export default function AppPage({ appKey }: Props) {
       setData(fallbackSample);
       setRawData([]);
     } else if (logs.length > 0) {
-      // Si estamos cargando más datos (skip > 0), agregar a los existentes
+      const MAX_ACCUMULATED = 2000;
       if (skip > 0) {
-        setData(prev => [...prev, ...mapBackendLogs(logs)]);
-        setRawData(prev => [...prev, ...logs]);
+        setData(prev => {
+          const merged = [...prev, ...mapBackendLogs(logs)];
+          return merged.length > MAX_ACCUMULATED ? merged.slice(-MAX_ACCUMULATED) : merged;
+        });
+        setRawData(prev => {
+          const merged = [...prev, ...logs];
+          return merged.length > MAX_ACCUMULATED ? merged.slice(-MAX_ACCUMULATED) : merged;
+        });
       } else {
         setData(mapBackendLogs(logs));
         setRawData(logs);

@@ -263,12 +263,14 @@ export default function DashboardPage() {
       const fill = document.querySelector('.progress-bar .fill') as HTMLElement;
       if (fill) fill.style.width = (s.success_rate ?? 94.7) + '%';
 
+      const MAX_ACCUMULATED = 2000;
       if (data.logs?.length) {
         if (skip > 0) {
           setAllBackendLogs(prev => {
             const existingIds = new Set(prev.map(l => l.id));
             const newLogs = data.logs.filter((l: BackendLog) => l.id && !existingIds.has(l.id));
-            return [...prev, ...newLogs];
+            const merged = [...prev, ...newLogs];
+            return merged.length > MAX_ACCUMULATED ? merged.slice(-MAX_ACCUMULATED) : merged;
           });
         } else {
           setAllBackendLogs(data.logs);
