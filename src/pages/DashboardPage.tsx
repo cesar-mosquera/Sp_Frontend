@@ -138,7 +138,7 @@ export default function DashboardPage() {
     } catch (e) { console.warn('Error loading devices:', e); }
   }, []);
 
-  // Wireframe canvas
+  // Wireframe canvas (optimizado para rendimiento)
   useEffect(() => {
     const canvas = canvasRef.current;
     if (!canvas) return;
@@ -148,6 +148,7 @@ export default function DashboardPage() {
     let W = 0, H = 0;
     const nodes: { x: number; y: number; vx: number; vy: number; r: number }[] = [];
     let animId: number;
+    let frameSkip = 0;
 
     const resize = () => {
       W = canvas.width = window.innerWidth;
@@ -156,12 +157,13 @@ export default function DashboardPage() {
     resize();
     window.addEventListener('resize', resize);
 
-    const count = Math.floor((W * H) / 22000);
+    const count = Math.floor((W * H) / 40000);
     for (let i = 0; i < count; i++) {
       nodes.push({ x: Math.random() * W, y: Math.random() * H, vx: (Math.random() - 0.5) * 0.3, vy: (Math.random() - 0.5) * 0.3, r: Math.random() * 2 + 1 });
     }
 
     const draw = () => {
+      frameSkip = (frameSkip + 1) % 3;
       if (!isModalOpenRef.current) {
         ctx.clearRect(0, 0, W, H);
         for (const n of nodes) {
@@ -170,18 +172,22 @@ export default function DashboardPage() {
           if (n.y < 0 || n.y > H) n.vy *= -1;
         }
         const maxDist = Math.min(W, H) * 0.15;
-        for (let i = 0; i < nodes.length; i++) {
-          for (let j = i + 1; j < nodes.length; j++) {
-            const dx = nodes[i].x - nodes[j].x;
-            const dy = nodes[i].y - nodes[j].y;
-            const dist = Math.sqrt(dx * dx + dy * dy);
-            if (dist < maxDist) {
-              ctx.strokeStyle = `rgba(179, 0, 255, ${(1 - dist / maxDist) * 0.25})`;
-              ctx.lineWidth = 0.6;
-              ctx.beginPath();
-              ctx.moveTo(nodes[i].x, nodes[i].y);
-              ctx.lineTo(nodes[j].x, nodes[j].y);
-              ctx.stroke();
+        const maxDistSq = maxDist * maxDist;
+        if (frameSkip === 0) {
+          for (let i = 0; i < nodes.length; i++) {
+            for (let j = i + 1; j < nodes.length; j++) {
+              const dx = nodes[i].x - nodes[j].x;
+              const dy = nodes[i].y - nodes[j].y;
+              const distSq = dx * dx + dy * dy;
+              if (distSq < maxDistSq) {
+                const alpha = (1 - Math.sqrt(distSq) / maxDist) * 0.25;
+                ctx.strokeStyle = `rgba(179, 0, 255, ${alpha})`;
+                ctx.lineWidth = 0.6;
+                ctx.beginPath();
+                ctx.moveTo(nodes[i].x, nodes[i].y);
+                ctx.lineTo(nodes[j].x, nodes[j].y);
+                ctx.stroke();
+              }
             }
           }
         }
@@ -191,8 +197,9 @@ export default function DashboardPage() {
           ctx.arc(n.x, n.y, n.r, 0, Math.PI * 2);
           ctx.fill();
         }
-        const redNodes = nodes.slice(0, Math.floor(nodes.length * 0.08));
-        for (const n of redNodes) {
+        const redCount = Math.max(1, Math.floor(nodes.length * 0.05));
+        for (let i = 0; i < redCount; i++) {
+          const n = nodes[i];
           ctx.fillStyle = `rgba(255, 0, 51, ${n.r * 0.1})`;
           ctx.beginPath();
           ctx.arc(n.x, n.y, n.r * 1.5, 0, Math.PI * 2);
@@ -799,7 +806,7 @@ export default function DashboardPage() {
                 <>
                   <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
                     {filteredLogsMemo.map((entry, index) => (
-                      <div key={index}>
+                      <div key={(entry as BackendLog).id || `log-${index}`}>
                         {renderLogEntry(entry, index)}
                       </div>
                     ))}

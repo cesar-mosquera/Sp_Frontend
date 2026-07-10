@@ -104,7 +104,7 @@ export default function DeviceDetailPanel({
             const timeStr = (entry.timestamp || '').slice(0, 19).replace('T', ' ');
             const phone = entry.phone || '';
             return (
-              <div key={idx} className="log-entry" style={{ cursor: 'default' }}>
+              <div key={entry.id || `detail-${idx}`} className="log-entry" style={{ cursor: 'default' }}>
                 <div className={`log-icon ${ic.cls}`}>{ic.icon}</div>
                 <div className="log-content">
                   <div className="log-header">

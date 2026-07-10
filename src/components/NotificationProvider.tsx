@@ -26,7 +26,7 @@ export default function NotificationProvider() {
     }
   }, []);
 
-  useSSE('/api/events', onEvent);
+  useSSE('/api/sse', onEvent);
 
   return <NotificationToast />;
 }

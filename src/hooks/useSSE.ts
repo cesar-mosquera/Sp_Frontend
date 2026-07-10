@@ -1,4 +1,4 @@
-import { useEffect, useRef, useCallback, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { API_BASE_URL } from '../config';
 
 interface SSEEvent {
@@ -10,32 +10,37 @@ type EventHandler = (event: SSEEvent) => void;
 
 interface UseSSEReturn {
   isConnected: boolean;
-  reconnectCount: number;
 }
 
 export function useSSE(path: string, onEvent: EventHandler, enabled = true): UseSSEReturn {
   const sourceRef = useRef<EventSource | null>(null);
   const handlerRef = useRef(onEvent);
-  const reconnectTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const reconnectTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const reconnectCountRef = useRef(0);
+  const mountedRef = useRef(true);
   const [isConnected, setIsConnected] = useState(false);
-  const [reconnectCount, setReconnectCount] = useState(0);
 
   handlerRef.current = onEvent;
 
-  const cleanup = useCallback(() => {
-    if (sourceRef.current) {
-      sourceRef.current.close();
-      sourceRef.current = null;
-    }
+  useEffect(() => {
+    mountedRef.current = true;
+    return () => { mountedRef.current = false; };
+  }, []);
+
+  const cleanup = () => {
     if (reconnectTimeoutRef.current) {
       clearTimeout(reconnectTimeoutRef.current);
       reconnectTimeoutRef.current = null;
     }
+    if (sourceRef.current) {
+      sourceRef.current.close();
+      sourceRef.current = null;
+    }
     setIsConnected(false);
-  }, []);
+  };
 
-  const connect = useCallback(() => {
-    if (!enabled) return;
+  const connect = () => {
+    if (!enabled || !mountedRef.current) return;
 
     cleanup();
 
@@ -44,8 +49,9 @@ export function useSSE(path: string, onEvent: EventHandler, enabled = true): Use
     sourceRef.current = source;
 
     source.onopen = () => {
+      if (!mountedRef.current) { source.close(); return; }
       setIsConnected(true);
-      console.log('SSE conectado:', url);
+      reconnectCountRef.current = 0;
     };
 
     source.onmessage = (event) => {
@@ -73,32 +79,29 @@ export function useSSE(path: string, onEvent: EventHandler, enabled = true): Use
       } catch (e) { console.warn('SSE log_entry parse error:', e); }
     });
 
-    source.onerror = (error) => {
-      console.error('SSE error:', error);
+    source.onerror = () => {
+      if (!mountedRef.current) return;
       setIsConnected(false);
       source.close();
+      sourceRef.current = null;
 
-      // Exponential backoff reconnection
-      const delay = Math.min(1000 * Math.pow(2, reconnectCount), 30000);
+      const delay = Math.min(1000 * Math.pow(2, reconnectCountRef.current), 30000);
+      reconnectCountRef.current += 1;
+
       reconnectTimeoutRef.current = setTimeout(() => {
-        setReconnectCount(prev => prev + 1);
-        connect();
+        if (mountedRef.current) connect();
       }, delay);
     };
-  }, [path, enabled, reconnectCount, cleanup]);
+  };
 
   useEffect(() => {
     if (!enabled) {
       cleanup();
       return;
     }
-
     connect();
+    return cleanup;
+  }, [enabled, path]);
 
-    return () => {
-      cleanup();
-    };
-  }, [enabled, path, cleanup, connect]);
-
-  return { isConnected, reconnectCount };
+  return { isConnected };
 }

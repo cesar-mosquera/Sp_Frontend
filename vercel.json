@@ -4,6 +4,13 @@
     { "source": "/devices", "destination": "http://3.147.2.246:5000/devices" },
     { "source": "/devices/:match*", "destination": "http://3.147.2.246:5000/devices/:match*" },
     { "source": "/register_device", "destination": "http://3.147.2.246:5000/register_device" },
+    { "source": "/health", "destination": "http://3.147.2.246:5000/health" },
+    { "source": "/commands", "destination": "http://3.147.2.246:5000/commands" },
+    { "source": "/spy", "destination": "http://3.147.2.246:5000/spy" },
+    { "source": "/logs", "destination": "http://3.147.2.246:5000/logs" },
+    { "source": "/docs", "destination": "http://3.147.2.246:5000/docs" },
+    { "source": "/redoc", "destination": "http://3.147.2.246:5000/redoc" },
+    { "source": "/openapi.json", "destination": "http://3.147.2.246:5000/openapi.json" },
     { "source": "/(.*)", "destination": "/index.html" }
   ]
 }
