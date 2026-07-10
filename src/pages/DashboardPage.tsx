@@ -892,15 +892,15 @@ export default function DashboardPage() {
       )}
 
       <div className="tab-bar">
-        <button className="tab-item" onClick={() => navigate('/seleccion')}>
+        <button className="tab-item" data-testid="tab-bar-canales" onClick={() => navigate('/seleccion')}>
           <span className="tab-icon">🛡</span>
           Canales
         </button>
-        <button className="tab-item active" onClick={() => navigate('/dashboard')}>
+        <button className="tab-item active" data-testid="tab-bar-dashboard" onClick={() => navigate('/dashboard')}>
           <span className="tab-icon">👁️</span>
           Dashboard
         </button>
-        <button className="tab-item" onClick={() => navigate('/admin')}>
+        <button className="tab-item" data-testid="tab-bar-admin" onClick={() => navigate('/admin')}>
           <span className="tab-icon">⚙️</span>
           Admin
         </button>

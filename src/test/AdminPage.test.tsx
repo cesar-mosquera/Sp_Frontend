@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
-import { render, screen, waitFor } from '@testing-library/react';
+import { render, screen, waitFor, fireEvent } from '@testing-library/react';
 import { MemoryRouter } from 'react-router-dom';
 import AdminPage from '../pages/AdminPage';
 
@@ -55,5 +55,27 @@ describe('AdminPage', () => {
     );
 
     await waitFor(() => expect(screen.getByText('Telefono de prueba')).toBeInTheDocument());
+  });
+
+  it('regresion: "Purgar Base de Datos" y "Registrar Dispositivo" son elementos distintos y localizables sin ambiguedad', async () => {
+    (fetch as ReturnType<typeof vi.fn>).mockResolvedValue(new Response(JSON.stringify({ devices: [] }), { status: 200 }));
+
+    render(
+      <MemoryRouter>
+        <AdminPage />
+      </MemoryRouter>
+    );
+
+    await waitFor(() => expect(screen.getByTestId('admin-open-register-device-modal')).toBeInTheDocument());
+
+    const purgeButton = screen.getByTestId('admin-purge-database');
+    const registerButton = screen.getByTestId('admin-open-register-device-modal');
+    expect(purgeButton).not.toBe(registerButton);
+
+    // Clic en el boton seguro (por data-testid, no por clase compartida) debe
+    // abrir el modal de registro, sin llamar a la accion destructiva.
+    fireEvent.click(registerButton);
+    expect(await screen.findByText('Registrar Nuevo Dispositivo')).toBeInTheDocument();
+    expect(fetch).not.toHaveBeenCalledWith(expect.stringContaining('/api/admin/maintenance'), expect.anything());
   });
 });

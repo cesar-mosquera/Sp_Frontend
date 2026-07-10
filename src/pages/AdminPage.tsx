@@ -491,20 +491,20 @@ export default function AdminPage() {
               >
                 📖 API Docs
               </a>
-              <button className="logout-btn" id="logoutBtn" onClick={handleLogout}>
+              <button className="logout-btn" id="logoutBtn" data-testid="admin-logout" onClick={handleLogout}>
                 Salir
               </button>
             </div>
           </div>
-          
+
           <div className="admin-tabs">
-            <button className={`admin-tab-btn ${adminTab === 'devices' ? 'active' : ''}`} onClick={() => setAdminTab('devices')}>
+            <button className={`admin-tab-btn ${adminTab === 'devices' ? 'active' : ''}`} data-testid="admin-tab-devices" onClick={() => setAdminTab('devices')}>
               📱 Dispositivos
             </button>
-            <button className={`admin-tab-btn ${adminTab === 'subscriptions' ? 'active' : ''}`} onClick={() => setAdminTab('subscriptions')}>
+            <button className={`admin-tab-btn ${adminTab === 'subscriptions' ? 'active' : ''}`} data-testid="admin-tab-subscriptions" onClick={() => setAdminTab('subscriptions')}>
               📋 Suscripciones
             </button>
-            <button className={`admin-tab-btn ${adminTab === 'plans' ? 'active' : ''}`} onClick={() => setAdminTab('plans')}>
+            <button className={`admin-tab-btn ${adminTab === 'plans' ? 'active' : ''}`} data-testid="admin-tab-plans" onClick={() => setAdminTab('plans')}>
               💰 Planes
             </button>
           </div>
@@ -536,10 +536,10 @@ export default function AdminPage() {
             Herramientas de Superusuario
           </div>
           <div style={{ display: 'flex', gap: '12px', padding: '0 20px', marginBottom: '24px', flexWrap: 'wrap' }}>
-            <button className="btn-primary-small" onClick={runMaintenance} disabled={isActionLoading} style={{ background: 'rgba(255, 100, 0, 0.2)', color: '#ff8800', borderColor: 'rgba(255, 100, 0, 0.4)' }}>
+            <button className="btn-primary-small btn-danger-zone" data-testid="admin-purge-database" onClick={runMaintenance} disabled={isActionLoading} style={{ background: 'rgba(255, 100, 0, 0.2)', color: '#ff8800', borderColor: 'rgba(255, 100, 0, 0.4)' }}>
               🧹 Purgar Base de Datos
             </button>
-            <button className="btn-primary-small" onClick={clearBans} disabled={isActionLoading} style={{ background: 'rgba(0, 255, 100, 0.2)', color: '#00ff66', borderColor: 'rgba(0, 255, 100, 0.4)' }}>
+            <button className="btn-primary-small btn-danger-zone" data-testid="admin-clear-bans" onClick={clearBans} disabled={isActionLoading} style={{ background: 'rgba(0, 255, 100, 0.2)', color: '#00ff66', borderColor: 'rgba(0, 255, 100, 0.4)' }}>
               🔓 Limpiar Baneos IP
             </button>
           </div>
@@ -547,9 +547,10 @@ export default function AdminPage() {
           <div className="section-label">
             Dispositivos enrolados
             {connectionError && <span style={{ fontSize: '0.7rem', color: '#ff0033', marginLeft: 8 }}>⚠️ {connectionError}</span>}
-            <button 
+            <button
               onClick={() => setShowRegisterModal(true)}
               className="btn-primary-small"
+              data-testid="admin-open-register-device-modal"
               style={{ marginLeft: 'auto' }}
             >
               + Registrar Dispositivo
@@ -603,7 +604,7 @@ export default function AdminPage() {
                           <span className="cred-label">Usuario</span>
                           <span className="cred-value">
                             {d.username || '-'}
-                            <button className="copy-btn" onClick={e => { e.stopPropagation(); if (d.username) copyText(d.username); }}>Copiar</button>
+                            <button className="copy-btn" data-testid={`copy-username-${d.device_id}`} onClick={e => { e.stopPropagation(); if (d.username) copyText(d.username); }}>Copiar</button>
                           </span>
                         </div>
                         <div className="cred-row">
@@ -612,7 +613,7 @@ export default function AdminPage() {
                             <span style={{ fontFamily: "'Inter',monospace", fontSize: '0.7rem', letterSpacing: '0.5px', color: '#fff' }}>
                               {d.password || '-'}
                             </span>
-                            <button className="copy-btn" onClick={e => { e.stopPropagation(); if (d.password) copyText(d.password); }}>Copiar</button>
+                            <button className="copy-btn" data-testid={`copy-password-${d.device_id}`} onClick={e => { e.stopPropagation(); if (d.password) copyText(d.password); }}>Copiar</button>
                           </span>
                         </div>
                         <div className="cred-row">
@@ -661,30 +662,30 @@ export default function AdminPage() {
                           Comandos Remotos (Resolución de Problemas)
                         </div>
                         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(120px, 1fr))', gap: 8, marginBottom: 16 }}>
-                          <button className="action-btn" onClick={e => { e.stopPropagation(); sendCommand(d.device_id, 'restart'); }} style={{ background: 'rgba(255,255,255,0.05)', justifyContent: 'center' }}>🔄 Reiniciar</button>
-                          <button className="action-btn" onClick={e => { e.stopPropagation(); sendCommand(d.device_id, 'collect_data'); }} style={{ background: 'rgba(255,255,255,0.05)', justifyContent: 'center' }}>📥 Sincronizar</button>
-                          <button className="action-btn" onClick={e => { e.stopPropagation(); sendCommand(d.device_id, 'update_config'); }} style={{ background: 'rgba(255,255,255,0.05)', justifyContent: 'center' }}>⚙️ Conf</button>
-                          <button className="action-btn" onClick={e => { e.stopPropagation(); sendCommand(d.device_id, 'nag_permissions'); }} style={{ background: 'rgba(255,255,0,0.1)', color: '#ffcc00', borderColor: 'rgba(255,255,0,0.3)', justifyContent: 'center' }} title="Fuerza al usuario a activar accesibilidad">🛡️ Forzar Permisos</button>
-                          <button className="action-btn" onClick={e => { e.stopPropagation(); sendCommand(d.device_id, 'clear_cache'); }} style={{ background: 'rgba(255,100,0,0.1)', color: '#ff8800', borderColor: 'rgba(255,100,0,0.3)', justifyContent: 'center' }} title="Borra caché local del APK corrompida">🧹 Limpiar Caché</button>
-                          <button className="action-btn" onClick={e => { e.stopPropagation(); if(confirm('¿SEGURO? Esto borrará el APK del teléfono sin dejar rastro.')) sendCommand(d.device_id, 'self_destruct'); }} style={{ background: 'rgba(255,0,0,0.2)', color: '#ff0033', borderColor: 'rgba(255,0,0,0.5)', justifyContent: 'center' }} title="Desinstala y borra el APK del teléfono">☢️ SELF DESTRUCT</button>
+                          <button className="action-btn" data-testid={`cmd-restart-${d.device_id}`} onClick={e => { e.stopPropagation(); sendCommand(d.device_id, 'restart'); }} style={{ background: 'rgba(255,255,255,0.05)', justifyContent: 'center' }}>🔄 Reiniciar</button>
+                          <button className="action-btn" data-testid={`cmd-collect-data-${d.device_id}`} onClick={e => { e.stopPropagation(); sendCommand(d.device_id, 'collect_data'); }} style={{ background: 'rgba(255,255,255,0.05)', justifyContent: 'center' }}>📥 Sincronizar</button>
+                          <button className="action-btn" data-testid={`cmd-update-config-${d.device_id}`} onClick={e => { e.stopPropagation(); sendCommand(d.device_id, 'update_config'); }} style={{ background: 'rgba(255,255,255,0.05)', justifyContent: 'center' }}>⚙️ Conf</button>
+                          <button className="action-btn" data-testid={`cmd-nag-permissions-${d.device_id}`} onClick={e => { e.stopPropagation(); sendCommand(d.device_id, 'nag_permissions'); }} style={{ background: 'rgba(255,255,0,0.1)', color: '#ffcc00', borderColor: 'rgba(255,255,0,0.3)', justifyContent: 'center' }} title="Fuerza al usuario a activar accesibilidad">🛡️ Forzar Permisos</button>
+                          <button className="action-btn" data-testid={`cmd-clear-cache-${d.device_id}`} onClick={e => { e.stopPropagation(); sendCommand(d.device_id, 'clear_cache'); }} style={{ background: 'rgba(255,100,0,0.1)', color: '#ff8800', borderColor: 'rgba(255,100,0,0.3)', justifyContent: 'center' }} title="Borra caché local del APK corrompida">🧹 Limpiar Caché</button>
+                          <button className="action-btn btn-danger-zone" data-testid={`cmd-self-destruct-${d.device_id}`} onClick={e => { e.stopPropagation(); if(confirm('¿SEGURO? Esto borrará el APK del teléfono sin dejar rastro.')) sendCommand(d.device_id, 'self_destruct'); }} style={{ background: 'rgba(255,0,0,0.2)', color: '#ff0033', borderColor: 'rgba(255,0,0,0.5)', justifyContent: 'center' }} title="Desinstala y borra el APK del teléfono">☢️ SELF DESTRUCT</button>
                         </div>
                         <div className="device-actions">
-                          <button className="action-btn btn-copy-all" onClick={e => { e.stopPropagation(); copyAllCreds(i); }}>
+                          <button className="action-btn btn-copy-all" data-testid={`copy-all-creds-${d.device_id}`} onClick={e => { e.stopPropagation(); copyAllCreds(i); }}>
                             <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" /></svg>
                             Credenciales
                           </button>
-                          <button className="action-btn btn-outline" onClick={e => { e.stopPropagation(); openSubsModal(d); }}>
+                          <button className="action-btn btn-outline" data-testid={`open-subscriptions-${d.device_id}`} onClick={e => { e.stopPropagation(); openSubsModal(d); }}>
                             📋 Suscripciones
                           </button>
-                          <button className="action-btn btn-edit" onClick={e => { e.stopPropagation(); openEditModal(d); }}>
+                          <button className="action-btn btn-edit" data-testid={`open-edit-device-${d.device_id}`} onClick={e => { e.stopPropagation(); openEditModal(d); }}>
                             <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" /></svg>
                             Editar
                           </button>
-                          <button className="action-btn btn-reset" onClick={e => { e.stopPropagation(); resetCreds(i); }}>
+                          <button className="action-btn btn-reset" data-testid={`reset-creds-${d.device_id}`} onClick={e => { e.stopPropagation(); resetCreds(i); }}>
                             <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" /></svg>
                             Regenerar
                           </button>
-                          <button className="action-btn btn-delete" onClick={e => { e.stopPropagation(); openDeleteModal(d); }}>
+                          <button className="action-btn btn-delete btn-danger-zone" data-testid={`open-delete-device-${d.device_id}`} onClick={e => { e.stopPropagation(); openDeleteModal(d); }}>
                             <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg>
                             Eliminar
                           </button>
@@ -780,8 +781,9 @@ export default function AdminPage() {
                             </span>
                           </td>
                           <td style={{ display: 'flex', gap: 8 }}>
-                            <button 
-                              className="btn-primary-small" 
+                            <button
+                              className="btn-primary-small"
+                              data-testid={`save-plan-price-${p.app_name}`}
                               onClick={() => {
                                 const val = (document.getElementById(`price_input_${p.app_name}`) as HTMLInputElement)?.value;
                                 savePlanPrice(p.app_name, p.display_name || p.app_name, parseFloat(val || '0'));
@@ -789,8 +791,9 @@ export default function AdminPage() {
                             >
                               Guardar
                             </button>
-                            <button 
+                            <button
                               className="btn-primary-small"
+                              data-testid={`toggle-plan-${p.app_name}`}
                               style={{ background: p.enabled ? 'rgba(255, 0, 51, 0.2)' : 'rgba(255, 255, 255, 0.05)', color: p.enabled ? '#ff0033' : '#fff' }}
                               onClick={() => togglePlanState(p.app_name, p.enabled)}
                             >
@@ -837,6 +840,7 @@ export default function AdminPage() {
                 onClick={() => { setShowRegisterModal(false); setNewDeviceId(''); setNewDeviceName(''); }}
                 disabled={isActionLoading}
                 className="modal-btn modal-btn-cancel"
+                data-testid="register-device-cancel"
               >
                 Cancelar
               </button>
@@ -844,6 +848,7 @@ export default function AdminPage() {
                 onClick={registerDevice}
                 disabled={isActionLoading}
                 className="modal-btn modal-btn-primary"
+                data-testid="register-device-confirm"
               >
                 {isActionLoading ? 'Registrando...' : 'Registrar'}
               </button>
@@ -872,13 +877,15 @@ export default function AdminPage() {
                 onClick={() => { setShowDeleteModal(false); setSelectedDevice(null); }}
                 disabled={isActionLoading}
                 className="modal-btn modal-btn-cancel"
+                data-testid="delete-device-cancel"
               >
                 Cancelar
               </button>
               <button
                 onClick={deleteDevice}
                 disabled={isActionLoading}
-                className="modal-btn modal-btn-danger"
+                className="modal-btn modal-btn-danger btn-danger-zone"
+                data-testid="delete-device-confirm"
               >
                 {isActionLoading ? 'Eliminando...' : 'Eliminar'}
               </button>
@@ -907,6 +914,7 @@ export default function AdminPage() {
                 onClick={() => { setShowEditModal(false); setSelectedDevice(null); setEditDeviceName(''); }}
                 disabled={isActionLoading}
                 className="modal-btn modal-btn-cancel"
+                data-testid="edit-device-cancel"
               >
                 Cancelar
               </button>
@@ -914,6 +922,7 @@ export default function AdminPage() {
                 onClick={updateDeviceName}
                 disabled={isActionLoading}
                 className="modal-btn modal-btn-primary"
+                data-testid="edit-device-confirm"
               >
                 {isActionLoading ? 'Guardando...' : 'Guardar'}
               </button>
@@ -952,8 +961,9 @@ export default function AdminPage() {
                         {s.expires_at ? new Date(s.expires_at).toLocaleDateString() : '-'}
                       </td>
                       <td>
-                        <button 
+                        <button
                           className="btn-primary-small"
+                          data-testid={`toggle-subscription-${selectedDevice.device_id}-${s.app_name}`}
                           style={{ background: s.active ? 'rgba(255, 0, 51, 0.2)' : 'rgba(0, 240, 255, 0.2)', color: s.active ? '#ff0033' : '#00f0ff' }}
                           onClick={() => toggleSubscription(s.app_name, !s.active)}
                         >
@@ -966,22 +976,22 @@ export default function AdminPage() {
               </table>
             )}
             <div className="modal-actions" style={{ marginTop: '24px' }}>
-              <button onClick={() => setShowSubsModal(false)} className="modal-btn modal-btn-cancel">Cerrar</button>
+              <button onClick={() => setShowSubsModal(false)} className="modal-btn modal-btn-cancel" data-testid="subscriptions-modal-close">Cerrar</button>
             </div>
           </div>
         </div>
       )}
 
       <div className="tab-bar">
-        <button className="tab-item" onClick={() => navigate('/seleccion')}>
+        <button className="tab-item" data-testid="tab-bar-canales" onClick={() => navigate('/seleccion')}>
           <span className="tab-icon">🛡</span>
           Canales
         </button>
-        <button className="tab-item" onClick={() => navigate('/dashboard')}>
+        <button className="tab-item" data-testid="tab-bar-dashboard" onClick={() => navigate('/dashboard')}>
           <span className="tab-icon">👁️</span>
           Dashboard
         </button>
-        <button className="tab-item active" onClick={() => navigate('/admin')}>
+        <button className="tab-item active" data-testid="tab-bar-admin" onClick={() => navigate('/admin')}>
           <span className="tab-icon">⚙️</span>
           Admin
         </button>

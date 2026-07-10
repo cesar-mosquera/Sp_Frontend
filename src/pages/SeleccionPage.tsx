@@ -65,7 +65,7 @@ export default function SeleccionPage() {
         <h1>Seleccione Canal<br />de Auditoría</h1>
         <p className="subtitle">Supervise en tiempo real la telemetría, capturas y eventos de seguridad interceptados.</p>
 
-        <div className="hero-card" onClick={() => nav('/dashboard')}>
+        <div className="hero-card" data-testid="hero-card-dashboard" onClick={() => nav('/dashboard')}>
           <div className="hero-glow"></div>
           <span className="hero-icon">👁️‍🗨️</span>
           <div className="hero-title">Central de Operaciones Inteligentes</div>
@@ -80,7 +80,7 @@ export default function SeleccionPage() {
 
         <div className="apps-grid">
           {APPS.map(app => (
-            <div key={app.name} className="app-card" onClick={() => nav(app.path)}>
+            <div key={app.name} className="app-card" data-testid={`app-card-${app.path.slice(1)}`} onClick={() => nav(app.path)}>
               <div className="card-glow"></div>
               <div className="icon-wrap">
                 <img src={app.img} alt={app.name} />
@@ -93,15 +93,15 @@ export default function SeleccionPage() {
       </div>
 
       <div className="tab-bar">
-        <button className="tab-item active" onClick={() => nav('/seleccion')}>
+        <button className="tab-item active" data-testid="tab-bar-canales" onClick={() => nav('/seleccion')}>
           <span className="tab-icon">🛡</span>
           Canales
         </button>
-        <button className="tab-item" onClick={() => nav('/dashboard')}>
+        <button className="tab-item" data-testid="tab-bar-dashboard" onClick={() => nav('/dashboard')}>
           <span className="tab-icon">👁️</span>
           Dashboard
         </button>
-        <button className="tab-item" onClick={() => nav('/admin')}>
+        <button className="tab-item" data-testid="tab-bar-admin" onClick={() => nav('/admin')}>
           <span className="tab-icon">⚙️</span>
           Admin
         </button>
