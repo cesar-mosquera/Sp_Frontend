@@ -22,7 +22,10 @@ function updateStatusTime() {
 
 export default function SeleccionPage() {
   const navigate = useNavigate();
+  const isNavigatingRef = useRef(false);
   const nav = (path: string) => {
+    if (isNavigatingRef.current) return;
+    isNavigatingRef.current = true;
     const overlay = document.createElement('div');
     overlay.style.cssText = 'position:fixed;inset:0;z-index:999;background:#0a0014;opacity:0;transition:opacity 0.2s ease;pointer-events:none';
     document.body.appendChild(overlay);
@@ -31,7 +34,10 @@ export default function SeleccionPage() {
       navigate(path);
       setTimeout(() => {
         overlay.style.opacity = '0';
-        setTimeout(() => overlay.remove(), 200);
+        setTimeout(() => {
+          overlay.remove();
+          isNavigatingRef.current = false;
+        }, 200);
       }, 50);
     }, 150);
   };
