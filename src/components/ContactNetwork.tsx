@@ -36,15 +36,19 @@ export default function ContactNetwork({ logs, token, role, onSelectContact }: P
         if (role === 'admin') headers['X-Dashboard-Key'] = DASHBOARD_KEY;
         if (token) headers['X-Session-Token'] = token;
         const res = await fetch(`${API_BASE_URL}/api/conversations?skip=0&limit=200`, { headers });
-        if (!res.ok) return;
+        if (!res.ok) {
+          // Fallo real de conexion/servidor: recien ahi tiene sentido el modo
+          // degradado derivado de logs locales.
+          if (!cancelled) setUseFallback(true);
+          return;
+        }
         const json = await res.json();
         if (!cancelled) {
-          if (json.conversations?.length > 0) {
-            setConversations(json.conversations);
-            setUseFallback(false);
-          } else {
-            setUseFallback(true);
-          }
+          // Exito con 0 conversaciones es un estado real (aun no hay datos),
+          // no un fallo -- no debe mostrar contactos sinteticos como si
+          // fueran reales.
+          setConversations(json.conversations || []);
+          setUseFallback(false);
         }
       } catch { if (!cancelled) setUseFallback(true); }
       if (!cancelled) setLoading(false);
