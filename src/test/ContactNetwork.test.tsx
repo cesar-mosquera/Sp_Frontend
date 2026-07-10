@@ -22,7 +22,7 @@ describe('ContactNetwork', () => {
       new Response(JSON.stringify({ conversations: [] }), { status: 200 })
     );
 
-    render(<ContactNetwork logs={sampleLogs} token="tok" role="admin" onSelectContact={() => {}} />);
+    render(<ContactNetwork logs={sampleLogs} token="tok" onSelectContact={() => {}} />);
 
     await waitFor(() => expect(screen.getByText(/Sin contactos identificados/i)).toBeInTheDocument());
     // Regresion: NO debe mostrar "Juan" (derivado de logs locales) como si
@@ -38,7 +38,7 @@ describe('ContactNetwork', () => {
       ],
     }), { status: 200 }));
 
-    render(<ContactNetwork logs={sampleLogs} token="tok" role="admin" onSelectContact={() => {}} />);
+    render(<ContactNetwork logs={sampleLogs} token="tok" onSelectContact={() => {}} />);
 
     await waitFor(() => expect(screen.getByText('Maria')).toBeInTheDocument());
   });
@@ -46,7 +46,7 @@ describe('ContactNetwork', () => {
   it('cae al modo degradado (derivado de logs locales) solo ante un fallo real de conexion', async () => {
     (fetch as ReturnType<typeof vi.fn>).mockRejectedValue(new TypeError('Failed to fetch'));
 
-    render(<ContactNetwork logs={sampleLogs} token="tok" role="admin" onSelectContact={() => {}} />);
+    render(<ContactNetwork logs={sampleLogs} token="tok" onSelectContact={() => {}} />);
 
     await waitFor(() => expect(screen.getByText('Juan')).toBeInTheDocument());
   });

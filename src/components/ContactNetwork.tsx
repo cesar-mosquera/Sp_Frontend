@@ -1,11 +1,10 @@
 import { useEffect, useState } from 'react';
-import { API_BASE_URL, DASHBOARD_KEY } from '../config';
+import { API_BASE_URL } from '../config';
 import type { BackendLog } from '../types/dashboard';
 
 interface Props {
   logs: BackendLog[];
   token: string | null;
-  role: string | null;
   onSelectContact: (contact: string, device: string) => void;
 }
 
@@ -22,7 +21,7 @@ interface ConversationData {
   created_at: string;
 }
 
-export default function ContactNetwork({ logs, token, role, onSelectContact }: Props) {
+export default function ContactNetwork({ logs, token, onSelectContact }: Props) {
   const [conversations, setConversations] = useState<ConversationData[]>([]);
   const [loading, setLoading] = useState(true);
   const [useFallback, setUseFallback] = useState(false);
@@ -33,7 +32,6 @@ export default function ContactNetwork({ logs, token, role, onSelectContact }: P
       setLoading(true);
       try {
         const headers: Record<string, string> = {};
-        if (role === 'admin') headers['X-Dashboard-Key'] = DASHBOARD_KEY;
         if (token) headers['X-Session-Token'] = token;
         const res = await fetch(`${API_BASE_URL}/api/conversations?skip=0&limit=200`, { headers });
         if (!res.ok) {
@@ -56,7 +54,7 @@ export default function ContactNetwork({ logs, token, role, onSelectContact }: P
     fetchContacts();
     const interval = setInterval(fetchContacts, 30000);
     return () => { cancelled = true; clearInterval(interval); };
-  }, [token, role]);
+  }, [token]);
 
   if (loading && conversations.length === 0) {
     return <div className="no-device-msg"><span>👥</span>Cargando contactos...</div>;

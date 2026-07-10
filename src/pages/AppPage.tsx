@@ -1,7 +1,7 @@
 import { useEffect, useState, useCallback, useMemo } from 'react';
 import { Link, useSearchParams } from 'react-router-dom';
 import { List } from 'react-window';
-import { APP_PAGE_CONFIG, API_BASE_URL, DASHBOARD_KEY } from '../config';
+import { APP_PAGE_CONFIG, API_BASE_URL } from '../config';
 import { useSSEEvents } from '../contexts/SSEProvider';
 import { usePagination } from '../hooks/usePagination';
 import { normalize, formatTimestamp, matchesApp, mapBackendLogs, type LogEntry, type BackendLog } from '../appPage';
@@ -51,7 +51,6 @@ export default function AppPage({ appKey }: Props) {
   ];
 
   const token = useAuthStore(s => s.token);
-  const role = useAuthStore(s => s.role);
 
   const loadData = useCallback(async () => {
     setIsLoading(true);
@@ -67,10 +66,7 @@ export default function AppPage({ appKey }: Props) {
       params.append('limit', limit.toString());
       const endpoint = `${API_BASE_URL}/api/dashboard-data?${params.toString()}`;
       const response = await fetchWithRetry(endpoint, {
-        headers: {
-          'X-Dashboard-Key': role === 'admin' ? DASHBOARD_KEY : '',
-          'X-Session-Token': token || ''
-        },
+        headers: { 'X-Session-Token': token || '' },
         timeoutMs: 7000,
       });
 

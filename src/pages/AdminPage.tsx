@@ -1,6 +1,6 @@
 import { useEffect, useState, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { API_BASE_URL, DASHBOARD_KEY } from '../config';
+import { API_BASE_URL } from '../config';
 import { useAuthStore } from '../store';
 import { fetchWithRetry } from '../utils/fetchWithRetry';
 import '../styles/admin.css';
@@ -97,12 +97,11 @@ export default function AdminPage() {
   const API = API_BASE_URL || '';
 
   // El backend valida X-Session-Token + role=='admin' en cada endpoint de
-  // admin; X-Dashboard-Key queda como capa adicional (mismo patron que
-  // DashboardPage/AppPage). X-Master-Key NUNCA se envia desde el navegador:
-  // el backend lo trata como fallback legacy solo para scripts internos.
+  // admin. X-Master-Key y X-Dashboard-Key ya no se envian desde el
+  // navegador: el backend confirmo que el primero es solo fallback legacy
+  // para scripts internos, y elimino el segundo por completo.
   const adminHeaders = useCallback((extra?: Record<string, string>): Record<string, string> => ({
     'X-Session-Token': token || '',
-    'X-Dashboard-Key': DASHBOARD_KEY,
     ...extra,
   }), [token]);
 

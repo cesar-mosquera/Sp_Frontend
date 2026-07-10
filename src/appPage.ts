@@ -1,4 +1,4 @@
-import { API_BASE_URL, DASHBOARD_KEY, type AppPageConfig } from './config';
+import { type AppPageConfig } from './config';
 
 export interface LogEntry {
   contact: string;

@@ -9,7 +9,7 @@ import { LogMsg, BackendLog, DeviceInfo } from '../types/dashboard';
 import { LOG_MESSAGES, formatTime } from '../utils/mockData';
 
 import { Link, useNavigate, useSearchParams } from 'react-router-dom';
-import { API_BASE_URL, DASHBOARD_KEY, APP_PAGE_MAP } from '../config';
+import { API_BASE_URL, APP_PAGE_MAP } from '../config';
 import { useAuthStore } from '../store';
 import { useSSEEvents } from '../contexts/SSEProvider';
 import { usePagination } from '../hooks/usePagination';
@@ -21,6 +21,7 @@ import '../styles/dashboard.css';
 
 export default function DashboardPage() {
   const navigate = useNavigate();
+  const token = useAuthStore(s => s.token);
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const [searchParams] = useSearchParams();
   const selectedApp = searchParams.get('app');
@@ -114,7 +115,7 @@ export default function DashboardPage() {
   const loadDevices = useCallback(async () => {
     try {
       const devRes = await fetchWithRetry(API_BASE_URL + '/devices', {
-        headers: { 'X-Master-Key': DASHBOARD_KEY, 'X-Dashboard-Key': DASHBOARD_KEY },
+        headers: { 'X-Session-Token': token || '' },
       });
       if (devRes.ok) {
         const devData = await devRes.json();
@@ -138,7 +139,7 @@ export default function DashboardPage() {
         }
       }
     } catch (e) { console.warn('Error loading devices:', e); }
-  }, []);
+  }, [token]);
 
   // Wireframe canvas (optimizado para rendimiento)
   useEffect(() => {
@@ -218,9 +219,6 @@ export default function DashboardPage() {
     };
   }, []);
 
-  const token = useAuthStore(s => s.token);
-  const role = useAuthStore(s => s.role);
-
   // Load backend data
   const loadData = useCallback(async () => {
     setIsLoading(true);
@@ -237,10 +235,7 @@ export default function DashboardPage() {
       if (params.toString()) endpoint += `?${params.toString()}`;
       
       const res = await fetchWithRetry(endpoint, {
-        headers: {
-          'X-Dashboard-Key': role === 'admin' ? DASHBOARD_KEY : '',
-          'X-Session-Token': token || ''
-        }
+        headers: { 'X-Session-Token': token || '' }
       });
       if (!res.ok) {
         setConnectionError(`Error ${res.status}: No se pudo conectar al backend`);
@@ -301,7 +296,7 @@ export default function DashboardPage() {
         });
         try {
           const devRes = await fetch(API_BASE_URL + '/devices', {
-            headers: { 'X-Master-Key': DASHBOARD_KEY, 'X-Dashboard-Key': DASHBOARD_KEY },
+            headers: { 'X-Session-Token': token || '' },
           });
           if (devRes.ok) {
             const devData = await devRes.json();
@@ -649,7 +644,6 @@ export default function DashboardPage() {
             <ContactNetwork
               logs={allBackendLogs}
               token={token}
-              role={role}
               onSelectContact={handleSelectContact}
             />
           </div>
