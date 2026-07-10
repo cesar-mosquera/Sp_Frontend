@@ -1,6 +1,6 @@
 import { describe, it, expect, vi, beforeAll, beforeEach, afterEach } from 'vitest';
-import { render, screen, waitFor } from '@testing-library/react';
-import { MemoryRouter } from 'react-router-dom';
+import { render, screen, waitFor, fireEvent } from '@testing-library/react';
+import { MemoryRouter, Routes, Route } from 'react-router-dom';
 import DashboardPage from '../pages/DashboardPage';
 import { SSEProvider } from '../contexts/SSEProvider';
 import { useAuthStore } from '../store';
@@ -86,4 +86,30 @@ describe('DashboardPage: flujo de datos', () => {
       { timeout: 6000 }
     );
   }, 8000);
+
+  it('tiene una barra de navegacion consistente con Seleccion y Admin (Canales/Dashboard/Admin)', async () => {
+    (fetch as ReturnType<typeof vi.fn>).mockImplementation(() =>
+      Promise.resolve(new Response(JSON.stringify({ stats: { total_operations: 1 }, logs: [], devices: [] }), { status: 200 }))
+    );
+
+    render(
+      <MemoryRouter initialEntries={['/dashboard']}>
+        <SSEProvider>
+          <Routes>
+            <Route path="/seleccion" element={<div>Pantalla de Seleccion</div>} />
+            <Route path="/admin" element={<div>Pantalla de Admin</div>} />
+            <Route path="/dashboard" element={<DashboardPage />} />
+          </Routes>
+        </SSEProvider>
+      </MemoryRouter>
+    );
+
+    await waitFor(() => expect(screen.getByText('CONECTADO')).toBeInTheDocument());
+
+    expect(screen.getByRole('button', { name: /Canales/i })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: /Admin/i })).toBeInTheDocument();
+
+    fireEvent.click(screen.getByRole('button', { name: /Admin/i }));
+    expect(await screen.findByText('Pantalla de Admin')).toBeInTheDocument();
+  });
 });

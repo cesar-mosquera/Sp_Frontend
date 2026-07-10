@@ -8,7 +8,7 @@ import LogEntryRow from '../components/LogEntryRow';
 import { LogMsg, BackendLog, DeviceInfo } from '../types/dashboard';
 import { LOG_MESSAGES, formatTime } from '../utils/mockData';
 
-import { Link, useSearchParams } from 'react-router-dom';
+import { Link, useNavigate, useSearchParams } from 'react-router-dom';
 import { API_BASE_URL, DASHBOARD_KEY, APP_PAGE_MAP } from '../config';
 import { useAuthStore } from '../store';
 import { useSSEEvents } from '../contexts/SSEProvider';
@@ -20,6 +20,7 @@ const DeviceMap = React.lazy(() => import('../components/DeviceMap'));
 import '../styles/dashboard.css';
 
 export default function DashboardPage() {
+  const navigate = useNavigate();
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const [searchParams] = useSearchParams();
   const selectedApp = searchParams.get('app');
@@ -890,7 +891,20 @@ export default function DashboardPage() {
         />
       )}
 
-      
+      <div className="tab-bar">
+        <button className="tab-item" onClick={() => navigate('/seleccion')}>
+          <span className="tab-icon">🛡</span>
+          Canales
+        </button>
+        <button className="tab-item active" onClick={() => navigate('/dashboard')}>
+          <span className="tab-icon">👁️</span>
+          Dashboard
+        </button>
+        <button className="tab-item" onClick={() => navigate('/admin')}>
+          <span className="tab-icon">⚙️</span>
+          Admin
+        </button>
+      </div>
     </>
   );
 }

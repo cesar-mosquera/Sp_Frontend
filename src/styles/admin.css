@@ -11,7 +11,7 @@
   --text-secondary: #a580c7;
 }
 
-html, body { height: 100%; overflow: hidden; }
+html, body { height: 100%; }
 
 body {
   height: 100%;
@@ -50,6 +50,53 @@ body { scrollbar-width: none; }
 }
 
 .status-bar .time { font-family: 'Orbitron', sans-serif; font-weight: 600; color: #fff; }
+
+.tab-bar {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  z-index: 80;
+  background: linear-gradient(0deg, rgba(10,0,20,0.97) 0%, rgba(10,0,20,0.6) 80%, transparent 100%);
+  padding: 8px env(safe-area-inset-bottom) env(safe-area-inset-bottom);
+  display: flex;
+  justify-content: space-around;
+  align-items: center;
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+}
+
+.tab-item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+  padding: 4px 16px;
+  border: none;
+  background: none;
+  color: rgba(255,255,255,0.25);
+  font-family: 'Outfit', sans-serif;
+  font-size: 0.55rem;
+  font-weight: 500;
+  letter-spacing: 0.3px;
+  cursor: pointer;
+  transition: color 0.2s ease;
+  touch-action: manipulation;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.tab-item.active {
+  color: var(--neon-cyan, #00f0ff);
+}
+
+.tab-item .tab-icon {
+  font-size: 1.2rem;
+  line-height: 1;
+}
+
+.tab-item:active {
+  opacity: 0.6;
+}
 
 .admin-header {
   display: flex; justify-content: space-between; align-items: center;
