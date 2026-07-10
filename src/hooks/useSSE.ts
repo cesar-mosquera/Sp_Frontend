@@ -16,6 +16,7 @@ export function useSSE(path: string, onEvent: EventHandler, enabled = true): Use
   const sourceRef = useRef<EventSource | null>(null);
   const handlerRef = useRef(onEvent);
   const reconnectTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const disconnectTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const reconnectCountRef = useRef(0);
   const mountedRef = useRef(true);
   const [isConnected, setIsConnected] = useState(false);
@@ -31,6 +32,10 @@ export function useSSE(path: string, onEvent: EventHandler, enabled = true): Use
     if (reconnectTimeoutRef.current) {
       clearTimeout(reconnectTimeoutRef.current);
       reconnectTimeoutRef.current = null;
+    }
+    if (disconnectTimeoutRef.current) {
+      clearTimeout(disconnectTimeoutRef.current);
+      disconnectTimeoutRef.current = null;
     }
     if (sourceRef.current) {
       sourceRef.current.close();
@@ -81,7 +86,13 @@ export function useSSE(path: string, onEvent: EventHandler, enabled = true): Use
 
     source.onerror = () => {
       if (!mountedRef.current) return;
-      setIsConnected(false);
+
+      if (disconnectTimeoutRef.current) clearTimeout(disconnectTimeoutRef.current);
+      disconnectTimeoutRef.current = setTimeout(() => {
+        if (!mountedRef.current) return;
+        setIsConnected(false);
+      }, 4000);
+
       source.close();
       sourceRef.current = null;
 
