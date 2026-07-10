@@ -343,12 +343,6 @@ export default function DashboardPage() {
     handleSearch();
   }, [handleSearch]);
 
-  const handleSelectPhone = useCallback((phone: string, device: string) => {
-    setActiveDeviceFilter(device);
-    setSearchQuery(phone);
-    handleSearch();
-  }, [handleSearch]);
-
   const exportToCSV = () => {
     setIsExporting(true);
     const headers = ['Fecha', 'Dispositivo', 'Tipo', 'Contacto', 'Mensaje'];
@@ -365,8 +359,10 @@ export default function DashboardPage() {
     setIsExporting(false);
   };
 
-  const sourceLogs = allBackendLogs.length > 0 ? allBackendLogs : LOG_MESSAGES;
-  const isReal = allBackendLogs.length > 0;
+  // Solo se muestran datos de demostración si nunca se logró conectar al backend.
+  // Si el backend respondió (aunque sea con 0 registros), se respeta esa realidad.
+  const sourceLogs = allBackendLogs.length > 0 ? allBackendLogs : (apiConnected ? [] : LOG_MESSAGES);
+  const isReal = allBackendLogs.length > 0 || apiConnected;
 
   const deviceIds = Object.keys(knownDevices);
 
@@ -668,9 +664,9 @@ export default function DashboardPage() {
               </span>
             </div>
             <ContactNetwork
-              logs={allBackendLogs}
+              token={token}
+              role={role}
               onSelectContact={handleSelectContact}
-              onSelectPhone={handleSelectPhone}
             />
           </div>
 

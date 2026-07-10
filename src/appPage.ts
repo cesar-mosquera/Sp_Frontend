@@ -60,10 +60,9 @@ export function extractAppValue(entry: BackendLog): string {
 export function matchesApp(entry: BackendLog, config: AppPageConfig): boolean {
   const appValue = extractAppValue(entry);
   const typeValue = normalize(entry.type || '');
-  const textValue = normalize(entry.msg || entry.content || entry.message || '');
   const validKeys = [config.appKey, ...(config.matchKeys || [])];
   return validKeys.some(key =>
-    appValue === key || appValue.includes(key) || typeValue.includes(key) || textValue.includes(key)
+    appValue === key || appValue.includes(key) || typeValue === key || typeValue.includes(key)
   );
 }
 

@@ -90,30 +90,6 @@ function DeviceMap({ logs }: Props) {
       }
     });
 
-    // Si no hay ubicaciones reales, proveemos un fallback dummy basado en los dispositivos activos 
-    // para propósitos de demostración en el dashboard
-    if (locs.length === 0) {
-      const mockLocations = [
-        { lat: 19.4326, lng: -99.1332, name: 'CDMX' },
-        { lat: 40.7128, lng: -74.0060, name: 'NY' },
-        { lat: 48.8566, lng: 2.3522, name: 'Paris' },
-        { lat: 4.7110, lng: -74.0721, name: 'Bogota' }
-      ];
-      
-      const uniqueDevices = Array.from(new Set(logs.map(l => l.device_id).filter(Boolean)));
-      
-      uniqueDevices.slice(0, 4).forEach((dev, idx) => {
-        const mock = mockLocations[idx % mockLocations.length];
-        locs.push({
-          id: `mock-${idx}`,
-          lat: mock.lat + (Math.random() * 0.1 - 0.05), // Añadir variación
-          lng: mock.lng + (Math.random() * 0.1 - 0.05),
-          device: dev as string,
-          time: 'Última conexión'
-        });
-      });
-    }
-
     setLocations(locs);
   }, [logs]);
 

@@ -56,6 +56,7 @@ export default function AppPage({ appKey }: Props) {
     setIsLoading(true);
     setConnectionError(null);
     let logs: BackendLog[] = [];
+    let connectedOk = false;
 
     try {
       const controller = new AbortController();
@@ -76,6 +77,7 @@ export default function AppPage({ appKey }: Props) {
       clearTimeout(timeoutId);
 
       if (response.ok) {
+        connectedOk = true;
         setApiConnected(true);
         const json = await response.json();
         // Actualizar total count si está disponible
@@ -100,8 +102,15 @@ export default function AppPage({ appKey }: Props) {
     }
 
     if (logs.length === 0 && skip === 0) {
-      setData(fallbackSample);
-      setRawData([]);
+      // Solo mostrar datos de ejemplo si de verdad no se pudo conectar al backend.
+      // Si el backend respondió (aunque sea sin resultados), se respeta esa realidad.
+      if (connectedOk) {
+        setData([]);
+        setRawData([]);
+      } else {
+        setData(fallbackSample);
+        setRawData([]);
+      }
     } else if (logs.length > 0) {
       const MAX_ACCUMULATED = 2000;
       if (skip > 0) {
