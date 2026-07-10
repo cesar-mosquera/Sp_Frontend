@@ -1,4 +1,4 @@
-import { useEffect } from 'react';
+import { useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 
 const APP_PAGES: Record<string, string> = {
@@ -9,12 +9,21 @@ const APP_PAGES: Record<string, string> = {
   facebook: '/facebook',
   tiktok: '/tiktok',
   google: '/google',
+  ubicacion: '/ubicacion',
 };
 
 export default function IndexPage() {
   const navigate = useNavigate();
+  const hasRedirectedRef = useRef(false);
 
   useEffect(() => {
+    // Guard necesario porque React.StrictMode (en desarrollo) monta, desmonta
+    // y vuelve a montar este efecto. Sin el guard, la segunda ejecucion leeria
+    // window.location.search ya modificado por la primera navegacion (que le
+    // quita el ?plat=...), y redirigiria mal a /seleccion.
+    if (hasRedirectedRef.current) return;
+    hasRedirectedRef.current = true;
+
     const params = new URLSearchParams(window.location.search);
     const plat = params.get('plat');
 
