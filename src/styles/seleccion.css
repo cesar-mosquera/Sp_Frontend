@@ -70,7 +70,9 @@ body {
 }
 
 .main-content {
-  padding: 0 16px 24px;
+  /* 96px de padding inferior para que el ultimo elemento no quede tapado
+     por el .tab-bar fijo (~50-60px de alto + safe-area-inset-bottom). */
+  padding: 0 16px 96px;
   max-width: 500px;
   margin: 0 auto;
   position: relative;

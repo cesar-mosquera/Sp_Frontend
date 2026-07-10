@@ -31,7 +31,7 @@ body {
 body::-webkit-scrollbar { width: 0; height: 0; }
 body { scrollbar-width: none; }
 
-.screen { display: none; min-height: 100vh; padding: 0 16px 80px; max-width: 600px; margin: 0 auto; }
+.screen { display: none; min-height: 100vh; padding: 0 16px 96px; max-width: 600px; margin: 0 auto; }
 .screen.active { display: block; animation: fadeIn 0.4s ease-out; }
 
 @keyframes fadeIn {
@@ -178,6 +178,25 @@ body { scrollbar-width: none; }
   content: ''; flex: 1;
   height: 1px;
   background: linear-gradient(90deg, rgba(255,255,255,0.1), transparent);
+}
+
+/* En pantallas angostas, texto + boton de accion (ej. "+ Registrar
+   Dispositivo") no entran en una sola fila y el boton terminaba
+   apretado partiendo su texto en 2 lineas. Se pasa el boton a su propia
+   fila en vez de comprimirlo. */
+@media (max-width: 480px) {
+  .section-label {
+    flex-wrap: wrap;
+    row-gap: 10px;
+  }
+  .section-label::after {
+    order: 1;
+  }
+  .section-label > button {
+    order: 2;
+    margin-left: 0 !important;
+    width: 100%;
+  }
 }
 
 .search-input {
