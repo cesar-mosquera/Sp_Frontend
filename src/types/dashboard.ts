@@ -28,6 +28,7 @@ export interface BackendLog {
   sender?: string;
   contact?: string;
   time?: string;
+  direction?: string;
 }
 
 export interface DeviceInfo {

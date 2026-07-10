@@ -64,13 +64,13 @@ export default function ContactNetwork({ logs, token, onSelectContact }: Props) 
   if (useFallback) {
     const contacts = new Map<string, { name: string; device: string; incoming: number; outgoing: number; lastSeen: string }>();
     for (const log of logs) {
-      const dir = (log as any).direction;
+      const dir = (log.direction || '').toLowerCase();
       const contact = log.contact?.trim() || log.sender?.trim() || '';
       if (!contact || log.type === 'HEARTBEAT' || log.type === 'LOCATION') continue;
       const key = `${log.device_id}::${contact}`;
       if (!contacts.has(key)) contacts.set(key, { name: contact, device: log.device_id || '', incoming: 0, outgoing: 0, lastSeen: log.timestamp || '' });
       const e = contacts.get(key)!;
-      if (dir === 'OUT') e.outgoing++; else e.incoming++;
+      if (dir === 'out' || dir === 'outgoing' || dir === 'saliente') e.outgoing++; else e.incoming++;
       if ((log.timestamp || '') > e.lastSeen) e.lastSeen = log.timestamp || '';
     }
     const fallbackList = Array.from(contacts.values()).sort((a, b) => (b.incoming + b.outgoing) - (a.incoming + a.outgoing));

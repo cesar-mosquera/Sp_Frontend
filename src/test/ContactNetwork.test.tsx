@@ -50,4 +50,20 @@ describe('ContactNetwork', () => {
 
     await waitFor(() => expect(screen.getByText('Juan')).toBeInTheDocument());
   });
+
+  it('en modo degradado cuenta como saliente un direction en minuscula ("out"), no solo "OUT"', async () => {
+    (fetch as ReturnType<typeof vi.fn>).mockRejectedValue(new TypeError('Failed to fetch'));
+    const logsWithLowercaseDirection: BackendLog[] = [
+      { id: '1', device_id: 'device-1', contact: 'Pedro', type: 'WHATSAPP', timestamp: '2026-07-09T10:00:00', direction: 'out' } as BackendLog,
+    ];
+
+    render(<ContactNetwork logs={logsWithLowercaseDirection} token="tok" onSelectContact={() => {}} />);
+
+    await waitFor(() => expect(screen.getByText('Pedro')).toBeInTheDocument());
+    // Regresion: antes se comparaba con === 'OUT' en mayusculas exactas, asi
+    // que un backend que manda "out" en minuscula quedaba mal contado como
+    // entrante (▼1 ▲0) en vez de saliente (▼0 ▲1).
+    expect(screen.getByText('▲1')).toBeInTheDocument();
+    expect(screen.getByText('▼0')).toBeInTheDocument();
+  });
 });
