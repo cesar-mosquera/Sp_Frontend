@@ -1,6 +1,7 @@
-import { type ReactNode } from 'react';
-import { Navigate, useLocation } from 'react-router-dom';
+import { type ReactNode, useEffect, useState } from 'react';
+import { useLocation } from 'react-router-dom';
 import { useAuthStore } from '../store';
+import { API_BASE_URL } from '../config';
 import Login from './Login';
 
 interface Props {
@@ -9,11 +10,37 @@ interface Props {
 
 export default function ProtectedRoute({ children }: Props) {
   const isAuthenticated = useAuthStore(s => s.isAuthenticated);
+  const token = useAuthStore(s => s.token);
   const role = useAuthStore(s => s.role);
+  const logout = useAuthStore(s => s.logout);
   const location = useLocation();
+  const [checking, setChecking] = useState(isAuthenticated && !!token);
+
+  useEffect(() => {
+    if (!token) return;
+    let cancelled = false;
+    const controller = new AbortController();
+    const timer = setTimeout(() => controller.abort(), 8000);
+    fetch(`${API_BASE_URL}/api/session`, {
+      signal: controller.signal,
+      headers: { 'X-Session-Token': token },
+    })
+      .then(r => { if (!cancelled && r.status === 401) logout(); })
+      .catch(e => { console.warn('No se pudo verificar la sesión (se mantiene la sesión local):', e); })
+      .finally(() => { if (!cancelled) { clearTimeout(timer); setChecking(false); } });
+    return () => { cancelled = true; controller.abort(); };
+  }, []);
 
   if (!isAuthenticated) {
     return <Login />;
+  }
+
+  if (checking) {
+    return (
+      <div style={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', background: '#0a0014', color: '#a580c7', fontFamily: 'monospace' }}>
+        Verificando sesión...
+      </div>
+    );
   }
 
   // Block non-admins from accessing /admin

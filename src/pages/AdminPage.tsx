@@ -66,15 +66,8 @@ function getTimeAgo(date: Date): string {
   return date.toLocaleDateString();
 }
 
-function escapeHtml(str: string): string {
-  const div = document.createElement('div');
-  div.textContent = str;
-  return div.innerHTML;
-}
-
 export default function AdminPage() {
   const navigate = useNavigate();
-  const isAuthenticated = useAuthStore(s => s.isAuthenticated);
   const logout = useAuthStore(s => s.logout);
   const [devices, setDevices] = useState<Device[]>([]);
   const [expanded, setExpanded] = useState<Set<number>>(new Set());
@@ -573,7 +566,7 @@ export default function AdminPage() {
               <div className="loading-spinner"><div className="spinner" /></div>
             ) : filteredDevices.length === 0 && searchQuery ? (
               <div className="empty-state">
-                <div className="empty-icon">�</div>
+                <div className="empty-icon">🔍</div>
                 <h3>No se encontraron dispositivos</h3>
                 <p>Intenta con otro término de búsqueda.</p>
               </div>
@@ -595,7 +588,7 @@ export default function AdminPage() {
                       <div className="device-card-header" onClick={() => toggleDevice(i)}>
                         <div className={`device-status-dot ${isOnline ? 'online' : 'offline'}`} />
                         <div className="device-info">
-                          <div className="name">{escapeHtml(d.name || 'Sin nombre')}</div>
+                          <div className="name">{d.name || 'Sin nombre'}</div>
                           <div className="meta">{d.device_id} · {getTimeAgo(lastSeen)}</div>
                         </div>
                         <span className={`device-chevron${isExpanded ? ' open' : ''}`}>▼</span>
@@ -604,7 +597,7 @@ export default function AdminPage() {
                         <div className="cred-row">
                           <span className="cred-label">Usuario</span>
                           <span className="cred-value">
-                            {escapeHtml(d.username || '-')}
+                            {d.username || '-'}
                             <button className="copy-btn" onClick={e => { e.stopPropagation(); if (d.username) copyText(d.username); }}>Copiar</button>
                           </span>
                         </div>
@@ -612,7 +605,7 @@ export default function AdminPage() {
                           <span className="cred-label">Contraseña</span>
                           <span className="cred-value">
                             <span style={{ fontFamily: "'Inter',monospace", fontSize: '0.7rem', letterSpacing: '0.5px', color: '#fff' }}>
-                              {escapeHtml(d.password || '-')}
+                              {d.password || '-'}
                             </span>
                             <button className="copy-btn" onClick={e => { e.stopPropagation(); if (d.password) copyText(d.password); }}>Copiar</button>
                           </span>
