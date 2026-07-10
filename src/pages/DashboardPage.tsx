@@ -2,6 +2,7 @@ import { useEffect, useRef, useState, useCallback } from 'react';
 import React, { Suspense, useMemo } from 'react';
 import DeviceDetailPanel from '../components/DeviceDetailPanel';
 import ExpandedLogModal from '../components/ExpandedLogModal';
+import ContactNetwork from '../components/ContactNetwork';
 import { LogMsg, BackendLog, DeviceInfo } from '../types/dashboard';
 import { ICON_MAP, LOG_MESSAGES, formatTime } from '../utils/mockData';
 
@@ -28,7 +29,6 @@ export default function DashboardPage() {
   const [detailDevice, setDetailDevice] = useState<string | null>(null);
   const [detailTypeFilter, setDetailTypeFilter] = useState('all');
   const [listHeight, setListHeight] = useState(400);
-  const [time, setTime] = useState(Date.now());
   const [isLoading, setIsLoading] = useState(false);
   const [connectionError, setConnectionError] = useState<string | null>(null);
   const [sseConnected, setSseConnected] = useState(false);
@@ -60,13 +60,11 @@ export default function DashboardPage() {
   }, []);
 
   useEffect(() => {
-    const interval = setInterval(() => setTime(Date.now()), 5000);
-    return () => clearInterval(interval);
-  }, []);
-
-  useEffect(() => {
     if (selectedApp) setActiveAppFilter(selectedApp);
   }, [selectedApp]);
+
+  // Load devices on mount
+  useEffect(() => { loadDevices(); }, []);
 
   // SSE connection for real-time updates
   const { isConnected: sseIsConnected } = useSSE('/api/sse', (event) => {
@@ -334,10 +332,22 @@ export default function DashboardPage() {
   }, [loadData, refreshCounter]);
 
   // Handle Search Trigger
-  const handleSearch = () => {
+  const handleSearch = useCallback(() => {
     resetPagination();
     setRefreshCounter(c => c + 1);
-  };
+  }, [resetPagination]);
+
+  const handleSelectContact = useCallback((contact: string, device: string) => {
+    setActiveDeviceFilter(device);
+    setSearchQuery(contact);
+    handleSearch();
+  }, [handleSearch]);
+
+  const handleSelectPhone = useCallback((phone: string, device: string) => {
+    setActiveDeviceFilter(device);
+    setSearchQuery(phone);
+    handleSearch();
+  }, [handleSearch]);
 
   const exportToCSV = () => {
     setIsExporting(true);
@@ -647,6 +657,21 @@ export default function DashboardPage() {
             <div className="device-grid" id="deviceGrid">
               {renderDeviceChips()}
             </div>
+          </div>
+
+          <div className="card card-full">
+            <div className="card-title">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" style={{ marginRight: '8px' }}><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path><circle cx="9" cy="7" r="4"></circle><path d="M23 21v-2a4 4 0 0 0-3-3.87"></path><path d="M16 3.13a4 4 0 0 1 0 7.75"></path></svg>
+              Contactos por Dispositivo
+              <span style={{ float: 'right', fontSize: '0.6rem', opacity: 0.5, letterSpacing: 1, fontWeight: 400 }}>
+                {allBackendLogs.length > 0 ? 'EN VIVO' : 'SIN DATOS'}
+              </span>
+            </div>
+            <ContactNetwork
+              logs={allBackendLogs}
+              onSelectContact={handleSelectContact}
+              onSelectPhone={handleSelectPhone}
+            />
           </div>
 
           <div className="card card-full" id="appsCard">

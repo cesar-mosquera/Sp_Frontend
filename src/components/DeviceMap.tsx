@@ -52,7 +52,7 @@ function ChangeView({ markers }: { markers: LocationData[] }) {
   return null;
 }
 
-export default function DeviceMap({ logs }: Props) {
+function DeviceMap({ logs }: Props) {
   const [locations, setLocations] = useState<LocationData[]>([]);
 
   useEffect(() => {
@@ -158,3 +158,5 @@ export default function DeviceMap({ logs }: Props) {
     </div>
   );
 }
+
+export default React.memo(DeviceMap);

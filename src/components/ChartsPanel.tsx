@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useMemo } from 'react';
 import {
   BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip as RechartsTooltip, ResponsiveContainer,
   PieChart, Pie, Cell, Legend
@@ -15,35 +15,35 @@ interface Props {
 
 const COLORS = ['#00f0ff', '#ff0033', '#00ff88', '#b300ff', '#ffcc00', '#ff00aa'];
 
-export default function ChartsPanel({ logs }: Props) {
-  // Aggregate data for PieChart (by App Type)
-  const appCounts: Record<string, number> = {};
-  logs.forEach(log => {
-    const t = (log.type || 'GENERAL').toUpperCase();
-    appCounts[t] = (appCounts[t] || 0) + 1;
-  });
+function ChartsPanel({ logs }: Props) {
+  const pieData = useMemo(() => {
+    const appCounts: Record<string, number> = {};
+    logs.forEach(log => {
+      const t = (log.type || 'GENERAL').toUpperCase();
+      appCounts[t] = (appCounts[t] || 0) + 1;
+    });
+    return Object.keys(appCounts)
+      .map(key => ({ name: key, value: appCounts[key] }))
+      .sort((a, b) => b.value - a.value)
+      .slice(0, 6); // Top 6 apps
+  }, [logs]);
 
-  const pieData = Object.keys(appCounts)
-    .map(key => ({ name: key, value: appCounts[key] }))
-    .sort((a, b) => b.value - a.value)
-    .slice(0, 6); // Top 6 apps
-
-  // Aggregate data for BarChart (by Day)
-  const dateCounts: Record<string, number> = {};
-  logs.forEach(log => {
-    if (log.timestamp) {
-      const date = log.timestamp.split('T')[0]; // YYYY-MM-DD
-      dateCounts[date] = (dateCounts[date] || 0) + 1;
-    }
-  });
-
-  const barData = Object.keys(dateCounts)
-    .sort()
-    .slice(-7) // Last 7 days
-    .map(date => ({
-      date: date.substring(5), // MM-DD
-      operaciones: dateCounts[date],
-    }));
+  const barData = useMemo(() => {
+    const dateCounts: Record<string, number> = {};
+    logs.forEach(log => {
+      if (log.timestamp) {
+        const date = log.timestamp.split('T')[0]; // YYYY-MM-DD
+        dateCounts[date] = (dateCounts[date] || 0) + 1;
+      }
+    });
+    return Object.keys(dateCounts)
+      .sort()
+      .slice(-7) // Last 7 days
+      .map(date => ({
+        date: date.substring(5), // MM-DD
+        operaciones: dateCounts[date],
+      }));
+  }, [logs]);
 
   return (
     <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))', gap: '24px', padding: '16px' }}>
@@ -111,3 +111,5 @@ export default function ChartsPanel({ logs }: Props) {
     </div>
   );
 }
+
+export default React.memo(ChartsPanel);
