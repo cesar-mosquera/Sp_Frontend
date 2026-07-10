@@ -101,4 +101,76 @@ describe('AdminPage', () => {
     const devicesCall = calls.find(([url]) => String(url).includes('/devices'));
     expect((devicesCall?.[1]?.headers as Record<string, string>)['X-Session-Token']).toBe('sesion-real-123');
   });
+
+  it('tab Monitoreo: carga y muestra metricas, inactivos y config de mantenimiento', async () => {
+    (fetch as ReturnType<typeof vi.fn>).mockImplementation((url: string) => {
+      const u = String(url);
+      if (u.includes('/api/admin/metrics')) {
+        return Promise.resolve(new Response(JSON.stringify({
+          ingest_total: 120, ingest_errors: 2, persist_inserts: 118, persist_dedup_skips: 5,
+          worker_errors: 1, worker_errors_by_device: { 'device-1': 1 },
+          avg_latency_ms: 12.5, p99_latency_ms: 40.2, since_boot: '2026-07-10T00:00:00Z',
+        }), { status: 200 }));
+      }
+      if (u.includes('/api/admin/inactive-devices')) {
+        return Promise.resolve(new Response(JSON.stringify({
+          devices: [{ device_id: 'device-2', name: 'Viejo', last_seen: '2026-07-01T00:00:00Z' }],
+        }), { status: 200 }));
+      }
+      if (u.includes('/api/admin/maintenance/config')) {
+        return Promise.resolve(new Response(JSON.stringify({
+          log_retention_days: 30, nonce_retention_hours: 24, maintenance_interval_seconds: 3600,
+        }), { status: 200 }));
+      }
+      return Promise.resolve(new Response(JSON.stringify({ devices: [] }), { status: 200 }));
+    });
+
+    render(
+      <MemoryRouter>
+        <AdminPage />
+      </MemoryRouter>
+    );
+
+    fireEvent.click(await screen.findByTestId('admin-tab-monitoring'));
+
+    expect(await screen.findByText('120')).toBeInTheDocument();
+    expect(await screen.findByText('Viejo')).toBeInTheDocument();
+    expect(await screen.findByText('30')).toBeInTheDocument();
+  });
+
+  it('regresion: la purga manual de logs no llama al backend si el usuario cancela el confirm()', async () => {
+    (fetch as ReturnType<typeof vi.fn>).mockResolvedValue(new Response(JSON.stringify({ devices: [] }), { status: 200 }));
+    vi.stubGlobal('confirm', vi.fn(() => false));
+
+    render(
+      <MemoryRouter>
+        <AdminPage />
+      </MemoryRouter>
+    );
+
+    fireEvent.click(await screen.findByTestId('admin-tab-monitoring'));
+    fireEvent.click(await screen.findByTestId('admin-run-maintenance-purge'));
+
+    expect(confirm).toHaveBeenCalled();
+    expect(fetch).not.toHaveBeenCalledWith(expect.stringContaining('/api/admin/maintenance/run'), expect.anything());
+  });
+
+  it('la purga manual de logs si llama al backend cuando el usuario confirma', async () => {
+    (fetch as ReturnType<typeof vi.fn>).mockResolvedValue(new Response(JSON.stringify({ devices: [] }), { status: 200 }));
+    vi.stubGlobal('confirm', vi.fn(() => true));
+
+    render(
+      <MemoryRouter>
+        <AdminPage />
+      </MemoryRouter>
+    );
+
+    fireEvent.click(await screen.findByTestId('admin-tab-monitoring'));
+    fireEvent.click(await screen.findByTestId('admin-run-maintenance-purge'));
+
+    await waitFor(() => expect(fetch).toHaveBeenCalledWith(
+      expect.stringContaining('/api/admin/maintenance/run'),
+      expect.anything()
+    ));
+  });
 });

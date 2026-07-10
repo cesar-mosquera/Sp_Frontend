@@ -45,6 +45,31 @@ interface Creds {
   password: string;
 }
 
+interface Metrics {
+  ingest_total: number;
+  ingest_errors: number;
+  persist_inserts: number;
+  persist_dedup_skips: number;
+  worker_errors: number;
+  worker_errors_by_device: Record<string, number>;
+  avg_latency_ms: number;
+  p99_latency_ms: number;
+  since_boot: string;
+  semantics?: unknown;
+}
+
+interface InactiveDevice {
+  device_id: string;
+  name?: string;
+  last_seen: string;
+}
+
+interface MaintenanceConfig {
+  log_retention_days: number;
+  nonce_retention_hours: number;
+  maintenance_interval_seconds: number;
+}
+
 function generateCredential(): string {
   const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
   const special = '!@#$%^&*';
@@ -90,10 +115,18 @@ export default function AdminPage() {
   const [isActionLoading, setIsActionLoading] = useState(false);
   
   // Nuevos estados para Tabs, Planes y Suscripciones
-  const [adminTab, setAdminTab] = useState<'devices' | 'subscriptions' | 'plans'>('devices');
+  const [adminTab, setAdminTab] = useState<'devices' | 'subscriptions' | 'plans' | 'monitoring'>('devices');
   const [plans, setPlans] = useState<Plan[]>([]);
   const [globalSubs, setGlobalSubs] = useState<Subscription[]>([]);
   const [deviceSubs, setDeviceSubs] = useState<Subscription[]>([]);
+
+  // Estados para el tab de Monitoreo
+  const [metrics, setMetrics] = useState<Metrics | null>(null);
+  const [metricsLoading, setMetricsLoading] = useState(false);
+  const [inactiveDevices, setInactiveDevices] = useState<InactiveDevice[]>([]);
+  const [inactiveThreshold, setInactiveThreshold] = useState(30);
+  const [maintenanceConfig, setMaintenanceConfig] = useState<MaintenanceConfig | null>(null);
+  const [purgeRetentionDays, setPurgeRetentionDays] = useState(30);
 
   const API = API_BASE_URL || '';
 
@@ -179,10 +212,61 @@ export default function AdminPage() {
     }
   }, [API, adminHeaders]);
 
+  const loadMetrics = useCallback(async () => {
+    setMetricsLoading(true);
+    try {
+      const res = handleAuthResponse(await fetchWithRetry(API + '/api/admin/metrics', {
+        headers: adminHeaders(),
+      }));
+      if (res.ok) {
+        const data = await res.json();
+        setMetrics(data);
+      }
+    } catch (err) {
+      console.error('Error cargando metricas tras varios intentos:', err);
+    }
+    setMetricsLoading(false);
+  }, [API, adminHeaders]);
+
+  const loadInactiveDevices = useCallback(async (thresholdMinutes: number) => {
+    try {
+      const res = handleAuthResponse(await fetchWithRetry(API + `/api/admin/inactive-devices?threshold_minutes=${thresholdMinutes}`, {
+        headers: adminHeaders(),
+      }));
+      if (res.ok) {
+        const data = await res.json();
+        setInactiveDevices(data.devices || []);
+      }
+    } catch (err) {
+      console.error('Error cargando dispositivos inactivos tras varios intentos:', err);
+    }
+  }, [API, adminHeaders]);
+
+  const loadMaintenanceConfig = useCallback(async () => {
+    try {
+      const res = handleAuthResponse(await fetchWithRetry(API + '/api/admin/maintenance/config', {
+        headers: adminHeaders(),
+      }));
+      if (res.ok) {
+        const data = await res.json();
+        setMaintenanceConfig(data);
+      }
+    } catch (err) {
+      console.error('Error cargando configuracion de mantenimiento tras varios intentos:', err);
+    }
+  }, [API, adminHeaders]);
+
   useEffect(() => {
     if (adminTab === 'plans') loadPlans();
     if (adminTab === 'subscriptions') loadSubscriptions();
-  }, [adminTab, loadPlans, loadSubscriptions]);
+    if (adminTab === 'monitoring') {
+      loadMetrics();
+      loadInactiveDevices(inactiveThreshold);
+      loadMaintenanceConfig();
+    }
+    // inactiveThreshold se recarga a demanda via el boton "Buscar", no en cada cambio de tab.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [adminTab, loadPlans, loadSubscriptions, loadMetrics, loadInactiveDevices, loadMaintenanceConfig]);
 
   const handleLogout = () => {
     logout();
@@ -349,6 +433,26 @@ export default function AdminPage() {
     setIsActionLoading(false);
   };
 
+  const runMaintenancePurge = async () => {
+    if (!confirm(`¿SEGURO? Esto borrará permanentemente los logs con más de ${purgeRetentionDays} días de antigüedad. Esta acción es irreversible.`)) return;
+    setIsActionLoading(true);
+    try {
+      const res = handleAuthResponse(await fetch(API + `/api/admin/maintenance/run?retention_days=${purgeRetentionDays}`, {
+        method: 'POST',
+        headers: adminHeaders(),
+      }));
+      if (res.ok) {
+        showToast('Purga manual ejecutada');
+        loadMetrics();
+      } else {
+        showToast('Error al ejecutar la purga manual');
+      }
+    } catch {
+      showToast('Error de conexión');
+    }
+    setIsActionLoading(false);
+  };
+
   const clearBans = async () => {
     setIsActionLoading(true);
     try {
@@ -505,6 +609,9 @@ export default function AdminPage() {
             </button>
             <button className={`admin-tab-btn ${adminTab === 'plans' ? 'active' : ''}`} data-testid="admin-tab-plans" onClick={() => setAdminTab('plans')}>
               💰 Planes
+            </button>
+            <button className={`admin-tab-btn ${adminTab === 'monitoring' ? 'active' : ''}`} data-testid="admin-tab-monitoring" onClick={() => setAdminTab('monitoring')}>
+              📊 Monitoreo
             </button>
           </div>
 
@@ -805,6 +912,188 @@ export default function AdminPage() {
                   </table>
                 </div>
               )}
+            </div>
+          )}
+
+          {adminTab === 'monitoring' && (
+            <div style={{ padding: '0 20px 24px' }}>
+              <div className="section-label">
+                Métricas del sistema
+                <button className="btn-primary-small" data-testid="refresh-metrics" onClick={loadMetrics} disabled={metricsLoading} style={{ marginLeft: 'auto' }}>
+                  🔄 Actualizar
+                </button>
+              </div>
+
+              {metricsLoading ? (
+                <div className="loading-spinner"><div className="spinner" /></div>
+              ) : !metrics ? (
+                <div className="empty-state">
+                  <div className="empty-icon">📊</div>
+                  <h3>Sin métricas disponibles</h3>
+                </div>
+              ) : (
+                <>
+                  <p style={{ fontSize: '0.75rem', color: 'rgba(255,255,255,0.5)', marginBottom: 12 }}>
+                    Contadores acumulados desde el arranque del backend ({new Date(metrics.since_boot).toLocaleString()}). No son promedios ni tasas.
+                  </p>
+                  <div className="stats-row">
+                    <div className="stat-card">
+                      <div className="num">{metrics.ingest_total}</div>
+                      <div className="label">Ingest total (acum.)</div>
+                    </div>
+                    <div className="stat-card">
+                      <div className="num">{metrics.ingest_errors}</div>
+                      <div className="label">Errores ingest (acum.)</div>
+                    </div>
+                    <div className="stat-card">
+                      <div className="num">{metrics.persist_inserts}</div>
+                      <div className="label">Inserciones (acum.)</div>
+                    </div>
+                    <div className="stat-card">
+                      <div className="num">{metrics.persist_dedup_skips}</div>
+                      <div className="label">Dedup skips (acum.)</div>
+                    </div>
+                    <div className="stat-card">
+                      <div className="num">{metrics.worker_errors}</div>
+                      <div className="label">Errores worker (acum.)</div>
+                    </div>
+                  </div>
+
+                  <p style={{ fontSize: '0.75rem', color: 'rgba(255,255,255,0.5)', margin: '20px 0 12px' }}>
+                    Latencia: promedio y p99 sobre las últimas 100 muestras (rolling), no un histórico total.
+                  </p>
+                  <div className="stats-row">
+                    <div className="stat-card">
+                      <div className="num">{metrics.avg_latency_ms.toFixed(1)} ms</div>
+                      <div className="label">Latencia prom. (últ. 100)</div>
+                    </div>
+                    <div className="stat-card">
+                      <div className="num">{metrics.p99_latency_ms.toFixed(1)} ms</div>
+                      <div className="label">Latencia p99 (últ. 100)</div>
+                    </div>
+                  </div>
+
+                  {Object.keys(metrics.worker_errors_by_device || {}).length > 0 && (
+                    <>
+                      <div className="section-label" style={{ marginTop: 20 }}>Errores de worker por dispositivo</div>
+                      <div className="device-card expanded">
+                        <table className="admin-table">
+                          <thead>
+                            <tr>
+                              <th>Dispositivo</th>
+                              <th>Errores</th>
+                            </tr>
+                          </thead>
+                          <tbody>
+                            {Object.entries(metrics.worker_errors_by_device).map(([deviceId, count]) => (
+                              <tr key={deviceId}>
+                                <td style={{ fontFamily: 'monospace', fontSize: '0.8rem', color: 'rgba(255,255,255,0.7)' }}>{deviceId}</td>
+                                <td>{count}</td>
+                              </tr>
+                            ))}
+                          </tbody>
+                        </table>
+                      </div>
+                    </>
+                  )}
+
+                  {metrics.semantics !== undefined && (
+                    <details style={{ marginTop: 16 }}>
+                      <summary style={{ cursor: 'pointer', fontSize: '0.75rem', color: 'rgba(255,255,255,0.5)' }}>semantics (detalle crudo del backend)</summary>
+                      <pre style={{ fontSize: '0.7rem', color: 'rgba(255,255,255,0.6)', background: 'rgba(255,255,255,0.03)', padding: 12, borderRadius: 8, overflowX: 'auto' }}>
+                        {JSON.stringify(metrics.semantics, null, 2)}
+                      </pre>
+                    </details>
+                  )}
+                </>
+              )}
+
+              <div className="section-label" style={{ marginTop: 32 }}>Dispositivos inactivos</div>
+              <div style={{ display: 'flex', gap: 8, alignItems: 'center', marginBottom: 16, flexWrap: 'wrap' }}>
+                <label className="modal-label" style={{ margin: 0 }}>Umbral (minutos)</label>
+                <input
+                  type="number"
+                  min={1}
+                  value={inactiveThreshold}
+                  onChange={e => setInactiveThreshold(Number(e.target.value))}
+                  data-testid="inactive-threshold-input"
+                  className="modal-input"
+                  style={{ width: 100, marginBottom: 0 }}
+                />
+                <button className="btn-primary-small" data-testid="load-inactive-devices" onClick={() => loadInactiveDevices(inactiveThreshold)}>
+                  Buscar
+                </button>
+              </div>
+              {inactiveDevices.length === 0 ? (
+                <div className="empty-state">
+                  <div className="empty-icon">📡</div>
+                  <h3>Sin dispositivos inactivos</h3>
+                  <p>Todos los dispositivos reportaron actividad dentro del umbral.</p>
+                </div>
+              ) : (
+                <div className="device-card expanded">
+                  <table className="admin-table">
+                    <thead>
+                      <tr>
+                        <th>Dispositivo</th>
+                        <th>Última actividad</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {inactiveDevices.map(d => (
+                        <tr key={d.device_id}>
+                          <td>{d.name || d.device_id}</td>
+                          <td style={{ fontSize: '0.8rem', color: 'rgba(255,255,255,0.5)' }}>{getTimeAgo(new Date(d.last_seen))}</td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              )}
+
+              <div className="section-label" style={{ marginTop: 32 }}>Configuración de mantenimiento (solo lectura)</div>
+              {maintenanceConfig && (
+                <div className="stats-row" style={{ marginBottom: 24 }}>
+                  <div className="stat-card">
+                    <div className="num">{maintenanceConfig.log_retention_days}</div>
+                    <div className="label">Retención logs (días)</div>
+                  </div>
+                  <div className="stat-card">
+                    <div className="num">{maintenanceConfig.nonce_retention_hours}</div>
+                    <div className="label">Retención nonces (h)</div>
+                  </div>
+                  <div className="stat-card">
+                    <div className="num">{maintenanceConfig.maintenance_interval_seconds}</div>
+                    <div className="label">Intervalo automático (s)</div>
+                  </div>
+                </div>
+              )}
+
+              <div className="section-label" style={{ color: '#ff0033', marginTop: 32 }}>Zona de peligro: purga manual</div>
+              <p style={{ fontSize: '0.75rem', color: 'rgba(255,0,51,0.7)', marginBottom: 12 }}>
+                Borra permanentemente logs más antiguos que el umbral indicado. Esta acción es irreversible.
+              </p>
+              <div style={{ display: 'flex', gap: 8, alignItems: 'center', flexWrap: 'wrap' }}>
+                <label className="modal-label" style={{ margin: 0 }}>Retención (días)</label>
+                <input
+                  type="number"
+                  min={0}
+                  value={purgeRetentionDays}
+                  onChange={e => setPurgeRetentionDays(Number(e.target.value))}
+                  data-testid="purge-retention-days-input"
+                  className="modal-input"
+                  style={{ width: 100, marginBottom: 0 }}
+                />
+                <button
+                  className="btn-primary-small btn-danger-zone"
+                  data-testid="admin-run-maintenance-purge"
+                  onClick={runMaintenancePurge}
+                  disabled={isActionLoading}
+                  style={{ background: 'rgba(255,0,51,0.2)', color: '#ff0033', borderColor: 'rgba(255,0,51,0.4)' }}
+                >
+                  ☢️ Ejecutar purga manual
+                </button>
+              </div>
             </div>
           )}
         </div>
