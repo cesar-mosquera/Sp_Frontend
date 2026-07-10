@@ -15,6 +15,7 @@ import { useSSEEvents } from '../contexts/SSEProvider';
 import { usePagination } from '../hooks/usePagination';
 import { downloadCSV } from '../utils/export';
 import { fetchWithRetry } from '../utils/fetchWithRetry';
+import { handleAuthResponse } from '../utils/authResponse';
 const ChartsPanel = React.lazy(() => import('../components/ChartsPanel'));
 const DeviceMap = React.lazy(() => import('../components/DeviceMap'));
 import '../styles/dashboard.css';
@@ -114,9 +115,9 @@ export default function DashboardPage() {
 
   const loadDevices = useCallback(async () => {
     try {
-      const devRes = await fetchWithRetry(API_BASE_URL + '/devices', {
+      const devRes = handleAuthResponse(await fetchWithRetry(API_BASE_URL + '/devices', {
         headers: { 'X-Session-Token': token || '' },
-      });
+      }));
       if (devRes.ok) {
         const devData = await devRes.json();
         if (devData.devices) {
@@ -234,9 +235,9 @@ export default function DashboardPage() {
       if (searchQuery) params.append('search', searchQuery);
       if (params.toString()) endpoint += `?${params.toString()}`;
       
-      const res = await fetchWithRetry(endpoint, {
+      const res = handleAuthResponse(await fetchWithRetry(endpoint, {
         headers: { 'X-Session-Token': token || '' }
-      });
+      }));
       if (!res.ok) {
         setConnectionError(`Error ${res.status}: No se pudo conectar al backend`);
         return;
@@ -295,9 +296,9 @@ export default function DashboardPage() {
           return updated;
         });
         try {
-          const devRes = await fetch(API_BASE_URL + '/devices', {
+          const devRes = handleAuthResponse(await fetch(API_BASE_URL + '/devices', {
             headers: { 'X-Session-Token': token || '' },
-          });
+          }));
           if (devRes.ok) {
             const devData = await devRes.json();
             if (devData.devices) {

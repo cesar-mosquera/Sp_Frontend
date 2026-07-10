@@ -7,6 +7,7 @@ import { usePagination } from '../hooks/usePagination';
 import { normalize, formatTimestamp, matchesApp, mapBackendLogs, type LogEntry, type BackendLog } from '../appPage';
 import { downloadCSV } from '../utils/export';
 import { fetchWithRetry } from '../utils/fetchWithRetry';
+import { handleAuthResponse } from '../utils/authResponse';
 import { useAuthStore } from '../store';
 import ChatMessageRow from '../components/ChatMessageRow';
 import React, { Suspense } from 'react';
@@ -65,10 +66,10 @@ export default function AppPage({ appKey }: Props) {
       params.append('skip', skip.toString());
       params.append('limit', limit.toString());
       const endpoint = `${API_BASE_URL}/api/dashboard-data?${params.toString()}`;
-      const response = await fetchWithRetry(endpoint, {
+      const response = handleAuthResponse(await fetchWithRetry(endpoint, {
         headers: { 'X-Session-Token': token || '' },
         timeoutMs: 7000,
-      });
+      }));
 
       if (response.ok) {
         connectedOk = true;

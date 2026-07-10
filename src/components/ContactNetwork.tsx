@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 import { API_BASE_URL } from '../config';
+import { handleAuthResponse } from '../utils/authResponse';
 import type { BackendLog } from '../types/dashboard';
 
 interface Props {
@@ -33,7 +34,7 @@ export default function ContactNetwork({ logs, token, onSelectContact }: Props) 
       try {
         const headers: Record<string, string> = {};
         if (token) headers['X-Session-Token'] = token;
-        const res = await fetch(`${API_BASE_URL}/api/conversations?skip=0&limit=200`, { headers });
+        const res = handleAuthResponse(await fetch(`${API_BASE_URL}/api/conversations?skip=0&limit=200`, { headers }));
         if (!res.ok) {
           // Fallo real de conexion/servidor: recien ahi tiene sentido el modo
           // degradado derivado de logs locales.

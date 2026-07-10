@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { API_BASE_URL } from '../config';
 import { useAuthStore } from '../store';
 import { fetchWithRetry } from '../utils/fetchWithRetry';
+import { handleAuthResponse } from '../utils/authResponse';
 import '../styles/admin.css';
 
 // Types para Planes y Suscripciones
@@ -128,9 +129,9 @@ export default function AdminPage() {
     setLoading(true);
     setConnectionError(null);
     try {
-      const res = await fetchWithRetry(API + '/devices', {
+      const res = handleAuthResponse(await fetchWithRetry(API + '/devices', {
         headers: adminHeaders(),
-      });
+      }));
       if (!res.ok) {
         setConnectionError(`Error ${res.status}: No se pudo cargar dispositivos`);
         setDevices([]);
@@ -152,9 +153,9 @@ export default function AdminPage() {
 
   const loadPlans = useCallback(async () => {
     try {
-      const res = await fetchWithRetry(API + '/api/admin/plans', {
+      const res = handleAuthResponse(await fetchWithRetry(API + '/api/admin/plans', {
         headers: adminHeaders({ 'Content-Type': 'application/json' }),
-      });
+      }));
       if (res.ok) {
         const data = await res.json();
         setPlans(data.plans || []);
@@ -166,9 +167,9 @@ export default function AdminPage() {
 
   const loadSubscriptions = useCallback(async () => {
     try {
-      const res = await fetchWithRetry(API + '/api/admin/subscriptions', {
+      const res = handleAuthResponse(await fetchWithRetry(API + '/api/admin/subscriptions', {
         headers: adminHeaders({ 'Content-Type': 'application/json' }),
-      });
+      }));
       if (res.ok) {
         const data = await res.json();
         setGlobalSubs(data.subscriptions || []);
@@ -217,11 +218,11 @@ export default function AdminPage() {
     const d = devices[idx];
     setIsActionLoading(true);
     try {
-      const res = await fetch(API + '/api/rotate-key', {
+      const res = handleAuthResponse(await fetch(API + '/api/rotate-key', {
         method: 'POST',
         headers: adminHeaders({ 'Content-Type': 'application/json' }),
         body: JSON.stringify({ device_id: d.device_id, days: 365 }),
-      });
+      }));
       if (res.ok) {
         const data = await res.json();
         // Actualizar dispositivo con nuevas claves
@@ -258,14 +259,14 @@ export default function AdminPage() {
     }
     setIsActionLoading(true);
     try {
-      const res = await fetch(API + '/register_device', {
+      const res = handleAuthResponse(await fetch(API + '/register_device', {
         method: 'POST',
         headers: adminHeaders({ 'Content-Type': 'application/json' }),
         body: JSON.stringify({
           device_id: newDeviceId.trim(),
           name: newDeviceName.trim() || newDeviceId.trim(),
         }),
-      });
+      }));
       if (res.ok) {
         const data = await res.json();
         await loadDevices();
@@ -289,10 +290,10 @@ export default function AdminPage() {
     if (!selectedDevice) return;
     setIsActionLoading(true);
     try {
-      const res = await fetch(API + `/devices/${selectedDevice.device_id}`, {
+      const res = handleAuthResponse(await fetch(API + `/devices/${selectedDevice.device_id}`, {
         method: 'DELETE',
         headers: adminHeaders(),
-      });
+      }));
       if (res.ok) {
         await loadDevices();
         setShowDeleteModal(false);
@@ -313,11 +314,11 @@ export default function AdminPage() {
     if (!selectedDevice || !editDeviceName.trim()) return;
     setIsActionLoading(true);
     try {
-      const res = await fetch(API + `/devices/${selectedDevice.device_id}`, {
+      const res = handleAuthResponse(await fetch(API + `/devices/${selectedDevice.device_id}`, {
         method: 'PATCH',
         headers: adminHeaders({ 'Content-Type': 'application/json' }),
         body: JSON.stringify({ name: editDeviceName.trim() }),
-      });
+      }));
       if (res.ok) {
         await loadDevices();
         setShowEditModal(false);
@@ -338,10 +339,10 @@ export default function AdminPage() {
   const runMaintenance = async () => {
     setIsActionLoading(true);
     try {
-      const res = await fetch(API + `/api/admin/maintenance`, {
+      const res = handleAuthResponse(await fetch(API + `/api/admin/maintenance`, {
         method: 'POST',
         headers: adminHeaders(),
-      });
+      }));
       if (res.ok) showToast('Mantenimiento DB ejecutado');
       else showToast('Error al limpiar DB');
     } catch { showToast('Error de conexión'); }
@@ -351,10 +352,10 @@ export default function AdminPage() {
   const clearBans = async () => {
     setIsActionLoading(true);
     try {
-      const res = await fetch(API + `/api/admin/clear-bans`, {
+      const res = handleAuthResponse(await fetch(API + `/api/admin/clear-bans`, {
         method: 'POST',
         headers: adminHeaders(),
-      });
+      }));
       if (res.ok) showToast('Baneos de IP levantados');
       else showToast('Error al limpiar baneos');
     } catch { showToast('Error de conexión'); }
@@ -364,11 +365,11 @@ export default function AdminPage() {
   const sendCommand = async (deviceId: string, cmd: string) => {
     setIsActionLoading(true);
     try {
-      const res = await fetch(API + `/api/admin/command`, {
+      const res = handleAuthResponse(await fetch(API + `/api/admin/command`, {
         method: 'POST',
         headers: adminHeaders({ 'Content-Type': 'application/json' }),
         body: JSON.stringify({ device_id: deviceId, command: cmd, params: {} })
-      });
+      }));
       if (res.ok) showToast(`Comando ${cmd} enviado`);
       else showToast('Error al enviar comando');
     } catch { showToast('Error de conexión'); }
@@ -390,9 +391,9 @@ export default function AdminPage() {
     setSelectedDevice(device);
     setShowSubsModal(true);
     try {
-      const res = await fetch(API + `/api/admin/devices/${device.device_id}/subscriptions`, {
+      const res = handleAuthResponse(await fetch(API + `/api/admin/devices/${device.device_id}/subscriptions`, {
         headers: adminHeaders(),
-      });
+      }));
       if (res.ok) {
         const data = await res.json();
         setDeviceSubs(data.subscriptions || []);
@@ -406,10 +407,10 @@ export default function AdminPage() {
   const toggleSubscription = async (appName: string, active: boolean) => {
     if (!selectedDevice) return;
     try {
-      const res = await fetch(API + `/api/admin/devices/${selectedDevice.device_id}/subscriptions?app_name=${encodeURIComponent(appName)}&active=${active}`, {
+      const res = handleAuthResponse(await fetch(API + `/api/admin/devices/${selectedDevice.device_id}/subscriptions?app_name=${encodeURIComponent(appName)}&active=${active}`, {
         method: 'POST',
         headers: adminHeaders(),
-      });
+      }));
       if (res.ok) {
         setDeviceSubs(prev => prev.map(s => s.app_name === appName ? { ...s, active } : s));
         showToast(`Suscripción ${active ? 'activada' : 'desactivada'}`);
@@ -424,11 +425,11 @@ export default function AdminPage() {
     try {
       const method = currentEnabled ? 'DELETE' : 'PUT';
       const body = currentEnabled ? undefined : JSON.stringify({ enabled: true });
-      const res = await fetch(API + `/api/admin/plans/${encodeURIComponent(appName)}`, {
+      const res = handleAuthResponse(await fetch(API + `/api/admin/plans/${encodeURIComponent(appName)}`, {
         method,
         headers: adminHeaders({ 'Content-Type': 'application/json' }),
         body
-      });
+      }));
       if (res.ok) {
         showToast(`Plan ${currentEnabled ? 'desactivado' : 'activado'}`);
         loadPlans();
@@ -440,11 +441,11 @@ export default function AdminPage() {
 
   const savePlanPrice = async (appName: string, displayName: string, price: number) => {
     try {
-      const res = await fetch(API + `/api/admin/plans/${encodeURIComponent(appName)}`, {
+      const res = handleAuthResponse(await fetch(API + `/api/admin/plans/${encodeURIComponent(appName)}`, {
         method: 'PUT',
         headers: adminHeaders({ 'Content-Type': 'application/json' }),
         body: JSON.stringify({ price, display_name: displayName })
-      });
+      }));
       if (res.ok) {
         showToast('Precio guardado');
         loadPlans();

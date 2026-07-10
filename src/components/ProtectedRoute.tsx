@@ -3,6 +3,7 @@ import { useLocation } from 'react-router-dom';
 import { useAuthStore } from '../store';
 import { API_BASE_URL } from '../config';
 import { fetchWithRetry } from '../utils/fetchWithRetry';
+import { handleAuthResponse } from '../utils/authResponse';
 import Login from './Login';
 
 interface Props {
@@ -13,7 +14,6 @@ export default function ProtectedRoute({ children }: Props) {
   const isAuthenticated = useAuthStore(s => s.isAuthenticated);
   const token = useAuthStore(s => s.token);
   const role = useAuthStore(s => s.role);
-  const logout = useAuthStore(s => s.logout);
   const location = useLocation();
   const [checking, setChecking] = useState(isAuthenticated && !!token);
 
@@ -28,7 +28,7 @@ export default function ProtectedRoute({ children }: Props) {
       retries: 1,
       retryDelayMs: 400,
     })
-      .then(r => { if (!cancelled && r.status === 401) logout(); })
+      .then(handleAuthResponse)
       .catch(e => { console.warn('No se pudo verificar la sesión tras varios intentos (se mantiene la sesión local):', e); })
       .finally(() => { if (!cancelled) setChecking(false); });
     return () => { cancelled = true; controller.abort(); };
