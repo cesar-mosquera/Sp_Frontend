@@ -2,6 +2,7 @@ import { type ReactNode, useEffect, useState } from 'react';
 import { useLocation } from 'react-router-dom';
 import { useAuthStore } from '../store';
 import { API_BASE_URL } from '../config';
+import { fetchWithRetry } from '../utils/fetchWithRetry';
 import Login from './Login';
 
 interface Props {
@@ -20,14 +21,16 @@ export default function ProtectedRoute({ children }: Props) {
     if (!token) return;
     let cancelled = false;
     const controller = new AbortController();
-    const timer = setTimeout(() => controller.abort(), 8000);
-    fetch(`${API_BASE_URL}/api/session`, {
+    fetchWithRetry(`${API_BASE_URL}/api/session`, {
       signal: controller.signal,
       headers: { 'X-Session-Token': token },
+      timeoutMs: 4000,
+      retries: 1,
+      retryDelayMs: 400,
     })
       .then(r => { if (!cancelled && r.status === 401) logout(); })
-      .catch(e => { console.warn('No se pudo verificar la sesión (se mantiene la sesión local):', e); })
-      .finally(() => { if (!cancelled) { clearTimeout(timer); setChecking(false); } });
+      .catch(e => { console.warn('No se pudo verificar la sesión tras varios intentos (se mantiene la sesión local):', e); })
+      .finally(() => { if (!cancelled) setChecking(false); });
     return () => { cancelled = true; controller.abort(); };
   }, []);
 

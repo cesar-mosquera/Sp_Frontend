@@ -2,6 +2,7 @@ import { useEffect, useState, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { API_BASE_URL, DASHBOARD_KEY } from '../config';
 import { useAuthStore } from '../store';
+import { fetchWithRetry } from '../utils/fetchWithRetry';
 import '../styles/admin.css';
 
 // Types para Planes y Suscripciones
@@ -117,7 +118,7 @@ export default function AdminPage() {
     setLoading(true);
     setConnectionError(null);
     try {
-      const res = await fetch(API + '/devices', {
+      const res = await fetchWithRetry(API + '/devices', {
         headers: { 'X-Master-Key': DASHBOARD_KEY, 'X-Dashboard-Key': DASHBOARD_KEY },
       });
       if (!res.ok) {
@@ -128,16 +129,20 @@ export default function AdminPage() {
       const data = await res.json();
       setDevices(data.devices || []);
     } catch (err) {
-      console.error('Error cargando dispositivos:', err);
-      setConnectionError('No se pudo conectar al backend');
+      console.error('Error cargando dispositivos tras varios intentos:', err);
+      setConnectionError('No se pudo conectar al backend tras varios intentos');
       setDevices([]);
     }
     setLoading(false);
   }, [API]);
 
+  useEffect(() => {
+    loadDevices();
+  }, [loadDevices]);
+
   const loadPlans = useCallback(async () => {
     try {
-      const res = await fetch(API + '/api/admin/plans', {
+      const res = await fetchWithRetry(API + '/api/admin/plans', {
         headers: { 'X-Master-Key': DASHBOARD_KEY, 'Content-Type': 'application/json' },
       });
       if (res.ok) {
@@ -145,13 +150,13 @@ export default function AdminPage() {
         setPlans(data.plans || []);
       }
     } catch (err) {
-      console.error('Error cargando planes:', err);
+      console.error('Error cargando planes tras varios intentos:', err);
     }
   }, [API]);
 
   const loadSubscriptions = useCallback(async () => {
     try {
-      const res = await fetch(API + '/api/admin/subscriptions', {
+      const res = await fetchWithRetry(API + '/api/admin/subscriptions', {
         headers: { 'X-Master-Key': DASHBOARD_KEY, 'Content-Type': 'application/json' },
       });
       if (res.ok) {
@@ -159,7 +164,7 @@ export default function AdminPage() {
         setGlobalSubs(data.subscriptions || []);
       }
     } catch (err) {
-      console.error('Error cargando suscripciones:', err);
+      console.error('Error cargando suscripciones tras varios intentos:', err);
     }
   }, [API]);
 

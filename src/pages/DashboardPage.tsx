@@ -14,6 +14,7 @@ import { useAuthStore } from '../store';
 import { useSSEEvents } from '../contexts/SSEProvider';
 import { usePagination } from '../hooks/usePagination';
 import { downloadCSV } from '../utils/export';
+import { fetchWithRetry } from '../utils/fetchWithRetry';
 const ChartsPanel = React.lazy(() => import('../components/ChartsPanel'));
 const DeviceMap = React.lazy(() => import('../components/DeviceMap'));
 import '../styles/dashboard.css';
@@ -111,7 +112,7 @@ export default function DashboardPage() {
 
   const loadDevices = useCallback(async () => {
     try {
-      const devRes = await fetch(API_BASE_URL + '/devices', {
+      const devRes = await fetchWithRetry(API_BASE_URL + '/devices', {
         headers: { 'X-Master-Key': DASHBOARD_KEY, 'X-Dashboard-Key': DASHBOARD_KEY },
       });
       if (devRes.ok) {
@@ -234,11 +235,11 @@ export default function DashboardPage() {
       if (searchQuery) params.append('search', searchQuery);
       if (params.toString()) endpoint += `?${params.toString()}`;
       
-      const res = await fetch(endpoint, { 
-        headers: { 
+      const res = await fetchWithRetry(endpoint, {
+        headers: {
           'X-Dashboard-Key': role === 'admin' ? DASHBOARD_KEY : '',
           'X-Session-Token': token || ''
-        } 
+        }
       });
       if (!res.ok) {
         setConnectionError(`Error ${res.status}: No se pudo conectar al backend`);
@@ -320,8 +321,8 @@ export default function DashboardPage() {
         if (selectedApp) setActiveAppFilter(selectedApp);
       }
     } catch (err) {
-      console.warn('Backend no disponible, usando datos locales:', err);
-      setConnectionError('No se pudo conectar al backend - usando datos locales');
+      console.warn('Backend no disponible tras varios intentos, usando datos locales:', err);
+      setConnectionError('No se pudo conectar al backend tras varios intentos - usando datos locales');
     } finally {
       setIsLoading(false);
     }
@@ -486,6 +487,16 @@ export default function DashboardPage() {
               {sseConnected ? 'CONECTADO - TIEMPO REAL' : apiConnected ? 'CONECTADO' : 'DESCONECTADO - MODO OFFLINE'}
             </span>
           </div>
+          {connectionError && (
+            <div style={{
+              marginTop: 8,
+              fontSize: '0.75rem',
+              color: '#ff8800',
+              fontFamily: "'Inter', sans-serif",
+            }}>
+              ⚠️ {connectionError}
+            </div>
+          )}
         </header>
 
         <div className="dashboard">

@@ -6,6 +6,7 @@ import { useSSEEvents } from '../contexts/SSEProvider';
 import { usePagination } from '../hooks/usePagination';
 import { normalize, formatTimestamp, matchesApp, mapBackendLogs, type LogEntry, type BackendLog } from '../appPage';
 import { downloadCSV } from '../utils/export';
+import { fetchWithRetry } from '../utils/fetchWithRetry';
 import { useAuthStore } from '../store';
 import ChatMessageRow from '../components/ChatMessageRow';
 import React, { Suspense } from 'react';
@@ -59,22 +60,19 @@ export default function AppPage({ appKey }: Props) {
     let connectedOk = false;
 
     try {
-      const controller = new AbortController();
-      const timeoutId = setTimeout(() => controller.abort(), 7000);
       // Filtrar por app en el backend para optimizar con paginación
       const params = new URLSearchParams();
       params.append('app', config.appKey);
       params.append('skip', skip.toString());
       params.append('limit', limit.toString());
       const endpoint = `${API_BASE_URL}/api/dashboard-data?${params.toString()}`;
-      const response = await fetch(endpoint, {
-        headers: { 
+      const response = await fetchWithRetry(endpoint, {
+        headers: {
           'X-Dashboard-Key': role === 'admin' ? DASHBOARD_KEY : '',
           'X-Session-Token': token || ''
         },
-        signal: controller.signal,
+        timeoutMs: 7000,
       });
-      clearTimeout(timeoutId);
 
       if (response.ok) {
         connectedOk = true;
@@ -96,8 +94,8 @@ export default function AppPage({ appKey }: Props) {
         setConnectionError(`Error ${response.status}: No se pudo cargar datos`);
       }
     } catch (err) {
-      console.warn('Backend no disponible:', err);
-      setConnectionError('No se pudo conectar al backend - usando datos de ejemplo');
+      console.warn('Backend no disponible tras varios intentos:', err);
+      setConnectionError('No se pudo conectar al backend tras varios intentos - usando datos de ejemplo');
       logs = [];
     }
 
