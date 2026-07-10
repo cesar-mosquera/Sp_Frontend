@@ -1,10 +1,13 @@
 import { type AppPageConfig } from './config';
 
 export interface LogEntry {
+  id: string;
   contact: string;
   msg: string;
   timestamp: string;
   type: 'message' | 'notificacion';
+  direction: 'IN' | 'OUT' | 'UNKNOWN';
+  deviceId: string;
 }
 
 export interface BackendLog {
@@ -23,6 +26,7 @@ export interface BackendLog {
   appKey?: string;
   service?: string;
   device_id?: string;
+  direction?: string;
 }
 
 export interface AppPageState {
@@ -66,11 +70,21 @@ export function matchesApp(entry: BackendLog, config: AppPageConfig): boolean {
   );
 }
 
+function normalizeDirection(direction: string | undefined): 'IN' | 'OUT' | 'UNKNOWN' {
+  const d = normalize(direction);
+  if (d === 'out' || d === 'outgoing' || d === 'saliente') return 'OUT';
+  if (d === 'in' || d === 'incoming' || d === 'entrante') return 'IN';
+  return 'UNKNOWN';
+}
+
 export function mapBackendLogs(logs: BackendLog[]): LogEntry[] {
-  return logs.map(entry => ({
+  return logs.map((entry, index) => ({
+    id: entry.id !== undefined ? String(entry.id) : `${entry.device_id || 'sin-device'}-${entry.timestamp || index}`,
     contact: entry.contact || entry.sender || 'Contacto desconocido',
     msg: entry.msg || entry.content || entry.message || '',
     timestamp: entry.timestamp || entry.time || '',
     type: normalize(entry.type).includes('notif') ? 'notificacion' : 'message',
+    direction: normalizeDirection(entry.direction),
+    deviceId: entry.device_id || '',
   }));
 }

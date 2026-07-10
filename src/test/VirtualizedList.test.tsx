@@ -29,10 +29,13 @@ function makeBackendLogs(count: number): BackendLog[] {
 
 function makeChatEntries(count: number): LogEntry[] {
   return Array.from({ length: count }, (_, i) => ({
+    id: `entry-${i}`,
     contact: `Contacto ${i}`,
     msg: `mensaje de prueba numero ${i}`,
     timestamp: '2026-07-09T10:00:00',
     type: 'message',
+    direction: i % 2 === 0 ? 'IN' : 'OUT',
+    deviceId: 'device-1',
   }));
 }
 

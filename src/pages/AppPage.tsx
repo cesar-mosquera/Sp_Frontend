@@ -46,9 +46,9 @@ export default function AppPage({ appKey }: Props) {
 
 
   const fallbackSample: LogEntry[] = [
-    { contact: 'Mi Reina', msg: 'Audio recibido de Mi Reina (0:47)', timestamp: '2026-06-28T14:12:00', type: 'message' },
-    { contact: 'El Enlace', msg: 'Mensaje de voz de El Enlace (1:23)', timestamp: '2026-06-28T13:50:00', type: 'message' },
-    { contact: 'Bot Secreto', msg: 'Documento PDF plan_operativo.pdf descargado', timestamp: '2026-06-28T13:35:00', type: 'notificacion' },
+    { id: 'demo-1', contact: 'Mi Reina', msg: 'Audio recibido de Mi Reina (0:47)', timestamp: '2026-06-28T14:12:00', type: 'message', direction: 'IN', deviceId: 'demo' },
+    { id: 'demo-2', contact: 'El Enlace', msg: 'Mensaje de voz de El Enlace (1:23)', timestamp: '2026-06-28T13:50:00', type: 'message', direction: 'OUT', deviceId: 'demo' },
+    { id: 'demo-3', contact: 'Bot Secreto', msg: 'Documento PDF plan_operativo.pdf descargado', timestamp: '2026-06-28T13:35:00', type: 'notificacion', direction: 'IN', deviceId: 'demo' },
   ];
 
   const token = useAuthStore(s => s.token);
