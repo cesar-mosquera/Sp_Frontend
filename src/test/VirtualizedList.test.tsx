@@ -44,7 +44,7 @@ describe('Listas virtualizadas', () => {
         <List
           style={{ height: 400 }}
           rowCount={entries.length}
-          rowHeight={104}
+          rowHeight={140}
           rowComponent={LogEntryRow}
           rowProps={{
             entries,
@@ -68,7 +68,7 @@ describe('Listas virtualizadas', () => {
       <List
         style={{ height: 600 }}
         rowCount={entries.length}
-        rowHeight={140}
+        rowHeight={220}
         rowComponent={ChatMessageRow}
         rowProps={{ entries }}
       />

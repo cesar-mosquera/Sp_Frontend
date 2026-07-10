@@ -26,7 +26,7 @@ export default function LogEntryRow({ index, style, entries, isReal, knownDevice
     <div style={{ ...style, paddingBottom: 8, boxSizing: 'border-box' }}>
       <div
         className="log-entry"
-        style={{ height: '100%', boxSizing: 'border-box', overflow: 'hidden' }}
+        style={{ height: '100%', boxSizing: 'border-box', overflowY: 'auto' }}
         onClick={() => !isReal && onExpand(index)}
       >
         <div className={`log-icon ${ic.cls}`}>{ic.icon}</div>

@@ -1,4 +1,4 @@
-import { createContext, useContext, useCallback, useEffect, useRef, type ReactNode } from 'react';
+import { createContext, useContext, useCallback, useEffect, useMemo, useRef, type ReactNode } from 'react';
 import { useSSE } from '../hooks/useSSE';
 
 interface SSEEvent {
@@ -29,8 +29,10 @@ export function SSEProvider({ children }: { children: ReactNode }) {
     return () => { listenersRef.current.delete(handler); };
   }, []);
 
+  const value = useMemo(() => ({ isConnected, subscribe }), [isConnected, subscribe]);
+
   return (
-    <SSEContext.Provider value={{ isConnected, subscribe }}>
+    <SSEContext.Provider value={value}>
       {children}
     </SSEContext.Provider>
   );

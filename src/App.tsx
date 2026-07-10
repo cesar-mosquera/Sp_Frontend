@@ -1,7 +1,9 @@
-import { lazy } from 'react';
+import { lazy, Suspense } from 'react';
 import { Routes, Route, Navigate } from 'react-router-dom';
 import NotificationProvider from './components/NotificationProvider';
 import ProtectedRoute from './components/ProtectedRoute';
+import DashboardSkeleton from './components/DashboardSkeleton';
+import AdminSkeleton from './components/AdminSkeleton';
 import { SSEProvider } from './contexts/SSEProvider';
 
 const IndexPage = lazy(() => import('./pages/IndexPage'));
@@ -18,8 +20,8 @@ export default function App() {
         <Routes>
           <Route path="/" element={<IndexPage />} />
           <Route path="/seleccion" element={<SeleccionPage />} />
-          <Route path="/dashboard" element={<DashboardPage />} />
-          <Route path="/admin" element={<AdminPage />} />
+          <Route path="/dashboard" element={<Suspense fallback={<DashboardSkeleton />}><DashboardPage /></Suspense>} />
+          <Route path="/admin" element={<Suspense fallback={<AdminSkeleton />}><AdminPage /></Suspense>} />
           <Route path="/whatsapp" element={<AppPage appKey="whatsapp" />} />
           <Route path="/telegram" element={<AppPage appKey="telegram" />} />
           <Route path="/instagram" element={<AppPage appKey="instagram" />} />

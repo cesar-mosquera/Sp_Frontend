@@ -320,7 +320,7 @@ export default function AppPage({ appKey }: Props) {
                 <List
                   style={{ height: 600 }}
                   rowCount={filtered.length}
-                  rowHeight={140}
+                  rowHeight={220}
                   rowComponent={ChatMessageRow}
                   rowProps={{ entries: filtered }}
                   onRowsRendered={handleRowsRendered}

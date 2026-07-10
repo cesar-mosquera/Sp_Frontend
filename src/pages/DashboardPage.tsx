@@ -811,7 +811,7 @@ export default function DashboardPage() {
                   className="log-container"
                   style={{ height: listHeight }}
                   rowCount={filteredLogsMemo.length}
-                  rowHeight={104}
+                  rowHeight={140}
                   rowComponent={LogEntryRow}
                   rowProps={{
                     entries: filteredLogsMemo,
