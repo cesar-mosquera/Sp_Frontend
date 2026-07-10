@@ -69,6 +69,7 @@ function getTimeAgo(date: Date): string {
 
 export default function AdminPage() {
   const navigate = useNavigate();
+  const token = useAuthStore(s => s.token);
   const logout = useAuthStore(s => s.logout);
   const [devices, setDevices] = useState<Device[]>([]);
   const [expanded, setExpanded] = useState<Set<number>>(new Set());
@@ -95,6 +96,16 @@ export default function AdminPage() {
 
   const API = API_BASE_URL || '';
 
+  // El backend valida X-Session-Token + role=='admin' en cada endpoint de
+  // admin; X-Dashboard-Key queda como capa adicional (mismo patron que
+  // DashboardPage/AppPage). X-Master-Key NUNCA se envia desde el navegador:
+  // el backend lo trata como fallback legacy solo para scripts internos.
+  const adminHeaders = useCallback((extra?: Record<string, string>): Record<string, string> => ({
+    'X-Session-Token': token || '',
+    'X-Dashboard-Key': DASHBOARD_KEY,
+    ...extra,
+  }), [token]);
+
   useEffect(() => {
     if ('scrollRestoration' in history) history.scrollRestoration = 'manual';
     window.scrollTo(0, 0);
@@ -119,7 +130,7 @@ export default function AdminPage() {
     setConnectionError(null);
     try {
       const res = await fetchWithRetry(API + '/devices', {
-        headers: { 'X-Master-Key': DASHBOARD_KEY, 'X-Dashboard-Key': DASHBOARD_KEY },
+        headers: adminHeaders(),
       });
       if (!res.ok) {
         setConnectionError(`Error ${res.status}: No se pudo cargar dispositivos`);
@@ -134,7 +145,7 @@ export default function AdminPage() {
       setDevices([]);
     }
     setLoading(false);
-  }, [API]);
+  }, [API, adminHeaders]);
 
   useEffect(() => {
     loadDevices();
@@ -143,7 +154,7 @@ export default function AdminPage() {
   const loadPlans = useCallback(async () => {
     try {
       const res = await fetchWithRetry(API + '/api/admin/plans', {
-        headers: { 'X-Master-Key': DASHBOARD_KEY, 'Content-Type': 'application/json' },
+        headers: adminHeaders({ 'Content-Type': 'application/json' }),
       });
       if (res.ok) {
         const data = await res.json();
@@ -152,12 +163,12 @@ export default function AdminPage() {
     } catch (err) {
       console.error('Error cargando planes tras varios intentos:', err);
     }
-  }, [API]);
+  }, [API, adminHeaders]);
 
   const loadSubscriptions = useCallback(async () => {
     try {
       const res = await fetchWithRetry(API + '/api/admin/subscriptions', {
-        headers: { 'X-Master-Key': DASHBOARD_KEY, 'Content-Type': 'application/json' },
+        headers: adminHeaders({ 'Content-Type': 'application/json' }),
       });
       if (res.ok) {
         const data = await res.json();
@@ -166,7 +177,7 @@ export default function AdminPage() {
     } catch (err) {
       console.error('Error cargando suscripciones tras varios intentos:', err);
     }
-  }, [API]);
+  }, [API, adminHeaders]);
 
   useEffect(() => {
     if (adminTab === 'plans') loadPlans();
@@ -209,10 +220,7 @@ export default function AdminPage() {
     try {
       const res = await fetch(API + '/api/rotate-key', {
         method: 'POST',
-        headers: { 
-          'X-Master-Key': DASHBOARD_KEY,
-          'Content-Type': 'application/json',
-        },
+        headers: adminHeaders({ 'Content-Type': 'application/json' }),
         body: JSON.stringify({ device_id: d.device_id, days: 365 }),
       });
       if (res.ok) {
@@ -253,11 +261,8 @@ export default function AdminPage() {
     try {
       const res = await fetch(API + '/register_device', {
         method: 'POST',
-        headers: { 
-          'X-Master-Key': DASHBOARD_KEY,
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ 
+        headers: adminHeaders({ 'Content-Type': 'application/json' }),
+        body: JSON.stringify({
           device_id: newDeviceId.trim(),
           name: newDeviceName.trim() || newDeviceId.trim(),
         }),
@@ -287,10 +292,7 @@ export default function AdminPage() {
     try {
       const res = await fetch(API + `/devices/${selectedDevice.device_id}`, {
         method: 'DELETE',
-        headers: { 
-          'X-Master-Key': DASHBOARD_KEY,
-          'X-Dashboard-Key': DASHBOARD_KEY,
-        },
+        headers: adminHeaders(),
       });
       if (res.ok) {
         await loadDevices();
@@ -314,10 +316,7 @@ export default function AdminPage() {
     try {
       const res = await fetch(API + `/devices/${selectedDevice.device_id}`, {
         method: 'PATCH',
-        headers: { 
-          'X-Master-Key': DASHBOARD_KEY,
-          'Content-Type': 'application/json',
-        },
+        headers: adminHeaders({ 'Content-Type': 'application/json' }),
         body: JSON.stringify({ name: editDeviceName.trim() }),
       });
       if (res.ok) {
@@ -342,7 +341,7 @@ export default function AdminPage() {
     try {
       const res = await fetch(API + `/api/admin/maintenance`, {
         method: 'POST',
-        headers: { 'X-Master-Key': DASHBOARD_KEY }
+        headers: adminHeaders(),
       });
       if (res.ok) showToast('Mantenimiento DB ejecutado');
       else showToast('Error al limpiar DB');
@@ -355,7 +354,7 @@ export default function AdminPage() {
     try {
       const res = await fetch(API + `/api/admin/clear-bans`, {
         method: 'POST',
-        headers: { 'X-Master-Key': DASHBOARD_KEY }
+        headers: adminHeaders(),
       });
       if (res.ok) showToast('Baneos de IP levantados');
       else showToast('Error al limpiar baneos');
@@ -368,7 +367,7 @@ export default function AdminPage() {
     try {
       const res = await fetch(API + `/api/admin/command`, {
         method: 'POST',
-        headers: { 'X-Master-Key': DASHBOARD_KEY, 'Content-Type': 'application/json' },
+        headers: adminHeaders({ 'Content-Type': 'application/json' }),
         body: JSON.stringify({ device_id: deviceId, command: cmd, params: {} })
       });
       if (res.ok) showToast(`Comando ${cmd} enviado`);
@@ -393,7 +392,7 @@ export default function AdminPage() {
     setShowSubsModal(true);
     try {
       const res = await fetch(API + `/api/admin/devices/${device.device_id}/subscriptions`, {
-        headers: { 'X-Master-Key': DASHBOARD_KEY },
+        headers: adminHeaders(),
       });
       if (res.ok) {
         const data = await res.json();
@@ -410,7 +409,7 @@ export default function AdminPage() {
     try {
       const res = await fetch(API + `/api/admin/devices/${selectedDevice.device_id}/subscriptions?app_name=${encodeURIComponent(appName)}&active=${active}`, {
         method: 'POST',
-        headers: { 'X-Master-Key': DASHBOARD_KEY },
+        headers: adminHeaders(),
       });
       if (res.ok) {
         setDeviceSubs(prev => prev.map(s => s.app_name === appName ? { ...s, active } : s));
@@ -428,7 +427,7 @@ export default function AdminPage() {
       const body = currentEnabled ? undefined : JSON.stringify({ enabled: true });
       const res = await fetch(API + `/api/admin/plans/${encodeURIComponent(appName)}`, {
         method,
-        headers: { 'X-Master-Key': DASHBOARD_KEY, 'Content-Type': 'application/json' },
+        headers: adminHeaders({ 'Content-Type': 'application/json' }),
         body
       });
       if (res.ok) {
@@ -444,7 +443,7 @@ export default function AdminPage() {
     try {
       const res = await fetch(API + `/api/admin/plans/${encodeURIComponent(appName)}`, {
         method: 'PUT',
-        headers: { 'X-Master-Key': DASHBOARD_KEY, 'Content-Type': 'application/json' },
+        headers: adminHeaders({ 'Content-Type': 'application/json' }),
         body: JSON.stringify({ price, display_name: displayName })
       });
       if (res.ok) {
