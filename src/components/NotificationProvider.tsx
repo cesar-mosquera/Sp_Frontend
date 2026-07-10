@@ -1,5 +1,5 @@
 import { useCallback } from 'react';
-import { useSSE } from '../hooks/useSSE';
+import { useSSEEvents } from '../contexts/SSEProvider';
 import NotificationToast, { notify } from './NotificationToast';
 
 export default function NotificationProvider() {
@@ -26,7 +26,7 @@ export default function NotificationProvider() {
     }
   }, []);
 
-  useSSE('/api/sse', onEvent);
+  useSSEEvents(onEvent);
 
   return <NotificationToast />;
 }

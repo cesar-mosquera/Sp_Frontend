@@ -1,11 +1,13 @@
-import { useEffect, useState, useCallback, useRef, useMemo } from 'react';
+import { useEffect, useState, useCallback, useMemo } from 'react';
 import { Link, useSearchParams } from 'react-router-dom';
+import { List } from 'react-window';
 import { APP_PAGE_CONFIG, API_BASE_URL, DASHBOARD_KEY } from '../config';
-import { useSSE } from '../hooks/useSSE';
+import { useSSEEvents } from '../contexts/SSEProvider';
 import { usePagination } from '../hooks/usePagination';
 import { normalize, formatTimestamp, matchesApp, mapBackendLogs, type LogEntry, type BackendLog } from '../appPage';
 import { downloadCSV } from '../utils/export';
 import { useAuthStore } from '../store';
+import ChatMessageRow from '../components/ChatMessageRow';
 import React, { Suspense } from 'react';
 const DeviceMap = React.lazy(() => import('../components/DeviceMap'));
 import '../app-page.css';
@@ -39,8 +41,6 @@ export default function AppPage({ appKey }: Props) {
   const { skip, limit, hasMore, loadMore, reset: resetPagination, setTotalCount } = usePagination({
     initialLimit: 50,
   });
-  const listRef = useRef<HTMLDivElement>(null);
-  const observerRef = useRef<IntersectionObserver | null>(null);
 
 
   const fallbackSample: LogEntry[] = [
@@ -134,8 +134,8 @@ export default function AppPage({ appKey }: Props) {
     loadData();
   }, [loadData]);
 
-  // SSE connection for real-time updates
-  const { isConnected: sseIsConnected } = useSSE('/api/sse', (event) => {
+  // SSE connection for real-time updates (compartida via SSEProvider)
+  const { isConnected: sseIsConnected } = useSSEEvents((event) => {
     if (event.type === 'log_entry' || event.type === 'new_data') {
       const newLog = event.data as BackendLog;
       // Solo procesar logs que coincidan con la app actual
@@ -157,7 +157,7 @@ export default function AppPage({ appKey }: Props) {
         });
       }
     }
-  }, true);
+  });
 
   useEffect(() => {
     setSseConnected(sseIsConnected);
@@ -192,32 +192,12 @@ export default function AppPage({ appKey }: Props) {
     downloadCSV(headers, rows, `${appKey}_logs_${new Date().toISOString().split('T')[0]}.csv`);
   };
 
-  // Intersection Observer para scroll infinito
-  useEffect(() => {
-    if (!hasMore || isLoading) return;
-
-    const observer = new IntersectionObserver(
-      (entries) => {
-        if (entries[0].isIntersecting && hasMore && !isLoading) {
-          loadMore();
-        }
-      },
-      { threshold: 0.1, rootMargin: '100px' }
-    );
-
-    observerRef.current = observer;
-
-    const sentinel = document.getElementById('infinite-scroll-sentinel');
-    if (sentinel) {
-      observer.observe(sentinel);
+  // Scroll infinito: se dispara cuando la lista virtualizada se acerca al final
+  const handleRowsRendered = useCallback((visible: { startIndex: number; stopIndex: number }) => {
+    if (hasMore && !isLoading && visible.stopIndex >= filtered.length - 5) {
+      loadMore();
     }
-
-    return () => {
-      if (observerRef.current) {
-        observerRef.current.disconnect();
-      }
-    };
-  }, [hasMore, isLoading, loadMore]);
+  }, [hasMore, isLoading, filtered.length, loadMore]);
 
   return (
     <div
@@ -339,25 +319,20 @@ export default function AppPage({ appKey }: Props) {
               <div className="empty-state">No se encontraron mensajes que coincidan.</div>
             ) : (
               <>
-                {filtered.map((entry, index) => (
-                  <article key={`${entry.timestamp}-${index}`} className="chat-message">
-                    <div className="chat-header">
-                      <div>
-                        <strong>{entry.contact}</strong>
-                        <div className="chat-label">{entry.type === 'notificacion' ? 'Notificación' : 'Mensaje'}</div>
-                      </div>
-                      <small>{formatTimestamp(entry.timestamp)}</small>
-                    </div>
-                    <div className="chat-body">{entry.msg}</div>
-                  </article>
-                ))}
+                <List
+                  style={{ height: 600 }}
+                  rowCount={filtered.length}
+                  rowHeight={140}
+                  rowComponent={ChatMessageRow}
+                  rowProps={{ entries: filtered }}
+                  onRowsRendered={handleRowsRendered}
+                />
                 {hasMore && (
-                  <div 
-                    id="infinite-scroll-sentinel" 
-                    style={{ 
-                      height: '50px', 
-                      display: 'flex', 
-                      alignItems: 'center', 
+                  <div
+                    style={{
+                      height: '50px',
+                      display: 'flex',
+                      alignItems: 'center',
                       justifyContent: 'center',
                       color: 'rgba(255, 255, 255, 0.5)',
                       fontSize: '0.8rem',

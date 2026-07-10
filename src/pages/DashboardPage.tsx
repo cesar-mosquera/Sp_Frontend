@@ -1,15 +1,17 @@
 import { useEffect, useRef, useState, useCallback } from 'react';
 import React, { Suspense, useMemo } from 'react';
+import { List } from 'react-window';
 import DeviceDetailPanel from '../components/DeviceDetailPanel';
 import ExpandedLogModal from '../components/ExpandedLogModal';
 import ContactNetwork from '../components/ContactNetwork';
+import LogEntryRow from '../components/LogEntryRow';
 import { LogMsg, BackendLog, DeviceInfo } from '../types/dashboard';
-import { ICON_MAP, LOG_MESSAGES, formatTime } from '../utils/mockData';
+import { LOG_MESSAGES, formatTime } from '../utils/mockData';
 
 import { Link, useSearchParams } from 'react-router-dom';
 import { API_BASE_URL, DASHBOARD_KEY, APP_PAGE_MAP } from '../config';
 import { useAuthStore } from '../store';
-import { useSSE } from '../hooks/useSSE';
+import { useSSEEvents } from '../contexts/SSEProvider';
 import { usePagination } from '../hooks/usePagination';
 import { downloadCSV } from '../utils/export';
 const ChartsPanel = React.lazy(() => import('../components/ChartsPanel'));
@@ -66,8 +68,8 @@ export default function DashboardPage() {
   // Load devices on mount
   useEffect(() => { loadDevices(); }, []);
 
-  // SSE connection for real-time updates
-  const { isConnected: sseIsConnected } = useSSE('/api/sse', (event) => {
+  // SSE connection for real-time updates (compartida via SSEProvider)
+  const { isConnected: sseIsConnected } = useSSEEvents((event) => {
     if (event.type === 'new_data') {
       // new_data solo trae {device_id, type, count}, no es un log completo
       // Incrementar contador para forzar recarga desde el principio
@@ -101,7 +103,7 @@ export default function DashboardPage() {
     } else if (event.type === 'device_registered') {
       loadDevices();
     }
-  }, true);
+  });
 
   useEffect(() => {
     setSseConnected(sseIsConnected);
@@ -382,43 +384,12 @@ export default function DashboardPage() {
     return result;
   }, [sourceLogs, activeDeviceFilter, activeAppFilter, isReal]);
 
-  const stripHtml = (str: string) => str.replace(/<[^>]+>/g, '');
-
-  const renderLogEntry = (entry: BackendLog | LogMsg, idx: number) => {
-    const app = isReal ? (entry as BackendLog).type || 'GENERAL' : (entry as LogMsg).app || 'LOG';
-    const msg = isReal ? ((entry as BackendLog).content || '').slice(0, 100) : (entry as LogMsg).msg;
-    const timeStr = isReal ? ((entry as BackendLog).timestamp || '').slice(11, 19) : formatTime((entry as LogMsg).timeOffset);
-    const devId = (entry as BackendLog).device_id || '';
-    const devName = knownDevices[devId]?.name || devId;
-    const appUp = (app || '').toUpperCase();
-    const ic = ICON_MAP[appUp] || { icon: '📋', cls: '' };
-
-    return (
-      <div key={idx} className="log-entry" onClick={() => !isReal && setExpandedIdx(idx)}>
-        <div className={`log-icon ${ic.cls}`}>{ic.icon}</div>
-        <div className="log-content">
-          <div className="log-header">
-            <span
-              className="log-app"
-              style={{ cursor: 'pointer' }}
-              onClick={e => {
-                e.stopPropagation();
-                const key = (app || '').toLowerCase();
-                const page = APP_PAGE_MAP[key];
-                if (page) window.location.href = `/${page}?app=${encodeURIComponent(app)}`;
-                else setActiveAppFilter(app);
-              }}
-            >
-              {app}
-            </span>
-            <span className="log-time">{timeStr}</span>
-          </div>
-          <div className="log-msg">{stripHtml(msg)}</div>
-          {devId ? <span className="log-device-badge" title={devId}>📱 {devName}</span> : null}
-        </div>
-      </div>
-    );
-  };
+  const handleAppClick = useCallback((app: string) => {
+    const key = (app || '').toLowerCase();
+    const page = APP_PAGE_MAP[key];
+    if (page) window.location.href = `/${page}?app=${encodeURIComponent(app)}`;
+    else setActiveAppFilter(app);
+  }, []);
 
   const renderDeviceChips = () => {
     if (deviceIds.length === 0) {
@@ -664,6 +635,7 @@ export default function DashboardPage() {
               </span>
             </div>
             <ContactNetwork
+              logs={allBackendLogs}
               token={token}
               role={role}
               onSelectContact={handleSelectContact}
@@ -820,19 +792,25 @@ export default function DashboardPage() {
               ))}
             </div>
 
-            <div className="log-container" style={{ height: listHeight }}>
-              {filteredLogsMemo.length === 0 ? (
-                <div className="no-device-msg"><span>🔍</span>Sin registros para este filtro.</div>
-              ) : (
-                <>
-                  <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
-                    {filteredLogsMemo.map((entry, index) => (
-                      <div key={(entry as BackendLog).id || `log-${index}`}>
-                        {renderLogEntry(entry, index)}
-                      </div>
-                    ))}
-                  </div>
-                  {hasMore && (
+            {filteredLogsMemo.length === 0 ? (
+              <div className="no-device-msg"><span>🔍</span>Sin registros para este filtro.</div>
+            ) : (
+              <>
+                <List
+                  className="log-container"
+                  style={{ height: listHeight }}
+                  rowCount={filteredLogsMemo.length}
+                  rowHeight={104}
+                  rowComponent={LogEntryRow}
+                  rowProps={{
+                    entries: filteredLogsMemo,
+                    isReal,
+                    knownDevices,
+                    onExpand: setExpandedIdx,
+                    onAppClick: handleAppClick,
+                  }}
+                />
+                {hasMore && (
                     <button
                       onClick={loadMore}
                       disabled={isLoading}
@@ -878,7 +856,6 @@ export default function DashboardPage() {
                   )}
                 </>
               )}
-            </div>
           </div>
         </div>
       </div>

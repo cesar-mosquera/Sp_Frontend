@@ -2,6 +2,7 @@ import { lazy } from 'react';
 import { Routes, Route, Navigate } from 'react-router-dom';
 import NotificationProvider from './components/NotificationProvider';
 import ProtectedRoute from './components/ProtectedRoute';
+import { SSEProvider } from './contexts/SSEProvider';
 
 const IndexPage = lazy(() => import('./pages/IndexPage'));
 const SeleccionPage = lazy(() => import('./pages/SeleccionPage'));
@@ -11,7 +12,7 @@ const AppPage = lazy(() => import('./pages/AppPage'));
 
 export default function App() {
   return (
-    <>
+    <SSEProvider>
       <NotificationProvider />
       <ProtectedRoute>
         <Routes>
@@ -30,6 +31,6 @@ export default function App() {
           <Route path="*" element={<Navigate to="/" replace />} />
         </Routes>
       </ProtectedRoute>
-    </>
+    </SSEProvider>
   );
 }

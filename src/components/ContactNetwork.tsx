@@ -1,7 +1,9 @@
 import { useEffect, useState } from 'react';
 import { API_BASE_URL, DASHBOARD_KEY } from '../config';
+import type { BackendLog } from '../types/dashboard';
 
 interface Props {
+  logs: BackendLog[];
   token: string | null;
   role: string | null;
   onSelectContact: (contact: string, device: string) => void;
@@ -20,9 +22,10 @@ interface ConversationData {
   created_at: string;
 }
 
-export default function ContactNetwork({ token, role, onSelectContact }: Props) {
+export default function ContactNetwork({ logs, token, role, onSelectContact }: Props) {
   const [conversations, setConversations] = useState<ConversationData[]>([]);
   const [loading, setLoading] = useState(true);
+  const [useFallback, setUseFallback] = useState(false);
 
   useEffect(() => {
     let cancelled = false;
@@ -35,8 +38,15 @@ export default function ContactNetwork({ token, role, onSelectContact }: Props) 
         const res = await fetch(`${API_BASE_URL}/api/conversations?skip=0&limit=200`, { headers });
         if (!res.ok) return;
         const json = await res.json();
-        if (!cancelled) setConversations(json.conversations || []);
-      } catch { /* ignore */ }
+        if (!cancelled) {
+          if (json.conversations?.length > 0) {
+            setConversations(json.conversations);
+            setUseFallback(false);
+          } else {
+            setUseFallback(true);
+          }
+        }
+      } catch { if (!cancelled) setUseFallback(true); }
       if (!cancelled) setLoading(false);
     };
     fetchContacts();
@@ -46,6 +56,48 @@ export default function ContactNetwork({ token, role, onSelectContact }: Props) 
 
   if (loading && conversations.length === 0) {
     return <div className="no-device-msg"><span>👥</span>Cargando contactos...</div>;
+  }
+
+  if (useFallback) {
+    const contacts = new Map<string, { name: string; device: string; incoming: number; outgoing: number; lastSeen: string }>();
+    for (const log of logs) {
+      const dir = (log as any).direction;
+      const contact = log.contact?.trim() || log.sender?.trim() || '';
+      if (!contact || log.type === 'HEARTBEAT' || log.type === 'LOCATION') continue;
+      const key = `${log.device_id}::${contact}`;
+      if (!contacts.has(key)) contacts.set(key, { name: contact, device: log.device_id || '', incoming: 0, outgoing: 0, lastSeen: log.timestamp || '' });
+      const e = contacts.get(key)!;
+      if (dir === 'OUT') e.outgoing++; else e.incoming++;
+      if ((log.timestamp || '') > e.lastSeen) e.lastSeen = log.timestamp || '';
+    }
+    const fallbackList = Array.from(contacts.values()).sort((a, b) => (b.incoming + b.outgoing) - (a.incoming + a.outgoing));
+
+    if (fallbackList.length === 0) {
+      return <div className="no-device-msg"><span>👥</span>Sin contactos identificados.</div>;
+    }
+
+    return (
+      <div className="device-grid">
+        {fallbackList.map(c => {
+          const total = c.incoming + c.outgoing;
+          const seen = c.lastSeen ? new Date(c.lastSeen) : null;
+          const diffMin = seen ? Math.round((Date.now() - seen.getTime()) / 60000) : Infinity;
+          const isRecent = diffMin < 60;
+          return (
+            <div key={`${c.device}::${c.name}`} className="device-chip" style={{ cursor: 'pointer', borderColor: isRecent ? 'rgba(0,240,255,0.3)' : undefined }}
+              onClick={() => onSelectContact(c.name, c.device)}
+            >
+              <div style={{ fontFamily: "'Orbitron', monospace", fontSize: '0.75rem', letterSpacing: '1px', color: '#fff', marginBottom: 6 }}>{c.name.slice(0, 24)}</div>
+              <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.7rem', color: 'rgba(255,255,255,0.5)', marginBottom: 6 }}>
+                <span><span style={{ color: '#00ff88' }}>▼{c.incoming}</span> <span style={{ color: '#00f0ff' }}>▲{c.outgoing}</span></span>
+                <span>{total} msgs</span>
+              </div>
+              <div style={{ fontSize: '0.6rem', color: 'rgba(255,255,255,0.3)' }}>📱 {c.device}</div>
+            </div>
+          );
+        })}
+      </div>
+    );
   }
 
   if (conversations.length === 0) {
