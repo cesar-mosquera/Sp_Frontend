@@ -197,4 +197,42 @@ describe('AdminPage', () => {
     expect(await screen.findByTestId('subscriptions-loading')).toBeInTheDocument();
     expect(screen.queryByText('Sin suscripciones registradas')).not.toBeInTheDocument();
   });
+
+  it('el boton "Credenciales" abre un modal para definir usuario y contraseña del dispositivo', async () => {
+    (fetch as ReturnType<typeof vi.fn>).mockImplementation((url: string, opts?: RequestInit) => {
+      if (String(url).includes('/devices/phone-cesar') && opts?.method === 'PATCH') {
+        return Promise.resolve(new Response(JSON.stringify({ status: 'ok' }), { status: 200 }));
+      }
+      if (String(url).includes('/devices')) {
+        return Promise.resolve(new Response(JSON.stringify({
+          devices: [{ device_id: 'phone-cesar', name: 'phone-cesar', last_seen: new Date().toISOString() }],
+        }), { status: 200 }));
+      }
+      return Promise.resolve(new Response('{}', { status: 200 }));
+    });
+
+    render(
+      <MemoryRouter>
+        <AdminPage />
+      </MemoryRouter>
+    );
+
+    // Expandir la tarjeta del dispositivo para ver sus acciones.
+    fireEvent.click((await screen.findAllByText('phone-cesar'))[0]);
+    fireEvent.click(await screen.findByTestId('edit-creds-phone-cesar'));
+
+    expect(await screen.findByText('Credenciales: phone-cesar')).toBeInTheDocument();
+
+    fireEvent.change(screen.getByTestId('creds-username-input'), { target: { value: 'phone-cesar' } });
+    fireEvent.change(screen.getByTestId('creds-password-input'), { target: { value: 'una-clave-segura' } });
+    fireEvent.click(screen.getByTestId('creds-confirm'));
+
+    await waitFor(() => expect(fetch).toHaveBeenCalledWith(
+      expect.stringContaining('/devices/phone-cesar'),
+      expect.objectContaining({
+        method: 'PATCH',
+        body: JSON.stringify({ username: 'phone-cesar', password: 'una-clave-segura' }),
+      })
+    ));
+  });
 });

