@@ -211,7 +211,7 @@ export default function DashboardPage() {
           ctx.arc(n.x, n.y, n.r, 0, Math.PI * 2);
           ctx.fill();
         }
-        const redCount = Math.max(1, Math.floor(nodes.length * 0.05));
+        const redCount = nodes.length === 0 ? 0 : Math.max(1, Math.floor(nodes.length * 0.05));
         for (let i = 0; i < redCount; i++) {
           const n = nodes[i];
           ctx.fillStyle = `rgba(255, 0, 51, ${n.r * 0.1})`;
