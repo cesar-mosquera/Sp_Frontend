@@ -1,5 +1,13 @@
 function escapeCsv(str: unknown): string {
-  return `"${(str ?? '').toString().replace(/"/g, '""')}"`;
+  let value = (str ?? '').toString();
+  // Los datos exportados vienen de mensajes de contactos, no del propio
+  // usuario. Si un contacto escribe algo que empieza con =, +, -, @ (o tab/CR),
+  // Excel/Sheets puede interpretarlo como formula al abrir el CSV (CSV/Formula
+  // Injection). Se antepone un apostrofe para forzarlo a texto plano.
+  if (/^[=+\-@\t\r]/.test(value)) {
+    value = `'${value}`;
+  }
+  return `"${value.replace(/"/g, '""')}"`;
 }
 
 export function downloadCSV(headers: string[], rows: string[][], filename: string): void {
