@@ -117,7 +117,9 @@ export default function AdminPage() {
   // Nuevos estados para Tabs, Planes y Suscripciones
   const [adminTab, setAdminTab] = useState<'devices' | 'subscriptions' | 'plans' | 'monitoring'>('devices');
   const [plans, setPlans] = useState<Plan[]>([]);
+  const [plansLoading, setPlansLoading] = useState(false);
   const [globalSubs, setGlobalSubs] = useState<Subscription[]>([]);
+  const [subsLoading, setSubsLoading] = useState(false);
   const [deviceSubs, setDeviceSubs] = useState<Subscription[]>([]);
 
   // Estados para el tab de Monitoreo
@@ -185,6 +187,7 @@ export default function AdminPage() {
   }, [loadDevices]);
 
   const loadPlans = useCallback(async () => {
+    setPlansLoading(true);
     try {
       const res = handleAuthResponse(await fetchWithRetry(API + '/api/admin/plans', {
         headers: adminHeaders({ 'Content-Type': 'application/json' }),
@@ -196,9 +199,11 @@ export default function AdminPage() {
     } catch (err) {
       console.error('Error cargando planes tras varios intentos:', err);
     }
+    setPlansLoading(false);
   }, [API, adminHeaders]);
 
   const loadSubscriptions = useCallback(async () => {
+    setSubsLoading(true);
     try {
       const res = handleAuthResponse(await fetchWithRetry(API + '/api/admin/subscriptions', {
         headers: adminHeaders({ 'Content-Type': 'application/json' }),
@@ -210,6 +215,7 @@ export default function AdminPage() {
     } catch (err) {
       console.error('Error cargando suscripciones tras varios intentos:', err);
     }
+    setSubsLoading(false);
   }, [API, adminHeaders]);
 
   const loadMetrics = useCallback(async () => {
@@ -808,7 +814,9 @@ export default function AdminPage() {
 
           {adminTab === 'subscriptions' && (
             <div className="device-list" style={{ marginTop: 0 }}>
-              {globalSubs.length === 0 ? (
+              {subsLoading ? (
+                <div className="loading-spinner" data-testid="subscriptions-loading"><div className="spinner" /></div>
+              ) : globalSubs.length === 0 ? (
                 <div className="empty-state">
                   <div className="empty-icon">📋</div>
                   <h3>Sin suscripciones registradas</h3>
@@ -848,7 +856,9 @@ export default function AdminPage() {
 
           {adminTab === 'plans' && (
             <div className="device-list" style={{ marginTop: 0 }}>
-              {plans.length === 0 ? (
+              {plansLoading ? (
+                <div className="loading-spinner" data-testid="plans-loading"><div className="spinner" /></div>
+              ) : plans.length === 0 ? (
                 <div className="empty-state">
                   <div className="empty-icon">💰</div>
                   <h3>Sin planes configurados</h3>

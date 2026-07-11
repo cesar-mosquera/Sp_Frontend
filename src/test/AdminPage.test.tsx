@@ -173,4 +173,28 @@ describe('AdminPage', () => {
       expect.anything()
     ));
   });
+
+  it('regresion: tabs Planes y Suscripciones no muestran "sin datos" mientras todavia estan cargando', async () => {
+    // fetch que nunca resuelve, para quedar congelados en el estado de carga.
+    (fetch as ReturnType<typeof vi.fn>).mockImplementation((url: string) => {
+      if (String(url).includes('/api/admin/plans') || String(url).includes('/api/admin/subscriptions')) {
+        return new Promise(() => {});
+      }
+      return Promise.resolve(new Response(JSON.stringify({ devices: [] }), { status: 200 }));
+    });
+
+    render(
+      <MemoryRouter>
+        <AdminPage />
+      </MemoryRouter>
+    );
+
+    fireEvent.click(await screen.findByTestId('admin-tab-plans'));
+    expect(await screen.findByTestId('plans-loading')).toBeInTheDocument();
+    expect(screen.queryByText('Sin planes configurados')).not.toBeInTheDocument();
+
+    fireEvent.click(screen.getByTestId('admin-tab-subscriptions'));
+    expect(await screen.findByTestId('subscriptions-loading')).toBeInTheDocument();
+    expect(screen.queryByText('Sin suscripciones registradas')).not.toBeInTheDocument();
+  });
 });
