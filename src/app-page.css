@@ -355,6 +355,10 @@ button {
 
 .conversation-list {
   display: grid;
+  /* minmax(0, 1fr) evita que un nombre de contacto largo sin espacios
+     fuerce la columna (y con ella, TODAS las tarjetas) mas ancha que el
+     viewport, provocando scroll horizontal de toda la pagina. */
+  grid-template-columns: minmax(0, 1fr);
   gap: 10px;
 }
 
@@ -406,6 +410,10 @@ button {
 .conversation-top-row strong {
   color: var(--body-text);
   font-size: 1rem;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .conversation-top-row small {
