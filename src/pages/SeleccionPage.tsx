@@ -11,6 +11,7 @@ const APPS = [
   { name: 'Google', path: '/google', img: 'https://cdn-icons-png.flaticon.com/512/281/281764.png' },
   { name: 'SMS', path: '/sms', img: 'https://cdn-icons-png.flaticon.com/512/2875/2875323.png' },
   { name: 'Ubicación', path: '/ubicacion', img: 'https://cdn-icons-png.flaticon.com/512/854/854878.png' },
+  { name: 'Llamadas', path: '/llamadas', img: 'https://cdn-icons-png.flaticon.com/512/724/724664.png' },
 ];
 
 function updateStatusTime() {

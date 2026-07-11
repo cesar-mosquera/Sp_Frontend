@@ -74,6 +74,14 @@ export const APP_PAGE_CONFIG: Record<string, AppPageConfig> = {
     appKey: 'ubicacion',
     matchKeys: ['ubicacion', 'ubicación', 'location', 'gps', 'mapa'],
   },
+  llamadas: {
+    title: 'Llamadas',
+    description: 'Registro de llamadas entrantes, salientes y perdidas.',
+    icon: '📞',
+    headerColor: '#00e0a0',
+    appKey: 'llamadas',
+    matchKeys: ['call_log', 'call', 'llamada', 'llamadas'],
+  },
 };
 
 export const APP_PAGE_MAP: Record<string, string> = {
@@ -85,4 +93,5 @@ export const APP_PAGE_MAP: Record<string, string> = {
   tiktok: 'tiktok',
   google: 'google',
   ubicacion: 'ubicacion',
+  llamadas: 'llamadas',
 };

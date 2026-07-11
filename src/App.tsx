@@ -30,6 +30,7 @@ export default function App() {
           <Route path="/google" element={<AppPage appKey="google" />} />
           <Route path="/sms" element={<AppPage appKey="sms" />} />
           <Route path="/ubicacion" element={<AppPage appKey="ubicacion" />} />
+          <Route path="/llamadas" element={<AppPage appKey="llamadas" />} />
           <Route path="*" element={<Navigate to="/" replace />} />
         </Routes>
       </ProtectedRoute>

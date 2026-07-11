@@ -31,11 +31,11 @@ beforeAll(() => {
   }
 });
 
-function renderAppPage() {
+function renderAppPage(appKey: string = 'whatsapp') {
   return render(
-    <MemoryRouter initialEntries={['/whatsapp']}>
+    <MemoryRouter initialEntries={[`/${appKey}`]}>
       <SSEProvider>
-        <AppPage appKey="whatsapp" />
+        <AppPage appKey={appKey} />
       </SSEProvider>
     </MemoryRouter>
   );
@@ -112,5 +112,26 @@ describe('AppPage', () => {
 
     fireEvent.click(screen.getByTestId('back-to-conversations'));
     expect(await screen.findByTestId('open-conversation-mi-reina')).toBeInTheDocument();
+  });
+
+  it('regresion: el canal Llamadas reconoce logs de tipo CALL_LOG y los agrupa por contacto', async () => {
+    vi.stubGlobal('fetch', vi.fn().mockImplementation((url: string) => {
+      if (String(url).includes('/api/dashboard-data')) {
+        return Promise.resolve(new Response(JSON.stringify({
+          logs: [
+            { id: '1', type: 'CALL_LOG', content: 'Llamada entrante (2:14)', timestamp: '2026-07-11T09:00:00', contact: 'Mi Reina', direction: 'in', device_id: 'device-1' },
+            { id: '2', type: 'CALL_LOG', content: 'Llamada saliente (0:45)', timestamp: '2026-07-11T08:30:00', contact: 'Mi Reina', direction: 'out', device_id: 'device-1' },
+            { id: '3', type: 'CALL_LOG', content: 'Llamada perdida', timestamp: '2026-07-11T07:00:00', contact: 'El Enlace', direction: 'in', device_id: 'device-1' },
+          ],
+        }), { status: 200 }));
+      }
+      return Promise.resolve(new Response('{}', { status: 200 }));
+    }));
+
+    renderAppPage('llamadas');
+
+    await waitFor(() => expect(screen.getByTestId('open-conversation-mi-reina')).toBeInTheDocument());
+    expect(screen.getByTestId('open-conversation-el-enlace')).toBeInTheDocument();
+    await waitFor(() => expect(screen.getByText('2 conversaciones')).toBeInTheDocument());
   });
 });
