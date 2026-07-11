@@ -5,9 +5,13 @@ import { colorForContact } from '../utils/contactColor';
 
 export interface ChatMessageRowProps {
   entries: LogEntry[];
+  // Dentro del hilo de un solo contacto ya se muestra su nombre en el
+  // encabezado -- repetirlo en cada burbuja es ruido. Por defecto se
+  // muestra (uso en un feed con varios contactos mezclados).
+  showContactName?: boolean;
 }
 
-export default function ChatMessageRow({ index, style, entries }: RowComponentProps<ChatMessageRowProps>) {
+export default function ChatMessageRow({ index, style, entries, showContactName = true }: RowComponentProps<ChatMessageRowProps>) {
   const entry = entries[index];
   const isOutgoing = entry.direction === 'OUT';
   const avatarColor = colorForContact(entry.contact);
@@ -42,7 +46,7 @@ export default function ChatMessageRow({ index, style, entries }: RowComponentPr
         <div style={{ flex: 1, minWidth: 0 }}>
           <div className="chat-header">
             <div>
-              <strong>{entry.contact}</strong>
+              {showContactName && <strong>{entry.contact}</strong>}
               <div className="chat-label">
                 {entry.type === 'notificacion'
                   ? 'Notificación'

@@ -388,7 +388,7 @@ export default function AppPage({ appKey }: Props) {
                   rowCount={threadEntries.length}
                   rowHeight={220}
                   rowComponent={ChatMessageRow}
-                  rowProps={{ entries: threadEntries }}
+                  rowProps={{ entries: threadEntries, showContactName: false }}
                 />
               )
             ) : conversations.length === 0 ? (

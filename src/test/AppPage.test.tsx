@@ -105,6 +105,11 @@ describe('AppPage', () => {
     expect(screen.getByText('como estas')).toBeInTheDocument();
     expect(screen.queryByText('todo bien por aca')).not.toBeInTheDocument();
 
+    // "Mi Reina" aparece en el titulo y en el encabezado del hilo (2 veces),
+    // pero no debe repetirse ademas en cada una de las 2 burbujas de mensaje
+    // (lo cual daria 4) -- ya se sabe de quien es la conversacion.
+    expect(screen.queryAllByText('Mi Reina').length).toBe(2);
+
     fireEvent.click(screen.getByTestId('back-to-conversations'));
     expect(await screen.findByTestId('open-conversation-mi-reina')).toBeInTheDocument();
   });
