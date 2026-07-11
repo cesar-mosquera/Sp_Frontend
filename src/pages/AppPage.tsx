@@ -33,7 +33,7 @@ export default function AppPage({ appKey }: Props) {
   const [data, setData] = useState<LogEntry[]>([]);
   const [rawData, setRawData] = useState<BackendLog[]>([]);
   const [search, setSearch] = useState('');
-  const [sort, setSort] = useState<'contact' | 'message'>('contact');
+  const [sort, setSort] = useState<'contact' | 'message'>('message');
   const [filter, setFilter] = useState<'all' | 'message' | 'notificacion'>('all');
   const [resultCount, setResultCount] = useState(0);
   const [isLoading, setIsLoading] = useState(false);
@@ -177,7 +177,9 @@ export default function AppPage({ appKey }: Props) {
       })
       .sort((a, b) => {
         if (sort === 'contact') return normalize(a.contact).localeCompare(normalize(b.contact));
-        return normalize(a.msg).localeCompare(normalize(b.msg));
+        // 'message' = mas recientes primero (coincide con el orden de la
+        // lista de conversaciones y con lo que exporta el CSV).
+        return new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime();
       });
   }, [data, filter, search, sort]);
 
@@ -290,7 +292,7 @@ export default function AppPage({ appKey }: Props) {
             className={`action-button${sort === 'message' ? ' active' : ''}`}
             onClick={() => setSort('message')}
           >
-            Ordenar por mensaje
+            Más recientes primero
           </button>
           <button
             className="action-button"
