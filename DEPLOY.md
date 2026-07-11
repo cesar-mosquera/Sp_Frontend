@@ -20,7 +20,7 @@ algo del lado del backend cambie.
 
 ## Si cambia la IP/host del backend
 
-El origen del backend (`http://3.147.2.246:5000` hoy) aparece **literalmente
+El origen del backend (`https://3.19.5.169.sslip.io` hoy) aparece **literalmente
 repetido 11 veces** dentro de `vercel.json`, porque Vercel no soporta
 interpolar variables de entorno dentro de sus reglas de `rewrites` (es JSON
 estático, evaluado por su capa de enrutamiento, no por el build).
@@ -29,7 +29,7 @@ Para actualizarlo todo de una vez, sin tener que buscar manualmente cada
 línea:
 
 ```bash
-./scripts/update-backend-origin.sh http://3.147.2.246:5000 https://nuevo-origen.com
+./scripts/update-backend-origin.sh https://3.19.5.169.sslip.io https://nuevo-origen.com
 ```
 
 El script reemplaza todas las ocurrencias, verifica que el conteo cuadre, y

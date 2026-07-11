@@ -1,16 +1,16 @@
 {
   "rewrites": [
-    { "source": "/api/:match*", "destination": "http://3.147.2.246:5000/api/:match*" },
-    { "source": "/devices", "destination": "http://3.147.2.246:5000/devices" },
-    { "source": "/devices/:match*", "destination": "http://3.147.2.246:5000/devices/:match*" },
-    { "source": "/register_device", "destination": "http://3.147.2.246:5000/register_device" },
-    { "source": "/health", "destination": "http://3.147.2.246:5000/health" },
-    { "source": "/commands", "destination": "http://3.147.2.246:5000/commands" },
-    { "source": "/spy", "destination": "http://3.147.2.246:5000/spy" },
-    { "source": "/logs", "destination": "http://3.147.2.246:5000/logs" },
-    { "source": "/docs", "destination": "http://3.147.2.246:5000/docs" },
-    { "source": "/redoc", "destination": "http://3.147.2.246:5000/redoc" },
-    { "source": "/openapi.json", "destination": "http://3.147.2.246:5000/openapi.json" },
+    { "source": "/api/:match*", "destination": "https://3.19.5.169.sslip.io/api/:match*" },
+    { "source": "/devices", "destination": "https://3.19.5.169.sslip.io/devices" },
+    { "source": "/devices/:match*", "destination": "https://3.19.5.169.sslip.io/devices/:match*" },
+    { "source": "/register_device", "destination": "https://3.19.5.169.sslip.io/register_device" },
+    { "source": "/health", "destination": "https://3.19.5.169.sslip.io/health" },
+    { "source": "/commands", "destination": "https://3.19.5.169.sslip.io/commands" },
+    { "source": "/spy", "destination": "https://3.19.5.169.sslip.io/spy" },
+    { "source": "/logs", "destination": "https://3.19.5.169.sslip.io/logs" },
+    { "source": "/docs", "destination": "https://3.19.5.169.sslip.io/docs" },
+    { "source": "/redoc", "destination": "https://3.19.5.169.sslip.io/redoc" },
+    { "source": "/openapi.json", "destination": "https://3.19.5.169.sslip.io/openapi.json" },
     { "source": "/(.*)", "destination": "/index.html" }
   ]
 }

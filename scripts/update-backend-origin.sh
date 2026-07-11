@@ -8,13 +8,13 @@
 # verdad" para actualizarlo sin tener que buscar manualmente cada linea.
 #
 # Uso:
-#   ./scripts/update-backend-origin.sh http://3.147.2.246:5000 https://api.tudominio.com
+#   ./scripts/update-backend-origin.sh https://3.19.5.169.sslip.io https://api.tudominio.com
 #
 set -euo pipefail
 
 if [ "$#" -ne 2 ]; then
   echo "Uso: $0 <origen-actual> <origen-nuevo>" >&2
-  echo "Ejemplo: $0 http://3.147.2.246:5000 https://api.tudominio.com" >&2
+  echo "Ejemplo: $0 https://3.19.5.169.sslip.io https://api.tudominio.com" >&2
   exit 1
 fi
 
