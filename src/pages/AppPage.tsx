@@ -310,6 +310,8 @@ export default function AppPage({ appKey }: Props) {
                   <DeviceMap logs={rawData} />
                 </div>
               </Suspense>
+            ) : isLoading && filtered.length === 0 ? (
+              <div className="empty-state" data-testid="app-list-loading">⏳ Cargando datos...</div>
             ) : filtered.length === 0 ? (
               <div className="empty-state">No se encontraron mensajes que coincidan.</div>
             ) : (
