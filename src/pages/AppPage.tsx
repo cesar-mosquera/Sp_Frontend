@@ -9,7 +9,9 @@ import { downloadCSV } from '../utils/export';
 import { fetchWithRetry } from '../utils/fetchWithRetry';
 import { handleAuthResponse } from '../utils/authResponse';
 import { useAuthStore } from '../store';
+import { colorForContact } from '../utils/contactColor';
 import ChatMessageRow from '../components/ChatMessageRow';
+import ConversationRow, { type Conversation } from '../components/ConversationRow';
 import React, { Suspense } from 'react';
 const DeviceMap = React.lazy(() => import('../components/DeviceMap'));
 import '../app-page.css';
@@ -38,7 +40,11 @@ export default function AppPage({ appKey }: Props) {
   const [connectionError, setConnectionError] = useState<string | null>(null);
   const [sseConnected, setSseConnected] = useState(false);
   const [apiConnected, setApiConnected] = useState(false);
-  
+  // Contacto abierto actualmente (null = viendo la lista de conversaciones).
+  // Cada conversacion se ve por separado -- los mensajes de un tercer
+  // contacto nunca aparecen mientras se esta viendo el chat de otro.
+  const [selectedContact, setSelectedContact] = useState<string | null>(null);
+
   // Paginación con scroll infinito
   const { skip, limit, hasMore, loadMore, reset: resetPagination, setTotalCount } = usePagination({
     initialLimit: 50,
@@ -175,9 +181,51 @@ export default function AppPage({ appKey }: Props) {
       });
   }, [data, filter, search, sort]);
 
+  // Agrupa los mensajes/notificaciones por contacto -- cada persona con la
+  // que se chatea es su propia conversacion, en vez de un feed plano donde
+  // se mezclan todos los contactos. Ordenadas por actividad mas reciente
+  // primero (o alfabeticamente si sort === 'contact'), igual que cualquier
+  // app de chat real.
+  const conversations = useMemo(() => {
+    const byContact = new Map<string, LogEntry[]>();
+    for (const entry of filtered) {
+      const key = entry.contact || 'Contacto desconocido';
+      if (!byContact.has(key)) byContact.set(key, []);
+      byContact.get(key)!.push(entry);
+    }
+    const list: Conversation[] = Array.from(byContact.entries()).map(([contact, entries]) => {
+      const lastEntry = entries.reduce((latest, e) =>
+        new Date(e.timestamp).getTime() > new Date(latest.timestamp).getTime() ? e : latest
+      );
+      return { contact, entries, lastEntry };
+    });
+    if (sort === 'contact') {
+      list.sort((a, b) => normalize(a.contact).localeCompare(normalize(b.contact)));
+    } else {
+      list.sort((a, b) => new Date(b.lastEntry.timestamp).getTime() - new Date(a.lastEntry.timestamp).getTime());
+    }
+    return list;
+  }, [filtered, sort]);
+
+  // Si el contacto abierto ya no tiene mensajes bajo los filtros actuales
+  // (ej. cambio de busqueda/tipo), se vuelve solo a la lista de
+  // conversaciones en vez de dejar un chat vacio y "atascado".
   useEffect(() => {
-    setResultCount(filtered.length);
-  }, [filtered]);
+    if (selectedContact && !conversations.some(c => c.contact === selectedContact)) {
+      setSelectedContact(null);
+    }
+  }, [selectedContact, conversations]);
+
+  const threadEntries = useMemo(() => {
+    if (!selectedContact) return [];
+    const conv = conversations.find(c => c.contact === selectedContact);
+    if (!conv) return [];
+    return [...conv.entries].sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime());
+  }, [conversations, selectedContact]);
+
+  useEffect(() => {
+    setResultCount(selectedContact ? threadEntries.length : conversations.length);
+  }, [conversations, threadEntries, selectedContact]);
 
   const exportToCSV = () => {
     const headers = ['Fecha', 'Contacto', 'Tipo', 'Mensaje'];
@@ -186,13 +234,6 @@ export default function AppPage({ appKey }: Props) {
     ]);
     downloadCSV(headers, rows, `${appKey}_logs_${new Date().toISOString().split('T')[0]}.csv`);
   };
-
-  // Scroll infinito: se dispara cuando la lista virtualizada se acerca al final
-  const handleRowsRendered = useCallback((visible: { startIndex: number; stopIndex: number }) => {
-    if (hasMore && !isLoading && visible.stopIndex >= filtered.length - 5) {
-      loadMore();
-    }
-  }, [hasMore, isLoading, filtered.length, loadMore]);
 
   return (
     <div
@@ -296,13 +337,37 @@ export default function AppPage({ appKey }: Props) {
         <section className="panel">
           <div className="panel-header">
             <div>
-              <h2>{config.title}</h2>
+              <h2>{selectedContact || config.title}</h2>
               <p className="panel-subtitle">
-                {isLoading ? '⏳ Cargando datos...' : connectionError ? '⚠️ ' + connectionError : 'Filtra mensajes y alertas por contacto o texto.'}
+                {isLoading ? '⏳ Cargando datos...' : connectionError ? '⚠️ ' + connectionError : selectedContact ? 'Conversación individual, sin mezclar con otros contactos.' : 'Cada contacto tiene su propia conversación.'}
               </p>
             </div>
-            <span className="result-count">{resultCount} elemento{resultCount === 1 ? '' : 's'}</span>
+            <span className="result-count">
+              {selectedContact
+                ? `${resultCount} mensaje${resultCount === 1 ? '' : 's'}`
+                : `${resultCount} conversaci${resultCount === 1 ? 'ón' : 'ones'}`}
+            </span>
           </div>
+
+          {selectedContact && appKey !== 'ubicacion' && (
+            <div className="thread-header">
+              <button
+                type="button"
+                className="back-link"
+                data-testid="back-to-conversations"
+                onClick={() => setSelectedContact(null)}
+              >
+                ← Volver a conversaciones
+              </button>
+              <div className="thread-header-contact">
+                <div className="thread-avatar" style={{ background: colorForContact(selectedContact) }}>
+                  {(selectedContact.trim().charAt(0) || '?').toUpperCase()}
+                </div>
+                <strong>{selectedContact}</strong>
+              </div>
+            </div>
+          )}
+
           <div id="app-list" className={appKey === 'ubicacion' ? 'map-container' : 'chat-list'}>
             {appKey === 'ubicacion' ? (
               <Suspense fallback={<div style={{padding: 20, color: '#fff'}}>Cargando Mapa...</div>}>
@@ -310,42 +375,48 @@ export default function AppPage({ appKey }: Props) {
                   <DeviceMap logs={rawData} />
                 </div>
               </Suspense>
-            ) : isLoading && filtered.length === 0 ? (
+            ) : isLoading && conversations.length === 0 ? (
               <div className="empty-state" data-testid="app-list-loading">⏳ Cargando datos...</div>
-            ) : filtered.length === 0 ? (
-              <div className="empty-state">No se encontraron mensajes que coincidan.</div>
-            ) : (
-              <>
+            ) : selectedContact ? (
+              threadEntries.length === 0 ? (
+                <div className="empty-state">No se encontraron mensajes que coincidan.</div>
+              ) : (
                 <List
                   style={{ height: 600 }}
-                  rowCount={filtered.length}
+                  rowCount={threadEntries.length}
                   rowHeight={220}
                   rowComponent={ChatMessageRow}
-                  rowProps={{ entries: filtered }}
-                  onRowsRendered={handleRowsRendered}
+                  rowProps={{ entries: threadEntries }}
                 />
+              )
+            ) : conversations.length === 0 ? (
+              <div className="empty-state">No se encontraron conversaciones que coincidan.</div>
+            ) : (
+              <>
+                <div className="conversation-list">
+                  {conversations.map(conv => (
+                    <ConversationRow key={conv.contact} conversation={conv} onOpen={setSelectedContact} />
+                  ))}
+                </div>
                 {hasMore && (
-                  <div
-                    style={{
-                      height: '50px',
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'center',
-                      color: 'rgba(255, 255, 255, 0.5)',
-                      fontSize: '0.8rem',
-                    }}
+                  <button
+                    type="button"
+                    className="load-more-btn"
+                    data-testid="load-more-messages"
+                    onClick={loadMore}
+                    disabled={isLoading}
                   >
-                    {isLoading ? '⏳ Cargando más mensajes...' : '↓ Desliza para cargar más'}
-                  </div>
+                    {isLoading ? '⏳ Cargando más mensajes...' : '📥 Cargar mensajes más antiguos'}
+                  </button>
                 )}
-                {!hasMore && filtered.length > 0 && (
+                {!hasMore && data.length > 0 && (
                   <div style={{
                     textAlign: 'center',
                     padding: '16px',
                     color: 'rgba(255, 255, 255, 0.4)',
                     fontSize: '0.75rem',
                   }}>
-                    ✓ Mostrando todos los mensajes ({filtered.length})
+                    ✓ Mostrando todos los mensajes ({data.length})
                   </div>
                 )}
               </>

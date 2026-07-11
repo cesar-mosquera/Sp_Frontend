@@ -1,20 +1,10 @@
 import type { RowComponentProps } from 'react-window';
 import { formatTimestamp } from '../appPage';
 import type { LogEntry } from '../appPage';
+import { colorForContact } from '../utils/contactColor';
 
 export interface ChatMessageRowProps {
   entries: LogEntry[];
-}
-
-const AVATAR_COLORS = ['#00c463', '#18a0fb', '#ff5ed9', '#fe2c55', '#4285f4', '#ff9800', '#00ffb8', '#b300ff'];
-
-// Color estable por contacto (mismo contacto = mismo color siempre), para
-// poder distinguir de un vistazo quien es quien en una lista larga de
-// mensajes de contactos distintos.
-function colorForContact(contact: string): string {
-  let hash = 0;
-  for (let i = 0; i < contact.length; i++) hash = (hash * 31 + contact.charCodeAt(i)) >>> 0;
-  return AVATAR_COLORS[hash % AVATAR_COLORS.length];
 }
 
 export default function ChatMessageRow({ index, style, entries }: RowComponentProps<ChatMessageRowProps>) {
