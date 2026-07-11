@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { MapContainer, TileLayer, Marker, Popup, useMap } from 'react-leaflet';
 import 'leaflet/dist/leaflet.css';
 import L from 'leaflet';
+import { colorForContact } from '../utils/contactColor';
 
 // Fix for default marker icons in React-Leaflet
 delete (L.Icon.Default.prototype as any)._getIconUrl;
@@ -38,6 +39,7 @@ interface LocationData {
   lng: number;
   device: string;
   time: string;
+  timestamp: string;
 }
 
 // Componente para ajustar el zoom a todos los marcadores
@@ -52,26 +54,38 @@ function ChangeView({ markers }: { markers: LocationData[] }) {
   return null;
 }
 
+// Centra el mapa en la tarjeta de ubicacion seleccionada (por dispositivo/momento).
+function FlyToSelected({ location }: { location: LocationData | null }) {
+  const map = useMap();
+  useEffect(() => {
+    if (location) {
+      map.flyTo([location.lat, location.lng], 15, { duration: 0.6 });
+    }
+  }, [location, map]);
+  return null;
+}
+
 function DeviceMap({ logs }: Props) {
   const [locations, setLocations] = useState<LocationData[]>([]);
+  const [selectedId, setSelectedId] = useState<string | null>(null);
 
   useEffect(() => {
     // Buscar coordenadas en logs tipo LOCATION o extraer de content si es posible
     const locs: LocationData[] = [];
-    
+
     logs.forEach((log, index) => {
       // Si el log es explícitamente de ubicación, o si log.content tiene un formato de lat,lng
       if (log.type === 'LOCATION' || log.content?.includes('lat:') || log.content?.match(/[-]?[0-9]*\.[0-9]+,\s*[-]?[0-9]*\.[0-9]+/)) {
-        
+
         let lat = 0, lng = 0;
         let found = false;
 
         // Intentar parsear "lat: 19.43, lng: -99.13" o similar
         const contentStr = log.content || '';
-        
+
         // Match regex for simple decimal coordinates (e.g., "19.4326, -99.1332")
         const coordMatch = contentStr.match(/([-]?[0-9]{1,2}\.[0-9]+)[^\d-]+([-]?[0-9]{1,3}\.[0-9]+)/);
-        
+
         if (coordMatch) {
           lat = parseFloat(coordMatch[1]);
           lng = parseFloat(coordMatch[2]);
@@ -83,27 +97,62 @@ function DeviceMap({ logs }: Props) {
             id: `loc-${index}`,
             lat,
             lng,
-            device: log.device_id || 'Unknown Device',
-            time: log.timestamp ? new Date(log.timestamp).toLocaleString() : 'Reciente'
+            device: log.device_id || 'Dispositivo desconocido',
+            time: log.timestamp ? new Date(log.timestamp).toLocaleString() : 'Reciente',
+            timestamp: log.timestamp || '',
           });
         }
       }
     });
 
+    // Mas recientes primero, igual que las conversaciones de chat.
+    locs.sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime());
     setLocations(locs);
+    setSelectedId(null);
   }, [logs]);
+
+  const selectedLocation = locations.find(l => l.id === selectedId) || null;
 
   return (
     <div style={{ background: 'rgba(10, 0, 20, 0.4)', borderRadius: '12px', padding: '16px', border: '1px solid rgba(0, 240, 255, 0.2)' }}>
       <h3 style={{ fontFamily: "'Orbitron', monospace", fontSize: '0.8rem', color: '#00f0ff', marginBottom: '16px' }}>
         Mapa de Nodos (Últimas ubicaciones)
       </h3>
-      
-      <div style={{ height: '300px', width: '100%', borderRadius: '8px', overflow: 'hidden' }}>
+
+      {locations.length > 0 && (
+        <div className="conversation-list location-card-list">
+          {locations.map(loc => {
+            const avatarColor = colorForContact(loc.device);
+            const initial = (loc.device || '?').trim().charAt(0).toUpperCase() || '?';
+            const isActive = loc.id === selectedId;
+            return (
+              <button
+                key={loc.id}
+                type="button"
+                className={`conversation-row location-row${isActive ? ' active' : ''}`}
+                data-testid={`open-location-${loc.id}`}
+                onClick={() => setSelectedId(loc.id)}
+                style={{ borderLeft: `3px solid ${avatarColor}` }}
+              >
+                <div className="conversation-avatar" style={{ background: avatarColor }}>{initial}</div>
+                <div className="conversation-info">
+                  <div className="conversation-top-row">
+                    <strong>{loc.device}</strong>
+                    <small>{loc.time}</small>
+                  </div>
+                  <div className="conversation-preview">📍 {loc.lat.toFixed(4)}, {loc.lng.toFixed(4)}</div>
+                </div>
+              </button>
+            );
+          })}
+        </div>
+      )}
+
+      <div style={{ height: '300px', width: '100%', borderRadius: '8px', overflow: 'hidden', marginTop: locations.length > 0 ? 16 : 0 }}>
         {locations.length > 0 ? (
-          <MapContainer 
-            center={[19.4326, -99.1332]} 
-            zoom={3} 
+          <MapContainer
+            center={[19.4326, -99.1332]}
+            zoom={3}
             style={{ height: '100%', width: '100%', background: '#0a0014' }}
             zoomControl={false}
           >
@@ -124,6 +173,7 @@ function DeviceMap({ logs }: Props) {
               </Marker>
             ))}
             <ChangeView markers={locations} />
+            <FlyToSelected location={selectedLocation} />
           </MapContainer>
         ) : (
           <div style={{ height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'rgba(255,255,255,0.3)' }}>

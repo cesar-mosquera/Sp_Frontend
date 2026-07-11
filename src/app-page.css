@@ -353,6 +353,16 @@ button {
   border: 1px solid rgba(179, 0, 255, 0.3);
 }
 
+@keyframes conversationFadeIn {
+  from { opacity: 0; transform: translateY(10px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes threadSlideIn {
+  from { opacity: 0; transform: translateX(16px); }
+  to { opacity: 1; transform: translateX(0); }
+}
+
 .conversation-list {
   display: grid;
   /* minmax(0, 1fr) evita que un nombre de contacto largo sin espacios
@@ -375,11 +385,32 @@ button {
   font-family: inherit;
   text-align: left;
   transition: transform .15s ease, background .15s ease;
+  animation: conversationFadeIn 0.35s ease-out backwards;
 }
+
+/* Entrada escalonada: cada tarjeta aparece un poco despues que la
+   anterior en vez de que todas salten juntas de golpe (estatico). */
+.conversation-list > *:nth-child(1) { animation-delay: 0.02s; }
+.conversation-list > *:nth-child(2) { animation-delay: 0.06s; }
+.conversation-list > *:nth-child(3) { animation-delay: 0.1s; }
+.conversation-list > *:nth-child(4) { animation-delay: 0.14s; }
+.conversation-list > *:nth-child(5) { animation-delay: 0.18s; }
+.conversation-list > *:nth-child(n+6) { animation-delay: 0.2s; }
 
 .conversation-row:hover {
   transform: translateY(-1px) scale(1.005);
   background: rgba(255, 255, 255, 0.09);
+}
+
+.location-card-list {
+  max-height: 280px;
+  overflow-y: auto;
+  padding-right: 4px;
+}
+
+.location-row.active {
+  background: rgba(0, 240, 255, 0.1);
+  border-color: rgba(0, 240, 255, 0.4);
 }
 
 .conversation-avatar {
@@ -453,6 +484,12 @@ button {
   gap: 16px;
   flex-wrap: wrap;
   margin-bottom: 16px;
+  animation: threadSlideIn 0.3s ease-out backwards;
+}
+
+.thread-messages-enter {
+  animation: threadSlideIn 0.3s ease-out backwards;
+  animation-delay: 0.05s;
 }
 
 .thread-header-contact {

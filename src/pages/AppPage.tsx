@@ -341,18 +341,28 @@ export default function AppPage({ appKey }: Props) {
             <div>
               <h2>{selectedContact || config.title}</h2>
               <p className="panel-subtitle">
-                {isLoading ? '⏳ Cargando datos...' : connectionError ? '⚠️ ' + connectionError : selectedContact ? 'Conversación individual, sin mezclar con otros contactos.' : 'Cada contacto tiene su propia conversación.'}
+                {isLoading
+                  ? '⏳ Cargando datos...'
+                  : connectionError
+                  ? '⚠️ ' + connectionError
+                  : appKey === 'ubicacion'
+                  ? 'Tocá una tarjeta para centrar el mapa en ese momento.'
+                  : selectedContact
+                  ? 'Conversación individual, sin mezclar con otros contactos.'
+                  : 'Cada contacto tiene su propia conversación.'}
               </p>
             </div>
-            <span className="result-count">
-              {selectedContact
-                ? `${resultCount} mensaje${resultCount === 1 ? '' : 's'}`
-                : `${resultCount} conversaci${resultCount === 1 ? 'ón' : 'ones'}`}
-            </span>
+            {appKey !== 'ubicacion' && (
+              <span className="result-count">
+                {selectedContact
+                  ? `${resultCount} mensaje${resultCount === 1 ? '' : 's'}`
+                  : `${resultCount} conversaci${resultCount === 1 ? 'ón' : 'ones'}`}
+              </span>
+            )}
           </div>
 
           {selectedContact && appKey !== 'ubicacion' && (
-            <div className="thread-header">
+            <div className="thread-header" key={`header-${selectedContact}`}>
               <button
                 type="button"
                 className="back-link"
@@ -383,13 +393,15 @@ export default function AppPage({ appKey }: Props) {
               threadEntries.length === 0 ? (
                 <div className="empty-state">No se encontraron mensajes que coincidan.</div>
               ) : (
-                <List
-                  style={{ height: 600 }}
-                  rowCount={threadEntries.length}
-                  rowHeight={220}
-                  rowComponent={ChatMessageRow}
-                  rowProps={{ entries: threadEntries, showContactName: false }}
-                />
+                <div className="thread-messages-enter" key={`messages-${selectedContact}`}>
+                  <List
+                    style={{ height: 600 }}
+                    rowCount={threadEntries.length}
+                    rowHeight={220}
+                    rowComponent={ChatMessageRow}
+                    rowProps={{ entries: threadEntries, showContactName: false }}
+                  />
+                </div>
               )
             ) : conversations.length === 0 ? (
               <div className="empty-state">No se encontraron conversaciones que coincidan.</div>
