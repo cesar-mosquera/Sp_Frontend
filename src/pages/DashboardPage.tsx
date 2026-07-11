@@ -51,6 +51,16 @@ export default function DashboardPage() {
   const [endDate, setEndDate] = useState('');
   const [searchQuery, setSearchQuery] = useState('');
   const [isExporting, setIsExporting] = useState(false);
+
+  // loadData los lee via ref (no como dependencia directa) para no recrearse
+  // y refetchear en cada tecla escrita; igual siempre usa el valor mas
+  // reciente cuando de verdad se dispara (boton/Enter en Buscar).
+  const startDateRef = useRef(startDate);
+  const endDateRef = useRef(endDate);
+  const searchQueryRef = useRef(searchQuery);
+  useEffect(() => { startDateRef.current = startDate; }, [startDate]);
+  useEffect(() => { endDateRef.current = endDate; }, [endDate]);
+  useEffect(() => { searchQueryRef.current = searchQuery; }, [searchQuery]);
   const [refreshCounter, setRefreshCounter] = useState(0);
   
   // Paginación
@@ -230,9 +240,9 @@ export default function DashboardPage() {
       if (selectedApp) params.append('app', selectedApp);
       params.append('skip', skip.toString());
       params.append('limit', limit.toString());
-      if (startDate) params.append('start_date', startDate + 'T00:00:00Z');
-      if (endDate) params.append('end_date', endDate + 'T23:59:59Z');
-      if (searchQuery) params.append('search', searchQuery);
+      if (startDateRef.current) params.append('start_date', startDateRef.current + 'T00:00:00Z');
+      if (endDateRef.current) params.append('end_date', endDateRef.current + 'T23:59:59Z');
+      if (searchQueryRef.current) params.append('search', searchQueryRef.current);
       if (params.toString()) endpoint += `?${params.toString()}`;
       
       const res = handleAuthResponse(await fetchWithRetry(endpoint, {
@@ -713,10 +723,11 @@ export default function DashboardPage() {
             <div style={{ padding: '12px', background: 'rgba(255,255,255,0.02)', borderRadius: '8px', marginBottom: '16px', display: 'flex', flexWrap: 'wrap', gap: '12px', border: '1px solid rgba(255,255,255,0.05)' }}>
               <div style={{ flex: '1 1 200px' }}>
                 <label style={{ display: 'block', fontSize: '0.65rem', color: 'rgba(255,255,255,0.5)', marginBottom: '4px' }}>BUSCAR CONTACTO / MENSAJE</label>
-                <input 
-                  type="text" 
+                <input
+                  type="text"
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
+                  onKeyDown={(e) => e.key === 'Enter' && handleSearch()}
                   placeholder="Ej. Mi Reina, alerta..."
                   style={{ width: '100%', padding: '8px', background: 'rgba(0,0,0,0.3)', border: '1px solid rgba(255,255,255,0.1)', color: '#fff', borderRadius: '4px', fontSize: '0.8rem' }}
                 />

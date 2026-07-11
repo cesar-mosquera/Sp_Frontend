@@ -112,4 +112,27 @@ describe('DashboardPage: flujo de datos', () => {
     fireEvent.click(screen.getByRole('button', { name: /Admin/i }));
     expect(await screen.findByText('Pantalla de Admin')).toBeInTheDocument();
   });
+
+  it('regresion: presionar Enter en el buscador dispara la busqueda igual que el boton', async () => {
+    (fetch as ReturnType<typeof vi.fn>).mockImplementation(() =>
+      Promise.resolve(new Response(JSON.stringify({ stats: { total_operations: 1 }, logs: [], devices: [] }), { status: 200 }))
+    );
+
+    renderDashboard();
+
+    await waitFor(() => expect(screen.getByText('CONECTADO')).toBeInTheDocument());
+
+    const searchInput = screen.getByPlaceholderText('Ej. Mi Reina, alerta...');
+    fireEvent.change(searchInput, { target: { value: 'Mi Reina' } });
+    (fetch as ReturnType<typeof vi.fn>).mockClear();
+
+    // Antes, el input no tenia onKeyDown y presionar Enter no hacia nada;
+    // habia que hacer clic manualmente en el boton "Buscar".
+    fireEvent.keyDown(searchInput, { key: 'Enter' });
+
+    await waitFor(() => expect(fetch).toHaveBeenCalledWith(
+      expect.stringContaining('search=Mi+Reina'),
+      expect.anything()
+    ));
+  });
 });
