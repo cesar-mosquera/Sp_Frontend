@@ -179,8 +179,13 @@ export default function AdminPage() {
       console.error('Error cargando dispositivos tras varios intentos:', err);
       setConnectionError('No se pudo conectar al backend tras varios intentos');
       setDevices([]);
+    } finally {
+      // finally (no al final del try): el "return" temprano del caso
+      // "!res.ok" saltaba directo por encima del setLoading(false) que
+      // estaba despues del try/catch, dejando el spinner girando para
+      // siempre aunque el mensaje de error ya se mostrara arriba.
+      setLoading(false);
     }
-    setLoading(false);
   }, [API, adminHeaders]);
 
   useEffect(() => {
@@ -450,7 +455,14 @@ export default function AdminPage() {
       const res = handleAuthResponse(await fetch(API + `/devices/${selectedDevice.device_id}`, {
         method: 'PATCH',
         headers: adminHeaders({ 'Content-Type': 'application/json' }),
-        body: JSON.stringify({ username: credsUsername.trim(), password: credsPassword.trim() }),
+        // El backend exige "name" en cualquier PATCH a /devices/{id}, aunque
+        // solo se este actualizando usuario/contraseña -- sin esto, siempre
+        // rechazaba con 422 "Field required" y el modal quedaba pegado.
+        body: JSON.stringify({
+          name: selectedDevice.name || selectedDevice.device_id,
+          username: credsUsername.trim(),
+          password: credsPassword.trim(),
+        }),
       }));
       if (res.ok) {
         await loadDevices();
@@ -460,7 +472,9 @@ export default function AdminPage() {
         setCredsPassword('');
         showToast('Credenciales actualizadas');
       } else {
-        showToast('Error al actualizar credenciales');
+        const error = await res.json().catch(() => null);
+        console.error(`Error actualizando credenciales: HTTP ${res.status}`, error);
+        showToast(`Error al actualizar credenciales (HTTP ${res.status})`);
       }
     } catch (err) {
       console.error('Error actualizando credenciales:', err);
@@ -480,7 +494,7 @@ export default function AdminPage() {
       if (res.ok) showToast('Mantenimiento DB ejecutado');
       else showToast('Error al limpiar DB');
     } catch { showToast('Error de conexión'); }
-    setIsActionLoading(false);
+    finally { setIsActionLoading(false); }
   };
 
   const runMaintenancePurge = async () => {
@@ -499,8 +513,9 @@ export default function AdminPage() {
       }
     } catch {
       showToast('Error de conexión');
+    } finally {
+      setIsActionLoading(false);
     }
-    setIsActionLoading(false);
   };
 
   const clearBans = async () => {
@@ -513,7 +528,7 @@ export default function AdminPage() {
       if (res.ok) showToast('Baneos de IP levantados');
       else showToast('Error al limpiar baneos');
     } catch { showToast('Error de conexión'); }
-    setIsActionLoading(false);
+    finally { setIsActionLoading(false); }
   };
 
   const sendCommand = async (deviceId: string, cmd: string) => {
@@ -527,7 +542,7 @@ export default function AdminPage() {
       if (res.ok) showToast(`Comando ${cmd} enviado`);
       else showToast('Error al enviar comando');
     } catch { showToast('Error de conexión'); }
-    setIsActionLoading(false);
+    finally { setIsActionLoading(false); }
   };
 
   const openDeleteModal = (device: Device) => {
@@ -581,6 +596,9 @@ export default function AdminPage() {
         setDeviceSubs(prev => prev.map(s => s.app_name === appName ? { ...s, active } : s));
         showToast(`Suscripción ${active ? 'activada' : 'desactivada'}`);
         if (adminTab === 'subscriptions') loadSubscriptions();
+      } else {
+        console.error(`Error actualizando suscripcion: HTTP ${res.status}`);
+        showToast(`No se pudo ${active ? 'activar' : 'desactivar'} la suscripción (HTTP ${res.status})`);
       }
     } catch (err) {
       showToast('Error al actualizar suscripción');
@@ -599,6 +617,9 @@ export default function AdminPage() {
       if (res.ok) {
         showToast(`Plan ${currentEnabled ? 'desactivado' : 'activado'}`);
         loadPlans();
+      } else {
+        console.error(`Error actualizando plan: HTTP ${res.status}`);
+        showToast(`No se pudo ${currentEnabled ? 'desactivar' : 'activar'} el plan (HTTP ${res.status})`);
       }
     } catch (err) {
       showToast('Error al actualizar plan');
@@ -1033,11 +1054,11 @@ export default function AdminPage() {
                   </p>
                   <div className="stats-row">
                     <div className="stat-card">
-                      <div className="num">{metrics.avg_latency_ms.toFixed(1)} ms</div>
+                      <div className="num">{(metrics.avg_latency_ms ?? 0).toFixed(1)} ms</div>
                       <div className="label">Latencia prom. (últ. 100)</div>
                     </div>
                     <div className="stat-card">
-                      <div className="num">{metrics.p99_latency_ms.toFixed(1)} ms</div>
+                      <div className="num">{(metrics.p99_latency_ms ?? 0).toFixed(1)} ms</div>
                       <div className="label">Latencia p99 (últ. 100)</div>
                     </div>
                   </div>

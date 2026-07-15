@@ -227,11 +227,14 @@ describe('AdminPage', () => {
     fireEvent.change(screen.getByTestId('creds-password-input'), { target: { value: 'una-clave-segura' } });
     fireEvent.click(screen.getByTestId('creds-confirm'));
 
+    // El backend exige "name" en cualquier PATCH a /devices/{id} -- sin
+    // mandarlo (aunque solo se actualice usuario/contraseña) rechaza con
+    // 422 "Field required" y el guardado queda pegado.
     await waitFor(() => expect(fetch).toHaveBeenCalledWith(
       expect.stringContaining('/devices/phone-cesar'),
       expect.objectContaining({
         method: 'PATCH',
-        body: JSON.stringify({ username: 'phone-cesar', password: 'una-clave-segura' }),
+        body: JSON.stringify({ name: 'phone-cesar', username: 'phone-cesar', password: 'una-clave-segura' }),
       })
     ));
   });

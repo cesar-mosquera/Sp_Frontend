@@ -413,7 +413,7 @@ export default function AppPage({ appKey }: Props) {
             <div className="thread-header" key={`header-${selectedContact}`}>
               <button
                 type="button"
-                className="back-link"
+                className="back-link accent-brand"
                 data-testid="back-to-conversations"
                 onClick={() => setSelectedContact(null)}
               >

@@ -365,7 +365,28 @@ header .subtitle {
   color: var(--text-secondary);
 }
 
-.app-filter-tag {
+/* Contenedor de ambas filas de filtro (dispositivo y app) -- sin esto,
+   las etiquetas (spans sin gap ni salto de linea propio) se renderizaban
+   pegadas unas a otras como texto plano corrido. */
+.device-filter-bar,
+.app-filter-bar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+  margin-top: 12px;
+}
+
+.device-filter-label {
+  font-family: 'Inter', sans-serif;
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: var(--text-secondary);
+  margin-right: 4px;
+}
+
+.app-filter-tag,
+.device-filter-tag {
   font-family: 'Inter', sans-serif;
   font-size: 0.75rem;
   font-weight: 600;
@@ -378,12 +399,14 @@ header .subtitle {
   transition: all 0.2s;
 }
 
-.app-filter-tag:hover {
+.app-filter-tag:hover,
+.device-filter-tag:hover {
   background: rgba(255, 255, 255, 0.08);
   color: #fff;
 }
 
-.app-filter-tag.selected-filter {
+.app-filter-tag.selected-filter,
+.device-filter-tag.selected-filter {
   background: var(--gradient-primary);
   border-color: transparent;
   color: #000;

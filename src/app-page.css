@@ -192,6 +192,21 @@ button {
   background: rgba(0, 240, 255, 0.18);
 }
 
+/* Volver a conversaciones (dentro de un hilo abierto): usa el color de
+   marca de la app actual para que resalte contra el fondo, en vez del
+   mismo gris translucido que el resto de los back-link. */
+.back-link.accent-brand {
+  background: var(--brand-color-soft);
+  border-color: var(--brand-color);
+  color: var(--brand-color);
+  box-shadow: 0 0 15px var(--brand-color-soft);
+}
+
+.back-link.accent-brand:hover {
+  background: var(--brand-color);
+  color: #0a0014;
+}
+
 /* El chat (.panel) va primero -- tanto en el orden del DOM (asi en mobile
    se ve primero la conversacion y despues los indicadores, no al reves)
    como en ancho, ya que es el contenido principal. Los indicadores quedan
