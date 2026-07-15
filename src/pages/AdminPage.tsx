@@ -1,6 +1,6 @@
 import { useEffect, useState, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { API_BASE_URL, APP_PAGE_CONFIG } from '../config';
+import { API_BASE_URL } from '../config';
 import { useAuthStore } from '../store';
 import { fetchWithRetry } from '../utils/fetchWithRetry';
 import { handleAuthResponse } from '../utils/authResponse';
@@ -195,22 +195,9 @@ export default function AdminPage() {
       }));
       if (res.ok) {
         const data = await res.json();
-        const existing: Plan[] = data.plans || [];
-        // Mismo motivo que en openSubsModal: el backend solo devuelve un
-        // plan por app una vez que alguien lo creo manualmente -- una app
-        // recien agregada al catalogo (ej. "Llamadas") no tendria fila
-        // todavia y no aparecería aca para poder activarla/ponerle precio.
-        // Se completa con el catalogo completo, deshabilitadas por defecto.
-        const byAppName = new Map(existing.map(p => [p.app_name, p]));
-        const merged: Plan[] = Object.values(APP_PAGE_CONFIG).map(cfg => (
-          byAppName.get(cfg.appKey) ?? {
-            app_name: cfg.appKey,
-            display_name: cfg.title,
-            price: 0,
-            enabled: false,
-          }
-        ));
-        setPlans(merged);
+        // El backend ya devuelve siempre el catalogo completo de apps
+        // (enabled:false por defecto para las que no tienen fila propia).
+        setPlans(data.plans || []);
       } else {
         console.error(`Error cargando planes: HTTP ${res.status}`);
         showToast('No se pudieron cargar los planes');
@@ -570,24 +557,9 @@ export default function AdminPage() {
       }));
       if (res.ok) {
         const data = await res.json();
-        const existing: Subscription[] = data.subscriptions || [];
-        // El backend solo devuelve una fila por app una vez que esa app se
-        // activo/reporto datos alguna vez -- pero un dispositivo con el APK
-        // instalado debe poder activar o desactivar CUALQUIERA de las apps
-        // soportadas desde el primer momento, no solo las que ya tienen
-        // fila. Se completa con el catalogo completo (APP_PAGE_CONFIG),
-        // inactivas por defecto, para que ninguna app quede sin mostrarse.
-        const byAppName = new Map(existing.map(s => [s.app_name, s]));
-        const merged: Subscription[] = Object.values(APP_PAGE_CONFIG).map(cfg => (
-          byAppName.get(cfg.appKey) ?? {
-            id: -1,
-            device_id: device.device_id,
-            app_name: cfg.appKey,
-            display_name: cfg.title,
-            active: false,
-          }
-        ));
-        setDeviceSubs(merged);
+        // El backend ya devuelve siempre las 9 apps del catalogo
+        // (active:false por defecto para las que no tienen fila propia).
+        setDeviceSubs(data.subscriptions || []);
       } else {
         console.error(`Error cargando suscripciones del dispositivo: HTTP ${res.status}`);
         showToast('No se pudieron cargar las suscripciones del dispositivo');
