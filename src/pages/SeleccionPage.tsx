@@ -4,16 +4,20 @@ import { useAuthStore } from '../store';
 import { API_BASE_URL } from '../config';
 import '../styles/seleccion.css';
 
+// Iconos alojados en /public/icons (antes se cargaban directo desde el CDN
+// de Flaticon: dependencia de un tercero que puede caerse/renombrar los
+// assets, y ademas Flaticon exige atribucion o licencia paga para uso
+// comercial sin ella -- riesgo para un producto de cliente).
 const APPS = [
-  { name: 'WhatsApp', path: '/whatsapp', img: 'https://cdn-icons-png.flaticon.com/512/3670/3670051.png' },
-  { name: 'TikTok', path: '/tiktok', img: 'https://cdn-icons-png.flaticon.com/512/3046/3046121.png' },
-  { name: 'Telegram', path: '/telegram', img: 'https://cdn-icons-png.flaticon.com/512/2111/2111646.png' },
-  { name: 'Facebook', path: '/facebook', img: 'https://cdn-icons-png.flaticon.com/512/5968/5968764.png' },
-  { name: 'Instagram', path: '/instagram', img: 'https://cdn-icons-png.flaticon.com/512/2111/2111463.png' },
-  { name: 'Google', path: '/google', img: 'https://cdn-icons-png.flaticon.com/512/281/281764.png' },
-  { name: 'SMS', path: '/sms', img: 'https://cdn-icons-png.flaticon.com/512/2875/2875323.png' },
-  { name: 'Ubicación', path: '/ubicacion', img: 'https://cdn-icons-png.flaticon.com/512/854/854878.png' },
-  { name: 'Llamadas', path: '/llamadas', img: 'https://cdn-icons-png.flaticon.com/512/724/724664.png' },
+  { name: 'WhatsApp', path: '/whatsapp', img: '/icons/app-whatsapp.png' },
+  { name: 'TikTok', path: '/tiktok', img: '/icons/app-tiktok.png' },
+  { name: 'Telegram', path: '/telegram', img: '/icons/app-telegram.png' },
+  { name: 'Facebook', path: '/facebook', img: '/icons/app-facebook.png' },
+  { name: 'Instagram', path: '/instagram', img: '/icons/app-instagram.png' },
+  { name: 'Google', path: '/google', img: '/icons/app-google.png' },
+  { name: 'SMS', path: '/sms', img: '/icons/app-sms.png' },
+  { name: 'Ubicación', path: '/ubicacion', img: '/icons/app-ubicacion.png' },
+  { name: 'Llamadas', path: '/llamadas', img: '/icons/app-llamadas.png' },
 ];
 
 function updateStatusTime() {

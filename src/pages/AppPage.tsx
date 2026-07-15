@@ -367,6 +367,8 @@ export default function AppPage({ appKey }: Props) {
                   ? '🧪 Sin conexión al servidor — mostrando datos de ejemplo.'
                   : appKey === 'ubicacion'
                   ? 'Tocá una tarjeta para centrar el mapa en ese momento.'
+                  : appKey === 'llamadas'
+                  ? (selectedContact ? 'Historial de llamadas individual, sin mezclar con otros contactos.' : 'Cada contacto tiene su propio historial de llamadas.')
                   : selectedContact
                   ? 'Conversación individual, sin mezclar con otros contactos.'
                   : 'Cada contacto tiene su propia conversación.'}
@@ -375,7 +377,11 @@ export default function AppPage({ appKey }: Props) {
             {appKey !== 'ubicacion' && (
               <span className="result-count">
                 {selectedContact
-                  ? `${resultCount} mensaje${resultCount === 1 ? '' : 's'}`
+                  ? appKey === 'llamadas'
+                    ? `${resultCount} registro${resultCount === 1 ? '' : 's'}`
+                    : `${resultCount} mensaje${resultCount === 1 ? '' : 's'}`
+                  : appKey === 'llamadas'
+                  ? `${resultCount} llamada${resultCount === 1 ? '' : 's'}`
                   : `${resultCount} conversaci${resultCount === 1 ? 'ón' : 'ones'}`}
               </span>
             )}
@@ -417,7 +423,7 @@ export default function AppPage({ appKey }: Props) {
                 data-testid="back-to-conversations"
                 onClick={() => setSelectedContact(null)}
               >
-                ← Volver a conversaciones
+                ← Volver a {appKey === 'llamadas' ? 'llamadas' : 'conversaciones'}
               </button>
               <div className="thread-header-contact">
                 <div className="thread-avatar" style={{ background: colorForContact(selectedContact) }}>
@@ -441,7 +447,7 @@ export default function AppPage({ appKey }: Props) {
               threadEntries.length === 0 ? (
                 <div className="empty-state">
                   <span className="empty-state-icon">🔍</span>
-                  No se encontraron mensajes que coincidan.
+                  No se encontraron {appKey === 'llamadas' ? 'registros' : 'mensajes'} que coincidan.
                 </div>
               ) : (
                 <div className="thread-messages-enter" key={`messages-${selectedContact}`}>
@@ -457,7 +463,9 @@ export default function AppPage({ appKey }: Props) {
             ) : conversations.length === 0 ? (
               <div className="empty-state">
                 <span className="empty-state-icon">{search ? '🔍' : '📭'}</span>
-                {search ? 'No se encontraron conversaciones que coincidan.' : 'Aún no hay conversaciones registradas para este canal.'}
+                {search
+                  ? `No se encontraron ${appKey === 'llamadas' ? 'llamadas' : 'conversaciones'} que coincidan.`
+                  : `Aún no hay ${appKey === 'llamadas' ? 'llamadas registradas' : 'conversaciones registradas'} para este canal.`}
               </div>
             ) : (
               <>

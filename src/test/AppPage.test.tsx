@@ -132,7 +132,7 @@ describe('AppPage', () => {
 
     await waitFor(() => expect(screen.getByTestId('open-conversation-mi-reina')).toBeInTheDocument());
     expect(screen.getByTestId('open-conversation-el-enlace')).toBeInTheDocument();
-    await waitFor(() => expect(screen.getByText('2 conversaciones')).toBeInTheDocument());
+    await waitFor(() => expect(screen.getByText('2 llamadas')).toBeInTheDocument());
   });
 
   it('regresion: fail-closed -- si no se pudo verificar la suscripcion (falla de red), niega el acceso en vez de concederlo', async () => {

@@ -302,7 +302,7 @@ button {
    una fila y quedaban cortadas fuera de vista tras un scroll horizontal
    sin ningun indicador (igual problema que las pestañas de Admin). Se
    envuelven en vez de depender de un scroll oculto. */
-@media (max-width: 480px) {
+@media (max-width: 600px) {
   .filter-tabs { flex-wrap: wrap; overflow-x: visible; }
 }
 
