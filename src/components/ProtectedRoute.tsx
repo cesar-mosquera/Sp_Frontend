@@ -14,6 +14,7 @@ export default function ProtectedRoute({ children }: Props) {
   const isAuthenticated = useAuthStore(s => s.isAuthenticated);
   const token = useAuthStore(s => s.token);
   const role = useAuthStore(s => s.role);
+  const loginAsUser = useAuthStore(s => s.loginAsUser);
   const location = useLocation();
   const [checking, setChecking] = useState(isAuthenticated && !!token);
 
@@ -29,6 +30,21 @@ export default function ProtectedRoute({ children }: Props) {
       retryDelayMs: 400,
     })
       .then(handleAuthResponse)
+      .then(async (res) => {
+        if (cancelled || !res.ok) return;
+        try {
+          const data = await res.json();
+          if (data.status === 'success') {
+            const serverRole: 'admin' | 'user' = data.role === 'admin' ? 'admin' : 'user';
+            const serverUsername = data.username || '';
+            const serverDeviceId = data.device_id || null;
+            // Actualizar store si el caché local está desactualizado
+            if (serverRole !== role || serverUsername !== useAuthStore.getState().username || serverDeviceId !== useAuthStore.getState().deviceId) {
+              loginAsUser(token, serverUsername, serverDeviceId, serverRole);
+            }
+          }
+        } catch { /* ignore parse errors */ }
+      })
       .catch(e => { console.warn('No se pudo verificar la sesión tras varios intentos (se mantiene la sesión local):', e); })
       .finally(() => { if (!cancelled) setChecking(false); });
     return () => { cancelled = true; controller.abort(); };
