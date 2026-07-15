@@ -23,10 +23,11 @@ export default function DeviceDetailPanel({
   const filteredDetailLogs = detailTypeFilter === 'all' ? detailLogs : detailLogs.filter(l => (l.type || 'GENERAL') === detailTypeFilter);
 
   const now = Date.now();
-  const seenMs = new Date(detailDeviceInfo.last_seen).getTime();
-  const isOnline = (now - seenMs) < 300000;
+  const seenMs = detailDeviceInfo.last_seen ? new Date(detailDeviceInfo.last_seen).getTime() : NaN;
+  const hasSeen = !Number.isNaN(seenMs);
+  const isOnline = hasSeen && (now - seenMs) < 300000;
   const diffMin = Math.round((now - seenMs) / 60000);
-  const seenText = diffMin < 1 ? 'Ahora mismo' : diffMin < 60 ? `Hace ${diffMin} min` : `Hace ${Math.round(diffMin / 60)}h`;
+  const seenText = !hasSeen ? 'Sin actividad' : diffMin < 1 ? 'Ahora mismo' : diffMin < 60 ? `Hace ${diffMin} min` : `Hace ${Math.round(diffMin / 60)}h`;
 
   return (
     <div className="dev-detail-overlay open" id="devDetailOverlay">

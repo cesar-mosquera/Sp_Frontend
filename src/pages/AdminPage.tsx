@@ -81,6 +81,7 @@ function generateCredential(): string {
 }
 
 function getTimeAgo(date: Date): string {
+  if (Number.isNaN(date.getTime())) return 'Sin actividad';
   const diff = Date.now() - date.getTime();
   const sec = Math.floor(diff / 1000);
   if (sec < 60) return 'Ahora';
@@ -777,7 +778,7 @@ export default function AdminPage() {
             ) : (
               <div className="device-list">
                 {filteredDevices.map((d, i) => {
-                  const lastSeen = new Date(d.last_seen);
+                  const lastSeen = d.last_seen ? new Date(d.last_seen) : new Date(NaN);
                   const isOnline = (now.getTime() - lastSeen.getTime()) < 60000;
                   const isExpanded = expanded.has(i);
 
@@ -1133,7 +1134,7 @@ export default function AdminPage() {
                       {inactiveDevices.map(d => (
                         <tr key={d.device_id}>
                           <td>{d.name || d.device_id}</td>
-                          <td style={{ fontSize: '0.8rem', color: 'rgba(255,255,255,0.5)' }}>{getTimeAgo(new Date(d.last_seen))}</td>
+                          <td style={{ fontSize: '0.8rem', color: 'rgba(255,255,255,0.5)' }}>{getTimeAgo(d.last_seen ? new Date(d.last_seen) : new Date(NaN))}</td>
                         </tr>
                       ))}
                     </tbody>

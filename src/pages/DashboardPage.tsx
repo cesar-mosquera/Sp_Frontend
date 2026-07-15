@@ -408,10 +408,11 @@ export default function DashboardPage() {
     const now = Date.now();
     return deviceIds.map(devId => {
       const dev = knownDevices[devId];
-      const seenMs = new Date(dev.last_seen).getTime();
+      const seenMs = dev.last_seen ? new Date(dev.last_seen).getTime() : NaN;
       const diffMin = Math.round((now - seenMs) / 60000);
-      const isOnline = diffMin <= 5;
-      const seenText = diffMin < 1 ? 'Ahora mismo' : diffMin < 60 ? `Hace ${diffMin} min` : `Hace ${Math.round(diffMin / 60)}h`;
+      const hasSeen = !Number.isNaN(diffMin);
+      const isOnline = hasSeen && diffMin <= 5;
+      const seenText = !hasSeen ? 'Sin actividad' : diffMin < 1 ? 'Ahora mismo' : diffMin < 60 ? `Hace ${diffMin} min` : `Hace ${Math.round(diffMin / 60)}h`;
       return (
         <div
           key={devId}
