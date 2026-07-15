@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { useAuthStore } from '../store';
 import { API_BASE_URL } from '../config';
+import '../styles/login.css';
 
 export default function Login() {
   const [username, setUsername] = useState('');
@@ -58,96 +59,45 @@ export default function Login() {
   };
 
   return (
-    <div style={{
-      minHeight: '100vh', display: 'flex', flexDirection: 'column',
-      alignItems: 'center', justifyContent: 'center',
-      background: 'radial-gradient(ellipse at top, rgba(0,255,136,0.04) 0%, #0a0014 60%)',
-      padding: 40, textAlign: 'center',
-    }}>
-      <div style={{ fontSize: '3rem', marginBottom: 16 }}>🔐</div>
-      <h1 style={{
-        fontFamily: "'Outfit', sans-serif", fontSize: '1.6rem', fontWeight: 700,
-        background: 'linear-gradient(135deg, #ffffff, #00ff88)',
-        WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent',
-        backgroundClip: 'text', marginBottom: 8,
-      }}>
-        Acceso al Sistema
-      </h1>
-      <p style={{ color: 'rgba(0,255,136,0.5)', fontSize: '0.85rem', marginBottom: 32 }}>
+    <div className="login-page">
+      <div className="login-icon">🔐</div>
+      <h1 className="login-title">Acceso al Sistema</h1>
+      <p className="login-subtitle">
         Ingresa tus credenciales para acceder a tu panel de monitoreo.
       </p>
-      
-      <div style={{ width: '100%', maxWidth: 320, display: 'flex', flexDirection: 'column', gap: 16 }}>
-        <div>
-          <label style={{
-            display: 'block', fontSize: '0.7rem', fontWeight: 600,
-            color: 'rgba(255,255,255,0.4)', textTransform: 'uppercase',
-            letterSpacing: 1, marginBottom: 8, textAlign: 'left',
-          }}>
-            Usuario
-          </label>
+
+      <div className="login-form">
+        <div className="login-field">
+          <label className="login-label" htmlFor="loginUsername">Usuario</label>
           <input
+            id="loginUsername"
             type="text"
             value={username}
             onChange={e => { setUsername(e.target.value); setErrorMsg(''); }}
             onKeyDown={e => e.key === 'Enter' && doLogin()}
             placeholder="Usuario asignado..."
             autoComplete="off"
-            style={{
-              width: '100%', padding: '14px 16px', borderRadius: 14,
-              border: `1px solid ${errorMsg ? '#ff0055' : 'rgba(0,255,136,0.25)'}`,
-              background: 'rgba(18,4,35,0.6)', color: '#fff',
-              fontFamily: "'Inter', sans-serif", fontSize: '1rem',
-              outline: 'none', backdropFilter: 'blur(12px)',
-              transition: 'border-color 0.2s',
-            }}
+            className={`login-input${errorMsg ? ' login-input--error' : ''}`}
           />
         </div>
-        
-        <div>
-          <label style={{
-            display: 'block', fontSize: '0.7rem', fontWeight: 600,
-            color: 'rgba(255,255,255,0.4)', textTransform: 'uppercase',
-            letterSpacing: 1, marginBottom: 8, textAlign: 'left',
-          }}>
-            Contraseña
-          </label>
+
+        <div className="login-field">
+          <label className="login-label" htmlFor="loginPassword">Contraseña</label>
           <input
+            id="loginPassword"
             type="password"
             value={password}
             onChange={e => { setPassword(e.target.value); setErrorMsg(''); }}
             onKeyDown={e => e.key === 'Enter' && doLogin()}
             placeholder="Tu contraseña..."
             autoComplete="off"
-            style={{
-              width: '100%', padding: '14px 16px', borderRadius: 14,
-              border: `1px solid ${errorMsg ? '#ff0055' : 'rgba(0,255,136,0.25)'}`,
-              background: 'rgba(18,4,35,0.6)', color: '#fff',
-              fontFamily: "'Inter', sans-serif", fontSize: '1rem',
-              outline: 'none', backdropFilter: 'blur(12px)',
-              transition: 'border-color 0.2s',
-            }}
+            className={`login-input${errorMsg ? ' login-input--error' : ''}`}
           />
         </div>
-        
-        {errorMsg && (
-          <p style={{ color: '#ff0055', fontSize: '0.8rem', marginTop: 4, marginBottom: 0 }}>
-            {errorMsg}
-          </p>
-        )}
-        
-        <button
-          onClick={doLogin}
-          disabled={isLoading}
-          style={{
-            width: '100%', padding: 14, marginTop: 8, border: 'none', borderRadius: 14,
-            background: 'linear-gradient(135deg, #00cc6a, #00ff88)',
-            color: '#0a0014', fontFamily: "'Outfit', sans-serif",
-            fontSize: '1rem', fontWeight: 700, cursor: isLoading ? 'not-allowed' : 'pointer',
-            boxShadow: '0 4px 20px rgba(0,255,136,0.3)',
-            opacity: isLoading ? 0.7 : 1
-          }}
-        >
+
+        {errorMsg && <p className="login-error">{errorMsg}</p>}
+
+        <button className="login-button" onClick={doLogin} disabled={isLoading}>
           {isLoading ? 'Conectando...' : 'Acceder al Panel'}
         </button>
       </div>

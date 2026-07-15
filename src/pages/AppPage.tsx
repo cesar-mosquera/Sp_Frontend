@@ -4,7 +4,7 @@ import { List } from 'react-window';
 import { APP_PAGE_CONFIG, API_BASE_URL } from '../config';
 import { useSSEEvents } from '../contexts/SSEProvider';
 import { usePagination } from '../hooks/usePagination';
-import { normalize, formatTimestamp, matchesApp, mapBackendLogs, type LogEntry, type BackendLog } from '../appPage';
+import { normalize, matchesApp, mapBackendLogs, type LogEntry, type BackendLog } from '../appPage';
 import { downloadCSV } from '../utils/export';
 import { fetchWithRetry } from '../utils/fetchWithRetry';
 import { handleAuthResponse } from '../utils/authResponse';
@@ -21,10 +21,10 @@ interface Props {
 }
 
 const FILTER_ITEMS = [
-  { type: 'all', label: 'Todos' },
-  { type: 'message', label: 'Mensajes' },
-  { type: 'notificacion', label: 'Notificaciones' },
-];
+  { type: 'all', label: 'Todos', icon: '💬' },
+  { type: 'message', label: 'Mensajes', icon: '✉️' },
+  { type: 'notificacion', label: 'Notificaciones', icon: '🔔' },
+] as const;
 
 export default function AppPage({ appKey }: Props) {
   const config = APP_PAGE_CONFIG[appKey];
@@ -38,15 +38,17 @@ export default function AppPage({ appKey }: Props) {
   const [resultCount, setResultCount] = useState(0);
   const [isLoading, setIsLoading] = useState(false);
   const [connectionError, setConnectionError] = useState<string | null>(null);
-  const [sseConnected, setSseConnected] = useState(false);
-  const [apiConnected, setApiConnected] = useState(false);
+  // Distingue "no hay servidor y se muestran datos de ejemplo" (informativo,
+  // no es un problema del usuario) de un error real con datos reales ya
+  // cargados en pantalla (ese sí amerita una alerta).
+  const [usingFallbackData, setUsingFallbackData] = useState(false);
   // Contacto abierto actualmente (null = viendo la lista de conversaciones).
   // Cada conversacion se ve por separado -- los mensajes de un tercer
   // contacto nunca aparecen mientras se esta viendo el chat de otro.
   const [selectedContact, setSelectedContact] = useState<string | null>(null);
 
   // Paginación con scroll infinito
-  const { skip, limit, hasMore, loadMore, reset: resetPagination, setTotalCount } = usePagination({
+  const { skip, limit, hasMore, loadMore, setTotalCount } = usePagination({
     initialLimit: 50,
   });
 
@@ -115,7 +117,6 @@ export default function AppPage({ appKey }: Props) {
 
       if (response.ok) {
         connectedOk = true;
-        setApiConnected(true);
         const json = await response.json();
         // Actualizar total count si está disponible
         if (json.total_count !== undefined) {
@@ -134,7 +135,7 @@ export default function AppPage({ appKey }: Props) {
       }
     } catch (err) {
       console.warn('Backend no disponible tras varios intentos:', err);
-      setConnectionError('No se pudo conectar al backend tras varios intentos - usando datos de ejemplo');
+      setConnectionError('No se pudo conectar al backend tras varios intentos');
       logs = [];
     }
 
@@ -144,11 +145,18 @@ export default function AppPage({ appKey }: Props) {
       if (connectedOk) {
         setData([]);
         setRawData([]);
+        setUsingFallbackData(false);
       } else {
+        // Sin conexión real: se muestran datos de ejemplo, así que el error
+        // técnico deja de ser relevante para el usuario (no hay nada roto
+        // desde su perspectiva, solo modo demo).
         setData(fallbackSample);
         setRawData([]);
+        setUsingFallbackData(true);
+        setConnectionError(null);
       }
     } else if (logs.length > 0) {
+      setUsingFallbackData(false);
       const MAX_ACCUMULATED = 2000;
       if (skip > 0) {
         setData(prev => {
@@ -172,7 +180,7 @@ export default function AppPage({ appKey }: Props) {
   }, [loadData]);
 
   // SSE connection for real-time updates (compartida via SSEProvider)
-  const { isConnected: sseIsConnected } = useSSEEvents((event) => {
+  useSSEEvents((event) => {
     if (event.type === 'log_entry' || event.type === 'new_data') {
       const newLog = event.data as BackendLog;
       // Solo procesar logs que coincidan con la app actual
@@ -195,10 +203,6 @@ export default function AppPage({ appKey }: Props) {
       }
     }
   });
-
-  useEffect(() => {
-    setSseConnected(sseIsConnected);
-  }, [sseIsConnected]);
 
   const filtered = useMemo(() => {
     const searchNormalized = normalize(search);
@@ -308,11 +312,7 @@ export default function AppPage({ appKey }: Props) {
         </div>
         <div style={{ display: 'flex', gap: 12, alignItems: 'center', flexWrap: 'wrap' }}>
           <Link className="back-link" to="/seleccion">← Volver a Selección</Link>
-          <Link
-            className="back-link"
-            to="/dashboard"
-            style={{ background: 'rgba(0,240,255,0.15)', borderColor: '#00f0ff', color: '#00f0ff', boxShadow: '0 0 15px rgba(0,240,255,0.2)' }}
-          >
+          <Link className="back-link accent-cyan" to="/dashboard">
             📊 Dashboard Central
           </Link>
         </div>
@@ -346,8 +346,7 @@ export default function AppPage({ appKey }: Props) {
             Más recientes primero
           </button>
           <button
-            className="action-button"
-            style={{ background: 'rgba(0, 240, 255, 0.1)', borderColor: '#00f0ff', color: '#00f0ff' }}
+            className="action-button accent-cyan"
             onClick={exportToCSV}
           >
             📥 Exportar CSV
@@ -356,46 +355,17 @@ export default function AppPage({ appKey }: Props) {
       </div>
 
       <div className="content">
-        <aside className="sidebar">
-          <h2>Indicadores</h2>
-          <div className="stats-grid">
-            <div className="stat-card">
-              <strong>{data.length}</strong>
-              <span>Mensajes totales</span>
-            </div>
-            <div className="stat-card">
-              <strong>{data.filter(item => item.type === 'notificacion').length}</strong>
-              <span>Notificaciones</span>
-            </div>
-            <div className="stat-card">
-              <strong>{new Set(data.map(item => normalize(item.contact))).size}</strong>
-              <span>Contactos</span>
-            </div>
-          </div>
-          <div className="filter-group">
-            <h3>Filtrar por tipo</h3>
-            {FILTER_ITEMS.map(item => (
-              <button
-                key={item.type}
-                className={`filter-pill${filter === item.type ? ' active' : ''}`}
-                data-type={item.type}
-                onClick={() => setFilter(item.type as typeof filter)}
-              >
-                {item.label}
-              </button>
-            ))}
-          </div>
-        </aside>
-
         <section className="panel">
           <div className="panel-header">
             <div>
               <h2>{selectedContact || config.title}</h2>
-              <p className="panel-subtitle">
+              <p className={`panel-subtitle${connectionError ? ' panel-subtitle--alert' : usingFallbackData ? ' panel-subtitle--info' : ''}`}>
                 {isLoading
                   ? '⏳ Cargando datos...'
                   : connectionError
                   ? '⚠️ ' + connectionError
+                  : usingFallbackData
+                  ? '🧪 Sin conexión al servidor — mostrando datos de ejemplo.'
                   : appKey === 'ubicacion'
                   ? 'Tocá una tarjeta para centrar el mapa en ese momento.'
                   : selectedContact
@@ -411,6 +381,34 @@ export default function AppPage({ appKey }: Props) {
               </span>
             )}
           </div>
+
+          {/* Pestañas de filtro estilo WhatsApp (Todos/Mensajes/Notificaciones
+              con contador), justo debajo del encabezado y por encima de la
+              lista -- solo tiene sentido mirando la lista de conversaciones,
+              no dentro de un hilo abierto ni en el mapa de ubicacion. */}
+          {appKey !== 'ubicacion' && !selectedContact && (
+            <div className="filter-tabs" role="tablist" aria-label="Filtrar conversaciones por tipo">
+              {FILTER_ITEMS.map(item => {
+                const count = item.type === 'all'
+                  ? data.length
+                  : data.filter(entry => entry.type === item.type).length;
+                return (
+                  <button
+                    key={item.type}
+                    type="button"
+                    role="tab"
+                    aria-selected={filter === item.type}
+                    className={`filter-tab${filter === item.type ? ' active' : ''}`}
+                    onClick={() => setFilter(item.type as typeof filter)}
+                  >
+                    <span aria-hidden="true">{item.icon}</span>
+                    {item.label}
+                    <span className="filter-tab-count">{count}</span>
+                  </button>
+                );
+              })}
+            </div>
+          )}
 
           {selectedContact && appKey !== 'ubicacion' && (
             <div className="thread-header" key={`header-${selectedContact}`}>
@@ -488,6 +486,24 @@ export default function AppPage({ appKey }: Props) {
             )}
           </div>
         </section>
+
+        <aside className="sidebar">
+          <h2>Indicadores</h2>
+          <div className="stats-grid">
+            <div className="stat-card">
+              <strong>{data.length}</strong>
+              <span>Mensajes totales</span>
+            </div>
+            <div className="stat-card">
+              <strong>{data.filter(item => item.type === 'notificacion').length}</strong>
+              <span>Notificaciones</span>
+            </div>
+            <div className="stat-card">
+              <strong>{new Set(data.map(item => normalize(item.contact))).size}</strong>
+              <span>Contactos</span>
+            </div>
+          </div>
+        </aside>
       </div>
     </div>
   );

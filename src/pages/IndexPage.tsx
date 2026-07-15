@@ -10,6 +10,7 @@ const APP_PAGES: Record<string, string> = {
   tiktok: '/tiktok',
   google: '/google',
   ubicacion: '/ubicacion',
+  llamadas: '/llamadas',
 };
 
 export default function IndexPage() {

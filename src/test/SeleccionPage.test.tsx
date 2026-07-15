@@ -73,7 +73,9 @@ describe('SeleccionPage', () => {
 
     // Antes, mientras no cargaba (o si /api/subscriptions fallaba para
     // siempre) todas las tarjetas quedaban desbloqueadas por defecto.
-    await waitFor(() => expect(screen.getByText('Sin acceso', { exact: false })).toBeInTheDocument());
+    // Con las 9 apps del catalogo bloqueadas a la vez, hay multiples
+    // insignias "Sin acceso" -- se usa getAllByText en vez de getByText.
+    await waitFor(() => expect(screen.getAllByText('Sin acceso', { exact: false }).length).toBeGreaterThan(0));
     fireEvent.click(screen.getByText('WhatsApp'));
     expect(screen.queryByText('Pantalla de WhatsApp')).not.toBeInTheDocument();
   });

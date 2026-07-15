@@ -29,6 +29,11 @@ body {
   margin: 0 auto;
   padding: 24px;
   display: grid;
+  /* minmax(0, 1fr): sin esto, la unica columna implicita del grid no tiene
+     limite inferior y crece con el contenido mas ancho de cualquier
+     descendiente (ej. las pestañas de filtro), forzando scroll horizontal
+     de toda la pagina. */
+  grid-template-columns: minmax(0, 1fr);
   gap: 24px;
 }
 
@@ -72,7 +77,6 @@ body {
 
 .back-link,
 .action-button,
-.filter-pill,
 button {
   border: none;
   cursor: pointer;
@@ -164,15 +168,37 @@ button {
   background: rgba(255, 255, 255, 0.14);
 }
 
-.action-button.active,
-.filter-pill.active {
+.action-button.active {
   background: var(--brand-color-soft);
   border-color: rgba(179, 0, 255, 0.4);
 }
 
+/* Acento cian reservado para acciones que cruzan de una app individual
+   hacia el dashboard central / exportacion, para distinguirlas del color
+   de marca de cada app (que cambia segun whatsapp/telegram/etc). */
+.back-link.accent-cyan,
+.action-button.accent-cyan {
+  background: rgba(0, 240, 255, 0.1);
+  border-color: #00f0ff;
+  color: #00f0ff;
+}
+
+.back-link.accent-cyan {
+  box-shadow: 0 0 15px rgba(0, 240, 255, 0.2);
+}
+
+.back-link.accent-cyan:hover,
+.action-button.accent-cyan:hover {
+  background: rgba(0, 240, 255, 0.18);
+}
+
+/* El chat (.panel) va primero -- tanto en el orden del DOM (asi en mobile
+   se ve primero la conversacion y despues los indicadores, no al reves)
+   como en ancho, ya que es el contenido principal. Los indicadores quedan
+   como una franja secundaria, mas angosta. */
 .content {
   display: grid;
-  grid-template-columns: 320px minmax(0, 1fr);
+  grid-template-columns: minmax(0, 1fr) 260px;
   gap: 22px;
 }
 
@@ -192,13 +218,24 @@ button {
   color: var(--body-text);
 }
 
+/* Franja compacta de 3 columnas cuando el sidebar ocupa el ancho completo
+   (mobile, debajo del chat) y una sola columna cuando es un costado angosto
+   junto al chat (desktop). */
 .stats-grid {
   display: grid;
-  gap: 14px;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 10px;
+}
+
+@media (min-width: 900px) {
+  .stats-grid {
+    grid-template-columns: 1fr;
+    gap: 14px;
+  }
 }
 
 .stat-card {
-  padding: 18px;
+  padding: 14px;
   border-radius: 22px;
   background: rgba(255, 255, 255, 0.05);
   border: 1px solid rgba(179, 0, 255, 0.2);
@@ -206,7 +243,7 @@ button {
 
 .stat-card strong {
   display: block;
-  font-size: 1.8rem;
+  font-size: 1.5rem;
   color: var(--body-text);
   text-shadow: 0 0 15px rgba(179, 0, 255, 0.4);
 }
@@ -214,7 +251,76 @@ button {
 .stat-card span {
   color: #b088d0;
   opacity: .86;
-  font-size: .93rem;
+  font-size: .78rem;
+}
+
+@media (min-width: 900px) {
+  .stat-card {
+    padding: 18px;
+  }
+
+  .stat-card strong {
+    font-size: 1.8rem;
+  }
+
+  .stat-card span {
+    font-size: .93rem;
+  }
+}
+
+/* Pestañas de filtro estilo WhatsApp: fila horizontal con scroll, contador
+   por tipo, y la pestaña activa toma el color de marca de la app actual
+   (verde en WhatsApp, azul en Telegram, etc). */
+.filter-tabs {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 18px;
+  overflow-x: auto;
+  padding-bottom: 2px;
+}
+
+.filter-tab {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 9px 16px;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid var(--border);
+  color: var(--body-text);
+  font-size: .88rem;
+  white-space: nowrap;
+  flex-shrink: 0;
+  transition: transform .15s ease, background .15s ease, border-color .15s ease;
+}
+
+.filter-tab:hover {
+  background: rgba(255, 255, 255, 0.1);
+  transform: translateY(-1px);
+}
+
+.filter-tab.active {
+  background: var(--brand-color);
+  border-color: var(--brand-color);
+  color: #fff;
+  box-shadow: 0 4px 16px var(--brand-color-soft);
+}
+
+.filter-tab-count {
+  min-width: 20px;
+  height: 20px;
+  padding: 0 6px;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.12);
+  font-size: .72rem;
+  font-weight: 700;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.filter-tab.active .filter-tab-count {
+  background: rgba(255, 255, 255, 0.28);
 }
 
   .chat-list {
@@ -264,21 +370,6 @@ button {
     border: 1px dashed rgba(179, 0, 255, 0.3);
   }
 
-  .filter-pill {
-    margin-bottom: 8px;
-    padding: 10px 14px;
-    border-radius: 999px;
-    background: rgba(255, 255, 255, 0.06);
-    border: 1px solid var(--border);
-    color: var(--body-text);
-    cursor: pointer;
-    transition: background .2s ease;
-  }
-
-  .filter-pill:hover {
-    background: rgba(255, 255, 255, 0.14);
-  }
-
 .panel-header {
   display: flex;
   justify-content: space-between;
@@ -291,6 +382,20 @@ button {
   margin: 6px 0 0;
   color: #b088d0;
   opacity: .86;
+}
+
+/* Error real: hay datos legitimos en pantalla (o deberia haberlos) y algo
+   fallo cargandolos/actualizandolos -- si amerita alertar. */
+.panel-subtitle--alert {
+  color: #ff6b8b;
+  opacity: 1;
+}
+
+/* Modo demo: no hay backend disponible, pero lo que se ve es solo un
+   ejemplo -- informativo, no un problema del usuario. */
+.panel-subtitle--info {
+  color: #00d4c4;
+  opacity: 1;
 }
 
 .result-count {
@@ -306,6 +411,34 @@ button {
   gap: 16px;
 }
 
+/* Fila de burbuja de chat: alinea a la izquierda los mensajes recibidos y
+   a la derecha los enviados, como cualquier app de mensajería real, en vez
+   de una lista plana de tarjetas de ancho completo. */
+.chat-bubble-row {
+  display: flex;
+  gap: 10px;
+  align-items: flex-start;
+}
+
+.chat-bubble-row.outgoing {
+  flex-direction: row-reverse;
+}
+
+.chat-avatar {
+  width: 36px;
+  height: 36px;
+  min-width: 36px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #fff;
+  font-weight: 700;
+  font-size: .9rem;
+  margin-top: 2px;
+  flex-shrink: 0;
+}
+
 .chat-message,
 .feed-card,
 .sms-card {
@@ -315,6 +448,21 @@ button {
   border-radius: 24px;
   background: rgba(255, 255, 255, 0.05);
   border: 1px solid rgba(179, 0, 255, 0.2);
+}
+
+.chat-bubble-row .chat-message {
+  max-width: 80%;
+  min-width: 0;
+  flex: 1 1 auto;
+}
+
+.chat-bubble-row.outgoing .chat-message {
+  background: var(--brand-color-soft);
+  border-radius: 24px 6px 24px 24px;
+}
+
+.chat-bubble-row:not(.outgoing) .chat-message {
+  border-radius: 6px 24px 24px 24px;
 }
 
 .chat-header {
@@ -546,5 +694,5 @@ button {
 }
 
 @media (max-width: 900px) {
-  .content { grid-template-columns: 1fr; }
+  .content { grid-template-columns: minmax(0, 1fr); }
 }
