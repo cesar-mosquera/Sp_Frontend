@@ -530,6 +530,7 @@ body { scrollbar-width: none; }
   white-space: nowrap; transition: all 0.3s;
 }
 .admin-tab-btn:hover { color: #fff; background: rgba(255,255,255,0.05); }
+.admin-tab-btn:active { transform: scale(0.95); }
 .admin-tab-btn.active {
   background: rgba(0, 240, 255, 0.1); color: var(--neon-cyan);
   box-shadow: 0 0 15px rgba(0,240,255,0.2);

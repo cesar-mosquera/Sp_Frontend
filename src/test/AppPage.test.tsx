@@ -71,7 +71,7 @@ describe('AppPage', () => {
 
     renderAppPage();
 
-    await waitFor(() => expect(screen.getByText('No se encontraron conversaciones que coincidan.')).toBeInTheDocument());
+    await waitFor(() => expect(screen.getByText('Aún no hay conversaciones registradas para este canal.')).toBeInTheDocument());
     expect(screen.queryByTestId('app-list-loading')).not.toBeInTheDocument();
   });
 

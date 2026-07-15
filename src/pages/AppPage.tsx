@@ -436,10 +436,13 @@ export default function AppPage({ appKey }: Props) {
                 </div>
               </Suspense>
             ) : isLoading && conversations.length === 0 ? (
-              <div className="empty-state" data-testid="app-list-loading">⏳ Cargando datos...</div>
+              <div className="empty-state" data-testid="app-list-loading"><span className="empty-state-icon">⏳</span>Cargando datos...</div>
             ) : selectedContact ? (
               threadEntries.length === 0 ? (
-                <div className="empty-state">No se encontraron mensajes que coincidan.</div>
+                <div className="empty-state">
+                  <span className="empty-state-icon">🔍</span>
+                  No se encontraron mensajes que coincidan.
+                </div>
               ) : (
                 <div className="thread-messages-enter" key={`messages-${selectedContact}`}>
                   <List
@@ -452,7 +455,10 @@ export default function AppPage({ appKey }: Props) {
                 </div>
               )
             ) : conversations.length === 0 ? (
-              <div className="empty-state">No se encontraron conversaciones que coincidan.</div>
+              <div className="empty-state">
+                <span className="empty-state-icon">{search ? '🔍' : '📭'}</span>
+                {search ? 'No se encontraron conversaciones que coincidan.' : 'Aún no hay conversaciones registradas para este canal.'}
+              </div>
             ) : (
               <>
                 <div className="conversation-list">

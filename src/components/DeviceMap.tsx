@@ -184,7 +184,8 @@ function DeviceMap({ logs }: Props) {
             <FlyToSelected location={selectedLocation} />
           </MapContainer>
         ) : (
-          <div style={{ height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'rgba(255,255,255,0.3)' }}>
+          <div style={{ height: '100%', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 8, color: 'rgba(255,255,255,0.3)' }}>
+            <span style={{ fontSize: '2rem', opacity: 0.7 }}>🗺️</span>
             No hay datos de ubicación disponibles.
           </div>
         )}

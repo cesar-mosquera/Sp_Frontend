@@ -100,6 +100,10 @@ button {
   background: rgba(255, 255, 255, 0.14);
 }
 
+.back-link:active {
+  transform: translateY(0) scale(0.97);
+}
+
 .toolbar {
   display: grid;
   gap: 14px;
@@ -294,6 +298,14 @@ button {
   padding-bottom: 2px;
 }
 
+/* En mobile las 3 pestañas (Todos/Mensajes/Notificaciones) no entran en
+   una fila y quedaban cortadas fuera de vista tras un scroll horizontal
+   sin ningun indicador (igual problema que las pestañas de Admin). Se
+   envuelven en vez de depender de un scroll oculto. */
+@media (max-width: 480px) {
+  .filter-tabs { flex-wrap: wrap; overflow-x: visible; }
+}
+
 .filter-tab {
   display: inline-flex;
   align-items: center;
@@ -312,6 +324,10 @@ button {
 .filter-tab:hover {
   background: rgba(255, 255, 255, 0.1);
   transform: translateY(-1px);
+}
+
+.filter-tab:active {
+  transform: scale(0.95);
 }
 
 .filter-tab.active {
@@ -565,6 +581,11 @@ button {
   background: rgba(255, 255, 255, 0.09);
 }
 
+.conversation-row:active {
+  transform: scale(0.98);
+  background: rgba(255, 255, 255, 0.12);
+}
+
 .location-card-list {
   max-height: 280px;
   overflow-y: auto;
@@ -700,12 +721,20 @@ button {
 }
 
 .empty-state {
-  padding: 26px;
+  padding: 36px 26px;
   border-radius: 22px;
   border: 1px dashed rgba(179, 0, 255, 0.3);
   background: rgba(255, 255, 255, 0.05);
   color: #b088d0;
   opacity: .88;
+  text-align: center;
+}
+
+.empty-state-icon {
+  display: block;
+  font-size: 2.2rem;
+  margin-bottom: 10px;
+  opacity: 0.7;
 }
 
 @media (max-width: 900px) {

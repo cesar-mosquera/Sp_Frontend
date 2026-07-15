@@ -50,7 +50,7 @@ body {
 
 header {
   text-align: center;
-  padding: 20px 10px 40px;
+  padding: 12px 10px 28px;
   position: relative;
 }
 
@@ -74,6 +74,16 @@ header .subtitle {
   color: var(--text-secondary);
   margin-top: 12px;
   text-transform: uppercase;
+}
+
+/* En mobile el letter-spacing de 4px/6px hacia que el h1 (3 palabras) y el
+   subtitulo cayeran en 3 lineas cada uno, empujando las metricas reales
+   fuera de la pantalla inicial. Se reduce tracking y tamaño para que el
+   titulo entre en 1-2 lineas sin perder el efecto neon. */
+@media (max-width: 480px) {
+  header { padding: 8px 10px 20px; }
+  header h1 { font-size: 1.5rem; letter-spacing: 1.5px; }
+  header .subtitle { font-size: 0.75rem; letter-spacing: 2.5px; margin-top: 8px; }
 }
 
 .header-line {
@@ -331,6 +341,10 @@ header .subtitle {
   background: rgba(255, 255, 255, 0.06);
   border-color: rgba(255, 255, 255, 0.15);
   transform: translateY(-2px);
+}
+
+.device-chip:active {
+  transform: scale(0.97);
 }
 
 .device-chip.active-device {
