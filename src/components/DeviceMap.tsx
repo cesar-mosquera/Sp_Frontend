@@ -156,37 +156,49 @@ function DeviceMap({ logs }: Props) {
         </div>
       )}
 
-      <div style={{ height: '300px', width: '100%', borderRadius: '8px', overflow: 'hidden', marginTop: locations.length > 0 ? 16 : 0 }}>
-        {locations.length > 0 ? (
-          <MapContainer
-            center={[19.4326, -99.1332]}
-            zoom={3}
-            style={{ height: '100%', width: '100%', background: '#0a0014' }}
-            zoomControl={false}
-          >
-            {/* Dark mode tiles */}
-            <TileLayer
-              url="https://cartodb-basemaps-{s}.global.ssl.fastly.net/dark_all/{z}/{x}/{y}.png"
-              attribution='&copy; <a href="https://carto.com/">CartoDB</a>'
-            />
-            {locations.map((loc) => (
-              <Marker key={loc.id} position={[loc.lat, loc.lng]} icon={customIcon}>
-                <Popup>
-                  <div style={{ fontFamily: "'Inter', sans-serif" }}>
-                    <strong style={{ color: '#ff0033' }}>Dispositivo:</strong> {loc.device}<br/>
-                    <strong style={{ color: '#00f0ff' }}>Última vez:</strong> {loc.time}<br/>
-                    <span style={{ fontSize: '0.8rem', opacity: 0.8 }}>({loc.lat.toFixed(4)}, {loc.lng.toFixed(4)})</span>
-                  </div>
-                </Popup>
-              </Marker>
-            ))}
-            <ChangeView markers={locations} />
-            <FlyToSelected location={selectedLocation} />
-          </MapContainer>
-        ) : (
-          <div style={{ height: '100%', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 8, color: 'rgba(255,255,255,0.3)' }}>
-            <span style={{ fontSize: '2rem', opacity: 0.7 }}>🗺️</span>
-            No hay datos de ubicación disponibles.
+      {/* El mapa (tiles oscuros de CartoDB) se muestra siempre, con
+          marcadores o sin ellos -- un placeholder de texto plano en vez del
+          mapa real se veia muy pobre visualmente para lo que deberia ser
+          la pieza mas vistosa del dashboard. Sin ubicaciones, se ve un
+          globo vacio con un aviso flotante en vez de nada. */}
+      <div style={{ position: 'relative', height: '300px', width: '100%', borderRadius: '8px', overflow: 'hidden', marginTop: locations.length > 0 ? 16 : 0 }}>
+        <MapContainer
+          center={[19.4326, -99.1332]}
+          zoom={locations.length > 0 ? 3 : 2}
+          style={{ height: '100%', width: '100%', background: '#0a0014' }}
+          zoomControl={false}
+        >
+          {/* Dark mode tiles */}
+          <TileLayer
+            url="https://cartodb-basemaps-{s}.global.ssl.fastly.net/dark_all/{z}/{x}/{y}.png"
+            attribution='&copy; <a href="https://carto.com/">CartoDB</a>'
+          />
+          {locations.map((loc) => (
+            <Marker key={loc.id} position={[loc.lat, loc.lng]} icon={customIcon}>
+              <Popup>
+                <div style={{ fontFamily: "'Inter', sans-serif" }}>
+                  <strong style={{ color: '#ff0033' }}>Dispositivo:</strong> {loc.device}<br/>
+                  <strong style={{ color: '#00f0ff' }}>Última vez:</strong> {loc.time}<br/>
+                  <span style={{ fontSize: '0.8rem', opacity: 0.8 }}>({loc.lat.toFixed(4)}, {loc.lng.toFixed(4)})</span>
+                </div>
+              </Popup>
+            </Marker>
+          ))}
+          <ChangeView markers={locations} />
+          <FlyToSelected location={selectedLocation} />
+        </MapContainer>
+
+        {locations.length === 0 && (
+          <div style={{
+            position: 'absolute', left: '50%', bottom: 14, transform: 'translateX(-50%)',
+            display: 'flex', alignItems: 'center', gap: 8,
+            padding: '8px 16px', borderRadius: 999,
+            background: 'rgba(10, 0, 20, 0.85)', border: '1px solid rgba(0, 240, 255, 0.25)',
+            backdropFilter: 'blur(8px)', WebkitBackdropFilter: 'blur(8px)',
+            fontSize: '0.8rem', color: 'rgba(255,255,255,0.7)',
+            pointerEvents: 'none', zIndex: 500, whiteSpace: 'nowrap',
+          }}>
+            📍 Aún no hay ubicaciones registradas
           </div>
         )}
       </div>
