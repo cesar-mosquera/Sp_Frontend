@@ -31,9 +31,17 @@ function ChartsPanel({ logs }: Props) {
   const barData = useMemo(() => {
     const dateCounts: Record<string, number> = {};
     logs.forEach(log => {
+      // El backend manda "YYYY-MM-DD HH:MM:SS" (con espacio, no ISO), por
+      // lo que un split('T') no cortaba nada y cada log terminaba en su
+      // propio "dia" (timestamp completo, hasta los segundos) en vez de
+      // agruparse por fecha -- el chart de "ultimos 7 dias" nunca agregaba
+      // nada. Se parsea con Date y se arma la clave YYYY-MM-DD en local.
       if (log.timestamp) {
-        const date = log.timestamp.split('T')[0]; // YYYY-MM-DD
-        dateCounts[date] = (dateCounts[date] || 0) + 1;
+        const d = new Date(log.timestamp);
+        if (!isNaN(d.getTime())) {
+          const date = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+          dateCounts[date] = (dateCounts[date] || 0) + 1;
+        }
       }
     });
     return Object.keys(dateCounts)
@@ -62,7 +70,7 @@ function ChartsPanel({ logs }: Props) {
                   cursor={{ fill: 'rgba(0, 240, 255, 0.1)' }}
                   contentStyle={{ backgroundColor: '#0a0014', border: '1px solid #00f0ff', borderRadius: '8px' }}
                 />
-                <Bar dataKey="operaciones" fill="#00f0ff" radius={[4, 4, 0, 0]} />
+                <Bar dataKey="operaciones" fill="#00f0ff" radius={[4, 4, 0, 0]} maxBarSize={48} />
               </BarChart>
             </ResponsiveContainer>
           ) : (

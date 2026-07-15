@@ -540,7 +540,7 @@ body { scrollbar-width: none; }
    angostas: quedaban cortadas fuera de vista (scroll horizontal sin
    ningun indicador de que "Monitoreo" seguia ahi). Se muestra solo el
    icono para que las 4 quepan siempre en una sola fila. */
-@media (max-width: 480px) {
+@media (max-width: 600px) {
   .admin-tab-btn { padding: 12px 4px; }
   .admin-tab-btn .tab-label { display: none; }
 }

@@ -80,7 +80,7 @@ header .subtitle {
    subtitulo cayeran en 3 lineas cada uno, empujando las metricas reales
    fuera de la pantalla inicial. Se reduce tracking y tamaño para que el
    titulo entre en 1-2 lineas sin perder el efecto neon. */
-@media (max-width: 480px) {
+@media (max-width: 600px) {
   header { padding: 8px 10px 20px; }
   header h1 { font-size: 1.5rem; letter-spacing: 1.5px; }
   header .subtitle { font-size: 0.75rem; letter-spacing: 2.5px; margin-top: 8px; }
