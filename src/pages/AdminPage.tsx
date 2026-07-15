@@ -279,7 +279,7 @@ export default function AdminPage() {
 
   const handleLogout = () => {
     logout();
-    setDevices([]);
+    window.location.href = '/login';
   };
 
   const toggleDevice = (idx: number) => {
@@ -620,7 +620,10 @@ export default function AdminPage() {
           </div>
 
           <div className="admin-header">
-            <h1>Administración</h1>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+              <button onClick={() => window.location.href = '/seleccion'} style={{ background: 'none', border: '1px solid rgba(0,255,136,0.2)', borderRadius: 8, color: '#00ff88', fontSize: '0.85rem', padding: '4px 10px', cursor: 'pointer', fontFamily: 'monospace', opacity: 0.6 }}>←</button>
+              <h1>Administración</h1>
+            </div>
             <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
               <a
                 href={`${API_BASE_URL}/docs`}

@@ -58,6 +58,42 @@ export default function AppPage({ appKey }: Props) {
   ];
 
   const token = useAuthStore(s => s.token);
+  const role = useAuthStore(s => s.role);
+  const [accessDenied, setAccessDenied] = useState(false);
+  const [checkingAccess, setCheckingAccess] = useState(true);
+
+  useEffect(() => {
+    if (role === 'admin') {
+      setAccessDenied(false);
+      setCheckingAccess(false);
+      return;
+    }
+    setCheckingAccess(true);
+    fetch(`${API_BASE_URL}/api/subscriptions`, {
+      headers: { 'X-Session-Token': token || '' },
+    })
+      .then(r => r.json())
+      .then(data => {
+        const subs = data?.subscriptions || [];
+        const planKey: Record<string, string> = {
+          whatsapp: 'whatsapp', tiktok: 'tiktok', telegram: 'telegram',
+          facebook: 'facebook', instagram: 'instagram', google: 'google',
+          sms: 'sms', ubicacion: 'location', llamadas: 'call',
+        };
+        const appPlan = planKey[config.appKey] || config.appKey;
+        const active = subs.some(
+          (s: { app_name: string; active: number }) =>
+            s.app_name === appPlan && s.active
+        );
+        setAccessDenied(!active);
+      })
+      // Fail-closed: si no se pudo verificar la suscripcion (red, timeout,
+      // backend caido), se niega el acceso en vez de concederlo. Lo
+      // contrario dejaria ver el contenido real del canal ante cualquier
+      // fallo de red, anulando el control de acceso.
+      .catch(() => setAccessDenied(true))
+      .finally(() => setCheckingAccess(false));
+  }, [role, token, config.appKey]);
 
   const loadData = useCallback(async () => {
     setIsLoading(true);
@@ -237,7 +273,22 @@ export default function AppPage({ appKey }: Props) {
     downloadCSV(headers, rows, `${appKey}_logs_${new Date().toISOString().split('T')[0]}.csv`);
   };
 
-  return (
+  return checkingAccess ? (
+    <div className="page" style={{ height: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', background: '#0a0014', color: '#a580c7', fontFamily: 'monospace' }}>
+      Verificando acceso...
+    </div>
+  ) : accessDenied ? (
+    <div className="page" style={{ height: '100vh', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', background: '#0a0014', color: '#ff0055', fontFamily: 'monospace', padding: 40, textAlign: 'center', gap: 16 }}>
+      <span style={{ fontSize: '3rem' }}>🔒</span>
+      <h1 style={{ color: '#ff0055', fontSize: '1.4rem' }}>Sin Suscripción</h1>
+      <p style={{ color: '#a580c7', fontSize: '0.85rem', maxWidth: 300, lineHeight: 1.5 }}>
+        No tienes acceso a este canal. Solicita al administrador que active la suscripción para <strong>{config.title}</strong>.
+      </p>
+      <Link className="back-link" to="/seleccion" style={{ marginTop: 12, display: 'inline-block', padding: '10px 24px', background: 'rgba(179,0,255,0.2)', border: '1px solid rgba(179,0,255,0.3)', borderRadius: 12, color: '#d5a6ff', textDecoration: 'none', fontFamily: 'monospace' }}>
+        ← Volver a Selección
+      </Link>
+    </div>
+  ) : (
     <div
       className="page"
       style={

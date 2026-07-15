@@ -46,14 +46,14 @@ export default function ProtectedRoute({ children }: Props) {
     );
   }
 
-  // Block non-admins from accessing /admin
-  if (role !== 'admin' && location.pathname === '/admin') {
+  // Block non-admins from accessing /admin or /dashboard
+  if (role !== 'admin' && (location.pathname === '/admin' || location.pathname === '/dashboard')) {
     return (
       <div style={{ minHeight: '100vh', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', background: '#0a0014', color: '#ff0055', fontFamily: 'monospace' }}>
         <h1>403 - Acceso Denegado</h1>
-        <p style={{margin: '10px 0'}}>No tienes privilegios de administrador para ver esta página.</p>
-        <button onClick={() => window.location.href = '/dashboard'} style={{padding: '10px 20px', background: '#ff0055', color: '#fff', border: 'none', borderRadius: 5, cursor: 'pointer', fontFamily: 'monospace', fontWeight: 'bold'}}>
-          Volver al Dashboard
+        <p style={{margin: '10px 0'}}>No tienes privilegios para ver esta página.</p>
+        <button onClick={() => window.location.href = '/seleccion'} style={{padding: '10px 20px', background: '#00ff88', color: '#0a0014', border: 'none', borderRadius: 5, cursor: 'pointer', fontFamily: 'monospace', fontWeight: 'bold', marginTop: 8}}>
+          Volver a Canales
         </button>
       </div>
     );

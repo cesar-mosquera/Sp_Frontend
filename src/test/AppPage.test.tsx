@@ -134,4 +134,39 @@ describe('AppPage', () => {
     expect(screen.getByTestId('open-conversation-el-enlace')).toBeInTheDocument();
     await waitFor(() => expect(screen.getByText('2 conversaciones')).toBeInTheDocument());
   });
+
+  it('regresion: fail-closed -- si no se pudo verificar la suscripcion (falla de red), niega el acceso en vez de concederlo', async () => {
+    useAuthStore.setState({ isAuthenticated: true, token: 'tok-user', role: 'user', username: 'juan', deviceId: null });
+    vi.stubGlobal('fetch', vi.fn().mockImplementation((url: string) => {
+      if (String(url).includes('/api/subscriptions')) {
+        return Promise.reject(new TypeError('Failed to fetch'));
+      }
+      return Promise.resolve(new Response('{}', { status: 200 }));
+    }));
+
+    renderAppPage('whatsapp');
+
+    // Antes, un fallo de red en la verificacion de suscripcion concedia
+    // acceso (setAccessDenied(false)) en vez de negarlo -- un usuario sin
+    // suscripcion activa veia el contenido real del canal ante cualquier
+    // fallo de red.
+    expect(await screen.findByText('Sin Suscripción')).toBeInTheDocument();
+  });
+
+  it('permite el acceso cuando la suscripcion esta activa para ese canal', async () => {
+    useAuthStore.setState({ isAuthenticated: true, token: 'tok-user', role: 'user', username: 'juan', deviceId: null });
+    vi.stubGlobal('fetch', vi.fn().mockImplementation((url: string) => {
+      if (String(url).includes('/api/subscriptions')) {
+        return Promise.resolve(new Response(JSON.stringify({
+          subscriptions: [{ app_name: 'whatsapp', active: 1 }],
+        }), { status: 200 }));
+      }
+      return Promise.resolve(new Response('{}', { status: 200 }));
+    }));
+
+    renderAppPage('whatsapp');
+
+    expect(screen.queryByText('Sin Suscripción')).not.toBeInTheDocument();
+    await waitFor(() => expect(screen.getByText('Cada contacto tiene su propia conversación.')).toBeInTheDocument());
+  });
 });

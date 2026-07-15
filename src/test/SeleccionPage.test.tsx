@@ -1,9 +1,22 @@
-import { describe, it, expect } from 'vitest';
+import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { render, screen, fireEvent, waitFor } from '@testing-library/react';
 import { MemoryRouter, Routes, Route } from 'react-router-dom';
 import SeleccionPage from '../pages/SeleccionPage';
+import { useAuthStore } from '../store';
 
 describe('SeleccionPage', () => {
+  beforeEach(() => {
+    // role: 'admin' evita el chequeo de suscripcion (isAllowed siempre true
+    // para admin) -- estos tests verifican navegacion, no el control de
+    // acceso por suscripcion, que se prueba aparte.
+    useAuthStore.setState({ isAuthenticated: true, token: null, role: 'admin', username: 'admin', deviceId: null });
+  });
+
+  afterEach(() => {
+    vi.unstubAllGlobals();
+    vi.restoreAllMocks();
+  });
+
   it('renders the page title', () => {
     render(
       <MemoryRouter>
@@ -43,5 +56,44 @@ describe('SeleccionPage', () => {
     expect(screen.queryByText('Pantalla de TikTok')).not.toBeInTheDocument();
 
     await waitFor(() => expect(document.body.children.length).toBe(1));
+  });
+
+  it('regresion: fail-closed -- sin sesion/suscripcion confirmada, las tarjetas quedan bloqueadas (no navegables)', async () => {
+    useAuthStore.setState({ isAuthenticated: true, token: 'tok-user', role: 'user', username: 'juan', deviceId: null });
+    vi.stubGlobal('fetch', vi.fn().mockRejectedValue(new TypeError('Failed to fetch')));
+
+    render(
+      <MemoryRouter initialEntries={['/seleccion']}>
+        <Routes>
+          <Route path="/seleccion" element={<SeleccionPage />} />
+          <Route path="/whatsapp" element={<div>Pantalla de WhatsApp</div>} />
+        </Routes>
+      </MemoryRouter>
+    );
+
+    // Antes, mientras no cargaba (o si /api/subscriptions fallaba para
+    // siempre) todas las tarjetas quedaban desbloqueadas por defecto.
+    await waitFor(() => expect(screen.getByText('Sin acceso', { exact: false })).toBeInTheDocument());
+    fireEvent.click(screen.getByText('WhatsApp'));
+    expect(screen.queryByText('Pantalla de WhatsApp')).not.toBeInTheDocument();
+  });
+
+  it('desbloquea solo las tarjetas con suscripcion activa confirmada', async () => {
+    useAuthStore.setState({ isAuthenticated: true, token: 'tok-user', role: 'user', username: 'juan', deviceId: null });
+    vi.stubGlobal('fetch', vi.fn().mockResolvedValue(new Response(JSON.stringify({
+      subscriptions: [{ app_name: 'whatsapp', active: true }],
+    }), { status: 200 })));
+
+    render(
+      <MemoryRouter initialEntries={['/seleccion']}>
+        <Routes>
+          <Route path="/seleccion" element={<SeleccionPage />} />
+          <Route path="/whatsapp" element={<div>Pantalla de WhatsApp</div>} />
+        </Routes>
+      </MemoryRouter>
+    );
+
+    fireEvent.click(await screen.findByText('WhatsApp'));
+    expect(await screen.findByText('Pantalla de WhatsApp')).toBeInTheDocument();
   });
 });

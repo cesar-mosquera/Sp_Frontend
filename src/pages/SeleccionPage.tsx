@@ -1,5 +1,7 @@
-import { useEffect, useRef } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { useAuthStore } from '../store';
+import { API_BASE_URL } from '../config';
 import '../styles/seleccion.css';
 
 const APPS = [
@@ -24,6 +26,54 @@ function updateStatusTime() {
 export default function SeleccionPage() {
   const navigate = useNavigate();
   const isNavigatingRef = useRef(false);
+  const role = useAuthStore(s => s.role);
+  const token = useAuthStore(s => s.token);
+  const deviceId = useAuthStore(s => s.deviceId);
+  const logout = useAuthStore(s => s.logout);
+  // Fail-closed: mientras no se confirmo la suscripcion (o si la
+  // verificacion fallo por red/backend), no se considera permitido ningun
+  // canal. Antes, mientras cargaba (o si /api/subscriptions fallaba y
+  // nunca volvia a intentarse) TODAS las tarjetas quedaban desbloqueadas.
+  const [allowedApps, setAllowedApps] = useState<Set<string>>(new Set());
+  const [subsChecked, setSubsChecked] = useState(false);
+
+  useEffect(() => {
+    if (role === 'admin') {
+      setSubsChecked(true);
+      return;
+    }
+    if (!token) {
+      setSubsChecked(true);
+      return;
+    }
+    fetch(`${API_BASE_URL}/api/subscriptions`, {
+      headers: { 'X-Session-Token': token },
+    })
+      .then(r => r.json())
+      .then(data => {
+        const active = new Set<string>();
+        for (const sub of data?.subscriptions || []) {
+          if (sub.active) active.add(sub.app_name);
+        }
+        setAllowedApps(active);
+      })
+      .catch(() => setAllowedApps(new Set()))
+      .finally(() => setSubsChecked(true));
+  }, [role, token]);
+
+  const isAllowed = (appName: string) => {
+    if (role === 'admin') return true;
+    if (!subsChecked) return false;
+    const map: Record<string, string> = {
+      whatsapp: 'whatsapp', tiktok: 'tiktok', telegram: 'telegram',
+      facebook: 'facebook', instagram: 'instagram', google: 'google',
+      sms: 'sms', ubicación: 'location', ubicacion: 'location',
+      llamadas: 'call',
+    };
+    const key = map[appName.toLowerCase()];
+    return allowedApps.has(key);
+  };
+
   const nav = (path: string) => {
     if (isNavigatingRef.current) return;
     isNavigatingRef.current = true;
@@ -57,6 +107,7 @@ export default function SeleccionPage() {
         <span className="time" id="statusTime">9:41</span>
         <div className="status-icons">
           <span>●●●●○</span>
+          <button onClick={() => { logout(); window.location.href = '/login'; }} className="logout-btn" title="Cerrar sesión">🚪</button>
         </div>
       </div>
 
@@ -80,16 +131,22 @@ export default function SeleccionPage() {
         <div className="section-label">Canales de auditoría</div>
 
         <div className="apps-grid">
-          {APPS.map(app => (
-            <div key={app.name} className="app-card" data-testid={`app-card-${app.path.slice(1)}`} onClick={() => nav(app.path)}>
-              <div className="card-glow"></div>
-              <div className="icon-wrap">
-                <img src={app.img} alt={app.name} />
+          {APPS.map(app => {
+            const allowed = isAllowed(app.name);
+            return (
+              <div key={app.name} className={`app-card${!allowed ? ' app-card--locked' : ''}`} onClick={() => allowed && nav(app.path)}>
+                <div className="card-glow"></div>
+                <div className="icon-wrap">
+                  <img src={app.img} alt={app.name} />
+                  {!allowed && <span className="lock-icon">🔒</span>}
+                </div>
+                <h3>{app.name}</h3>
+                <span className={`status-badge${!allowed ? ' status-badge--locked' : ''}`}>
+                  {allowed ? <><span className="dot-sm"></span> En línea</> : '🔒 Sin acceso'}
+                </span>
               </div>
-              <h3>{app.name}</h3>
-              <span className="status-badge"><span className="dot-sm"></span> En línea</span>
-            </div>
-          ))}
+            );
+          })}
         </div>
       </div>
 
@@ -98,14 +155,18 @@ export default function SeleccionPage() {
           <span className="tab-icon">🛡</span>
           Canales
         </button>
-        <button className="tab-item" data-testid="tab-bar-dashboard" onClick={() => nav('/dashboard')}>
-          <span className="tab-icon">👁️</span>
-          Dashboard
-        </button>
-        <button className="tab-item" data-testid="tab-bar-admin" onClick={() => nav('/admin')}>
-          <span className="tab-icon">⚙️</span>
-          Admin
-        </button>
+        {role === 'admin' && (
+          <button className="tab-item" data-testid="tab-bar-dashboard" onClick={() => nav('/dashboard')}>
+            <span className="tab-icon">👁️</span>
+            Dashboard
+          </button>
+        )}
+        {role === 'admin' && (
+          <button className="tab-item" data-testid="tab-bar-admin" onClick={() => nav('/admin')}>
+            <span className="tab-icon">⚙️</span>
+            Admin
+          </button>
+        )}
       </div>
     </>
   );

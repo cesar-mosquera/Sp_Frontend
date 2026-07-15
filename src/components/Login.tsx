@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { useLocation, useNavigate } from 'react-router-dom';
 import { useAuthStore } from '../store';
 import { API_BASE_URL } from '../config';
 
@@ -7,8 +8,10 @@ export default function Login() {
   const [password, setPassword] = useState('');
   const [errorMsg, setErrorMsg] = useState('');
   const [isLoading, setIsLoading] = useState(false);
-  
+
   const loginAsUser = useAuthStore(s => s.loginAsUser);
+  const navigate = useNavigate();
+  const location = useLocation();
 
   const doLogin = async () => {
     setErrorMsg('');
@@ -29,11 +32,20 @@ export default function Login() {
         },
         body: JSON.stringify({ username: trimmedUser, password: trimmedPass })
       });
-      
+
       const data = await res.json();
-      
+
       if (res.ok && data.status === 'success') {
         loginAsUser(data.token, data.username, data.device_id, data.role);
+        // Si el formulario se muestra en la ruta dedicada /login, hay que
+        // navegar explicitamente. Pero si ProtectedRoute lo mostro "en linea"
+        // sobre otra ruta (ej. alguien entro directo a /dashboard sin
+        // sesion), no hay que redirigir -- apenas isAuthenticated pasa a
+        // true, esa misma ruta ya renderiza lo que corresponde sola, y un
+        // navigate() aca perderia el destino original que el usuario queria.
+        if (location.pathname === '/login') {
+          navigate('/seleccion', { replace: true });
+        }
       } else {
         setErrorMsg(data.detail || 'Credenciales inválidas');
       }
@@ -49,18 +61,19 @@ export default function Login() {
     <div style={{
       minHeight: '100vh', display: 'flex', flexDirection: 'column',
       alignItems: 'center', justifyContent: 'center',
-      background: '#0a0014', padding: 40, textAlign: 'center',
+      background: 'radial-gradient(ellipse at top, rgba(0,255,136,0.04) 0%, #0a0014 60%)',
+      padding: 40, textAlign: 'center',
     }}>
       <div style={{ fontSize: '3rem', marginBottom: 16 }}>🔐</div>
       <h1 style={{
         fontFamily: "'Outfit', sans-serif", fontSize: '1.6rem', fontWeight: 700,
-        background: 'linear-gradient(135deg, #ffffff, #d5a6ff)',
+        background: 'linear-gradient(135deg, #ffffff, #00ff88)',
         WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent',
         backgroundClip: 'text', marginBottom: 8,
       }}>
         Acceso al Sistema
       </h1>
-      <p style={{ color: '#a580c7', fontSize: '0.85rem', marginBottom: 32 }}>
+      <p style={{ color: 'rgba(0,255,136,0.5)', fontSize: '0.85rem', marginBottom: 32 }}>
         Ingresa tus credenciales para acceder a tu panel de monitoreo.
       </p>
       
@@ -82,7 +95,7 @@ export default function Login() {
             autoComplete="off"
             style={{
               width: '100%', padding: '14px 16px', borderRadius: 14,
-              border: `1px solid ${errorMsg ? '#ff0055' : 'rgba(179,0,255,0.25)'}`,
+              border: `1px solid ${errorMsg ? '#ff0055' : 'rgba(0,255,136,0.25)'}`,
               background: 'rgba(18,4,35,0.6)', color: '#fff',
               fontFamily: "'Inter', sans-serif", fontSize: '1rem',
               outline: 'none', backdropFilter: 'blur(12px)',
@@ -108,7 +121,7 @@ export default function Login() {
             autoComplete="off"
             style={{
               width: '100%', padding: '14px 16px', borderRadius: 14,
-              border: `1px solid ${errorMsg ? '#ff0055' : 'rgba(179,0,255,0.25)'}`,
+              border: `1px solid ${errorMsg ? '#ff0055' : 'rgba(0,255,136,0.25)'}`,
               background: 'rgba(18,4,35,0.6)', color: '#fff',
               fontFamily: "'Inter', sans-serif", fontSize: '1rem',
               outline: 'none', backdropFilter: 'blur(12px)',
@@ -128,10 +141,10 @@ export default function Login() {
           disabled={isLoading}
           style={{
             width: '100%', padding: 14, marginTop: 8, border: 'none', borderRadius: 14,
-            background: 'linear-gradient(135deg, #b300ff, #6a00ff)',
-            color: '#fff', fontFamily: "'Outfit', sans-serif",
-            fontSize: '1rem', fontWeight: 600, cursor: isLoading ? 'not-allowed' : 'pointer',
-            boxShadow: '0 4px 20px rgba(179,0,255,0.3)',
+            background: 'linear-gradient(135deg, #00cc6a, #00ff88)',
+            color: '#0a0014', fontFamily: "'Outfit', sans-serif",
+            fontSize: '1rem', fontWeight: 700, cursor: isLoading ? 'not-allowed' : 'pointer',
+            boxShadow: '0 4px 20px rgba(0,255,136,0.3)',
             opacity: isLoading ? 0.7 : 1
           }}
         >
