@@ -179,6 +179,8 @@ header .subtitle {
   background: rgba(255, 255, 255, 0.05);
 }
 
+.metric-item.no-divider::after { display: none; }
+
 .stat-value {
   font-family: 'Orbitron', monospace;
   font-size: clamp(2rem, 3.5vw, 2.8rem);
@@ -617,7 +619,6 @@ header .subtitle {
   .card-span-2 { grid-column: 1; }
   .metric-group { grid-template-columns: 1fr; gap: 16px; }
   .metric-item:first-child::after { display: none; }
-  header h1 { font-size: 1.8rem; }
   .card { padding: 20px; }
 }
 

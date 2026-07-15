@@ -273,10 +273,14 @@ export default function DashboardPage() {
       if (el('successRate')) el('successRate')!.textContent = (s.success_rate ?? '94.7') + '%';
       if (el('activeAgents')) el('activeAgents')!.textContent = s.active_agents ?? '47';
       if (el('onlineAgents')) el('onlineAgents')!.textContent = s.agents_online ?? '32';
+      if (el('agentsAvailability')) {
+        const active = Number(s.active_agents) || 0;
+        const online = Number(s.agents_online) || 0;
+        const pct = active > 0 ? Math.round((online / active) * 100) : 0;
+        el('agentsAvailability')!.textContent = `${pct}% disponibilidad`;
+      }
       if (el('dataProcessed')) el('dataProcessed')!.textContent = s.data_processed_tb ?? '2.4';
       if (el('dataToday')) el('dataToday')!.textContent = s.data_processed_today_gb ?? '386';
-      if (el('signals')) el('signals')!.textContent = Math.max(1, Math.floor((s.intercepts_24h ?? 18) * 0.3)).toString();
-      if (el('priority')) el('priority')!.textContent = Math.max(1, Math.floor((s.active_agents ?? 47) * 0.15)).toString();
       const fill = document.querySelector('.progress-bar .fill') as HTMLElement;
       if (fill) fill.style.width = (s.success_rate ?? 94.7) + '%';
 
@@ -561,12 +565,17 @@ export default function DashboardPage() {
                   <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#00ff88" strokeWidth="2"><path d="M5 12.55a11 11 0 0 1 14.08 0"></path><path d="M1.42 9a16 16 0 0 1 21.16 0"></path><path d="M8.53 16.11a6 6 0 0 1 6.95 0"></path><line x1="12" y1="20" x2="12.01" y2="20"></line></svg>
                   <div className="stat-label">Agentes en Línea</div>
                 </div>
-                <div className="stat-sub"><span className="log-status online" />68% disponibilidad</div>
+                <div className="stat-sub"><span className="log-status online" /><span id="agentsAvailability">-- disponibilidad</span></div>
               </div>
             </div>
-            <div className="data-row"><span className="label">En misión</span><span className="value cyan">23</span></div>
-            <div className="data-row"><span className="label">En reposo</span><span className="value yellow">9</span></div>
-            <div className="data-row"><span className="label">Sin señal</span><span className="value red">4</span></div>
+            {/* "En mision/reposo/sin señal" eran numeros de ejemplo fijos
+                (23, 9, 4) que no correspondian a ningun desglose real de los
+                dispositivos enrolados -- mismo caso que "Señales de
+                Inteligencia" mas abajo, se reemplaza por un aviso honesto. */}
+            <div className="data-row">
+              <span className="label" style={{ opacity: 0.6 }}>Desglose por estado de misión</span>
+              <span className="value" style={{ fontSize: '0.7rem', opacity: 0.6, fontFamily: "'Inter', sans-serif", textTransform: 'none', letterSpacing: 0 }}>Próximamente</span>
+            </div>
           </div>
 
           <div className="card card-span-2">
@@ -605,28 +614,25 @@ export default function DashboardPage() {
               <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" style={{ marginRight: '8px' }}><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"></path><line x1="12" y1="9" x2="12" y2="13"></line><line x1="12" y1="17" x2="12.01" y2="17"></line></svg>
               Señales de Inteligencia
             </div>
-            <div className="metric-group">
-              <div className="metric-item">
-                <div className="stat-value" id="signals">18</div>
+            <div className="metric-group" style={{ gridTemplateColumns: '1fr' }}>
+              <div className="metric-item no-divider">
+                <div className="stat-value" id="signals">{allBackendLogs.length}</div>
                 <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
                   <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--neon-cyan)" strokeWidth="2"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"></path><path d="M13.73 21a2 2 0 0 1-3.46 0"></path></svg>
                   <div className="stat-label">Alertas Activas</div>
                 </div>
                 <div className="stat-sub"><span className="log-status online" />Todas monitoreadas</div>
               </div>
-              <div className="metric-item">
-                <div className="stat-value" id="priority" style={{ color: 'var(--red-accent)', background: 'none', WebkitTextFillColor: 'initial' }}>6</div>
-                <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--red-accent)" strokeWidth="2"><polygon points="7.86 2 16.14 2 22 7.86 22 16.14 16.14 22 7.86 22 2 16.14 2 7.86 7.86 2"></polygon><line x1="12" y1="8" x2="12" y2="12"></line><line x1="12" y1="16" x2="12.01" y2="16"></line></svg>
-                  <div className="stat-label" style={{ color: 'var(--red-accent)' }}>Prioridad Alta</div>
-                </div>
-                <div className="stat-sub"><span className="log-status pending" />Requiere atención</div>
-              </div>
             </div>
             <div className="spark" />
-            <div className="data-row"><span className="label">Comunicación cifrada detectada</span><span className="value cyan">8</span></div>
-            <div className="data-row"><span className="label">Geolocalización sospechosa</span><span className="value red">4</span></div>
-            <div className="data-row"><span className="label">Patrón de actividad anómala</span><span className="value yellow">6</span></div>
+            {/* Prioridad Alta / cifrado / geolocalizacion sospechosa / patron
+                anomalo eran numeros de ejemplo fijos en el codigo (6, 8, 4, 6)
+                que nunca cambiaban con los datos reales -- se reemplazan por
+                un aviso honesto hasta que el backend exponga esa clasificacion. */}
+            <div className="data-row">
+              <span className="label" style={{ opacity: 0.6 }}>Detección avanzada de amenazas</span>
+              <span className="value" style={{ fontSize: '0.7rem', opacity: 0.6, fontFamily: "'Inter', sans-serif", textTransform: 'none', letterSpacing: 0 }}>Próximamente</span>
+            </div>
           </div>
 
           <div className="card card-full">
