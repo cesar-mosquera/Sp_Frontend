@@ -19,7 +19,18 @@ export function SSEProvider({ children }: { children: ReactNode }) {
   const listenersRef = useRef<Set<EventHandler>>(new Set());
 
   const dispatch = useCallback((event: SSEEvent) => {
-    listenersRef.current.forEach(handler => handler(event));
+    // Cada listener se aisla en su propio try/catch: si uno lanza una
+    // excepcion (ej. datos con una forma inesperada), no debe cortar la
+    // entrega del mismo evento al resto de los suscriptores (otras
+    // pestañas de app, notificaciones, etc.) -- sin esto, un solo handler
+    // roto silenciaba las actualizaciones en tiempo real de todos los demas.
+    listenersRef.current.forEach(handler => {
+      try {
+        handler(event);
+      } catch (err) {
+        console.error('[SSEProvider] Error en un listener de evento SSE:', err);
+      }
+    });
   }, []);
 
   const { isConnected } = useSSE('/api/sse', dispatch);

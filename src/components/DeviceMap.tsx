@@ -3,6 +3,7 @@ import { MapContainer, TileLayer, Marker, Popup, useMap } from 'react-leaflet';
 import 'leaflet/dist/leaflet.css';
 import L from 'leaflet';
 import { colorForContact } from '../utils/contactColor';
+import { formatExactDateTime } from '../appPage';
 
 // Fix for default marker icons in React-Leaflet
 delete (L.Icon.Default.prototype as any)._getIconUrl;
@@ -98,9 +99,16 @@ function DeviceMap({ logs }: Props) {
             lat,
             lng,
             device: log.device_id || 'Dispositivo desconocido',
-            time: log.timestamp ? new Date(log.timestamp).toLocaleString() : 'Reciente',
+            time: log.timestamp ? formatExactDateTime(log.timestamp) : 'Reciente',
             timestamp: log.timestamp || '',
           });
+        } else if (log.type === 'LOCATION') {
+          // El backend marco explicitamente este log como ubicacion, pero
+          // no se pudieron extraer coordenadas del formato de "content"
+          // (ej. numeros enteros sin decimales, JSON con otras claves,
+          // etc.) -- sin este aviso, el punto se pierde del mapa en
+          // silencio, sin ningun indicio de que algo no se pudo parsear.
+          console.warn('[DeviceMap] Log tipo LOCATION sin coordenadas parseables:', log);
         }
       }
     });

@@ -1,0 +1,111 @@
+@import url('https://fonts.googleapis.com/css2?family=Outfit:wght@600;700&family=Inter:wght@400;500;600&display=swap');
+
+/* Mismo fondo (color base + doble brillo radial morado/cian) que
+   seleccion.css, dashboard.css y admin.css -- antes el login tenia un
+   fondo plano de un solo color, distinto al resto de la app. */
+.login-page {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  background-color: #0a0014;
+  background-image:
+    radial-gradient(ellipse at 20% 10%, rgba(115, 0, 255, 0.15) 0%, transparent 50%),
+    radial-gradient(ellipse at 80% 90%, rgba(0, 240, 255, 0.1) 0%, transparent 50%);
+  padding: 40px;
+  text-align: center;
+}
+
+.login-icon {
+  font-size: 3rem;
+  margin-bottom: 16px;
+}
+
+.login-title {
+  font-family: 'Outfit', sans-serif;
+  font-size: 1.6rem;
+  font-weight: 700;
+  background: linear-gradient(135deg, #ffffff, #d5a6ff);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  margin-bottom: 8px;
+}
+
+.login-subtitle {
+  color: #a580c7;
+  font-size: .85rem;
+  margin-bottom: 32px;
+}
+
+.login-form {
+  width: 100%;
+  max-width: 320px;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.login-field {
+  text-align: left;
+}
+
+.login-label {
+  display: block;
+  font-size: .7rem;
+  font-weight: 600;
+  color: rgba(255, 255, 255, 0.4);
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  margin-bottom: 8px;
+}
+
+.login-input {
+  width: 100%;
+  padding: 14px 16px;
+  border-radius: 14px;
+  border: 1px solid rgba(179, 0, 255, 0.25);
+  background: rgba(18, 4, 35, 0.6);
+  color: #fff;
+  font-family: 'Inter', sans-serif;
+  font-size: 1rem;
+  outline: none;
+  backdrop-filter: blur(12px);
+  transition: border-color .2s;
+}
+
+.login-input::placeholder {
+  color: rgba(240, 230, 255, 0.5);
+}
+
+.login-input--error {
+  border-color: #ff0055;
+}
+
+.login-error {
+  color: #ff0055;
+  font-size: .8rem;
+  margin: 4px 0 0;
+}
+
+.login-button {
+  width: 100%;
+  padding: 14px;
+  margin-top: 8px;
+  border: none;
+  border-radius: 14px;
+  background: linear-gradient(135deg, #b300ff, #6a00ff);
+  color: #fff;
+  font-family: 'Outfit', sans-serif;
+  font-size: 1rem;
+  font-weight: 600;
+  cursor: pointer;
+  box-shadow: 0 4px 20px rgba(179, 0, 255, 0.3);
+  transition: opacity .2s;
+}
+
+.login-button:disabled {
+  cursor: not-allowed;
+  opacity: .7;
+}

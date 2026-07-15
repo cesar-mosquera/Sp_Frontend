@@ -1,9 +1,10 @@
 import { useEffect, useState, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { API_BASE_URL } from '../config';
+import { API_BASE_URL, APP_PAGE_CONFIG } from '../config';
 import { useAuthStore } from '../store';
 import { fetchWithRetry } from '../utils/fetchWithRetry';
 import { handleAuthResponse } from '../utils/authResponse';
+import { formatExactDate, formatExactDateTime } from '../appPage';
 import '../styles/admin.css';
 
 // Types para Planes y Suscripciones
@@ -78,9 +79,6 @@ function generateCredential(): string {
   pass += special.charAt(Math.floor(Math.random() * special.length));
   return pass;
 }
-
-// Eliminamos getDeviceCredentials mock
-// function getDeviceCredentials(deviceId: string): Creds { ... }
 
 function getTimeAgo(date: Date): string {
   const diff = Date.now() - date.getTime();
@@ -197,10 +195,29 @@ export default function AdminPage() {
       }));
       if (res.ok) {
         const data = await res.json();
-        setPlans(data.plans || []);
+        const existing: Plan[] = data.plans || [];
+        // Mismo motivo que en openSubsModal: el backend solo devuelve un
+        // plan por app una vez que alguien lo creo manualmente -- una app
+        // recien agregada al catalogo (ej. "Llamadas") no tendria fila
+        // todavia y no aparecería aca para poder activarla/ponerle precio.
+        // Se completa con el catalogo completo, deshabilitadas por defecto.
+        const byAppName = new Map(existing.map(p => [p.app_name, p]));
+        const merged: Plan[] = Object.values(APP_PAGE_CONFIG).map(cfg => (
+          byAppName.get(cfg.appKey) ?? {
+            app_name: cfg.appKey,
+            display_name: cfg.title,
+            price: 0,
+            enabled: false,
+          }
+        ));
+        setPlans(merged);
+      } else {
+        console.error(`Error cargando planes: HTTP ${res.status}`);
+        showToast('No se pudieron cargar los planes');
       }
     } catch (err) {
       console.error('Error cargando planes tras varios intentos:', err);
+      showToast('No se pudieron cargar los planes');
     }
     setPlansLoading(false);
   }, [API, adminHeaders]);
@@ -214,9 +231,13 @@ export default function AdminPage() {
       if (res.ok) {
         const data = await res.json();
         setGlobalSubs(data.subscriptions || []);
+      } else {
+        console.error(`Error cargando suscripciones: HTTP ${res.status}`);
+        showToast('No se pudieron cargar las suscripciones');
       }
     } catch (err) {
       console.error('Error cargando suscripciones tras varios intentos:', err);
+      showToast('No se pudieron cargar las suscripciones');
     }
     setSubsLoading(false);
   }, [API, adminHeaders]);
@@ -230,9 +251,13 @@ export default function AdminPage() {
       if (res.ok) {
         const data = await res.json();
         setMetrics(data);
+      } else {
+        console.error(`Error cargando metricas: HTTP ${res.status}`);
+        showToast('No se pudieron cargar las métricas');
       }
     } catch (err) {
       console.error('Error cargando metricas tras varios intentos:', err);
+      showToast('No se pudieron cargar las métricas');
     }
     setMetricsLoading(false);
   }, [API, adminHeaders]);
@@ -245,9 +270,13 @@ export default function AdminPage() {
       if (res.ok) {
         const data = await res.json();
         setInactiveDevices(data.devices || []);
+      } else {
+        console.error(`Error cargando dispositivos inactivos: HTTP ${res.status}`);
+        showToast('No se pudieron cargar los dispositivos inactivos');
       }
     } catch (err) {
       console.error('Error cargando dispositivos inactivos tras varios intentos:', err);
+      showToast('No se pudieron cargar los dispositivos inactivos');
     }
   }, [API, adminHeaders]);
 
@@ -259,9 +288,13 @@ export default function AdminPage() {
       if (res.ok) {
         const data = await res.json();
         setMaintenanceConfig(data);
+      } else {
+        console.error(`Error cargando configuracion de mantenimiento: HTTP ${res.status}`);
+        showToast('No se pudo cargar la configuración de mantenimiento');
       }
     } catch (err) {
       console.error('Error cargando configuracion de mantenimiento tras varios intentos:', err);
+      showToast('No se pudo cargar la configuración de mantenimiento');
     }
   }, [API, adminHeaders]);
 
@@ -537,7 +570,27 @@ export default function AdminPage() {
       }));
       if (res.ok) {
         const data = await res.json();
-        setDeviceSubs(data.subscriptions || []);
+        const existing: Subscription[] = data.subscriptions || [];
+        // El backend solo devuelve una fila por app una vez que esa app se
+        // activo/reporto datos alguna vez -- pero un dispositivo con el APK
+        // instalado debe poder activar o desactivar CUALQUIERA de las apps
+        // soportadas desde el primer momento, no solo las que ya tienen
+        // fila. Se completa con el catalogo completo (APP_PAGE_CONFIG),
+        // inactivas por defecto, para que ninguna app quede sin mostrarse.
+        const byAppName = new Map(existing.map(s => [s.app_name, s]));
+        const merged: Subscription[] = Object.values(APP_PAGE_CONFIG).map(cfg => (
+          byAppName.get(cfg.appKey) ?? {
+            id: -1,
+            device_id: device.device_id,
+            app_name: cfg.appKey,
+            display_name: cfg.title,
+            active: false,
+          }
+        ));
+        setDeviceSubs(merged);
+      } else {
+        console.error(`Error cargando suscripciones del dispositivo: HTTP ${res.status}`);
+        showToast('No se pudieron cargar las suscripciones del dispositivo');
       }
     } catch (err) {
       console.error(err);
@@ -768,7 +821,7 @@ export default function AdminPage() {
                         <div className="cred-row">
                           <span className="cred-label">Registro</span>
                           <span className="cred-value" style={{ fontSize: '0.7rem', color: 'rgba(255,255,255,0.4)' }}>
-                            {d.created_at ? new Date(d.created_at).toLocaleDateString() : 'Desconocido'}
+                            {d.created_at ? formatExactDate(d.created_at) : 'Desconocido'}
                           </span>
                         </div>
                         
@@ -874,7 +927,7 @@ export default function AdminPage() {
                             </span>
                           </td>
                           <td style={{ fontSize: '0.8rem', color: 'rgba(255,255,255,0.5)' }}>
-                            {s.expires_at ? new Date(s.expires_at).toLocaleDateString() : '-'}
+                            {s.expires_at ? formatExactDate(s.expires_at) : '-'}
                           </td>
                         </tr>
                       ))}
@@ -975,7 +1028,7 @@ export default function AdminPage() {
               ) : (
                 <>
                   <p style={{ fontSize: '0.75rem', color: 'rgba(255,255,255,0.5)', marginBottom: 12 }}>
-                    Contadores acumulados desde el arranque del backend ({new Date(metrics.since_boot).toLocaleString()}). No son promedios ni tasas.
+                    Contadores acumulados desde el arranque del backend ({formatExactDateTime(metrics.since_boot)}). No son promedios ni tasas.
                   </p>
                   <div className="stats-row">
                     <div className="stat-card">
@@ -1350,7 +1403,7 @@ export default function AdminPage() {
                         </span>
                       </td>
                       <td style={{ fontSize: '0.8rem', color: 'rgba(255,255,255,0.5)' }}>
-                        {s.expires_at ? new Date(s.expires_at).toLocaleDateString() : '-'}
+                        {s.expires_at ? formatExactDate(s.expires_at) : '-'}
                       </td>
                       <td>
                         <button

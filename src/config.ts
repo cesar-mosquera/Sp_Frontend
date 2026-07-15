@@ -40,7 +40,12 @@ export const APP_PAGE_CONFIG: Record<string, AppPageConfig> = {
     icon: '✉',
     headerColor: '#00ffb8',
     appKey: 'sms',
-    matchKeys: ['sms', 'text', 'mensaje', 'mensajetexto'],
+    // 'text' y 'mensaje' sueltos se sacaron: matchesApp tambien los
+    // compara contra entry.type, y esas son palabras genericas que
+    // cualquier app de chat puede usar como tipo de evento (ej. un
+    // mensaje de WhatsApp con type:"mensaje" terminaba clasificado
+    // tambien como SMS). 'mensajetexto' ya es lo bastante especifico.
+    matchKeys: ['sms', 'mensajetexto'],
   },
   facebook: {
     title: 'Facebook',
@@ -64,7 +69,10 @@ export const APP_PAGE_CONFIG: Record<string, AppPageConfig> = {
     icon: 'G',
     headerColor: '#4285f4',
     appKey: 'google',
-    matchKeys: ['google', 'gmail', 'search', 'chrome'],
+    // 'search' se saco por el mismo motivo: Instagram, TikTok, etc. tienen
+    // su propia busqueda interna y podrian mandar type:"search", lo que
+    // los mezclaria con el feed de Google.
+    matchKeys: ['google', 'gmail', 'chrome'],
   },
   ubicacion: {
     title: 'Ubicación',
@@ -72,7 +80,10 @@ export const APP_PAGE_CONFIG: Record<string, AppPageConfig> = {
     icon: '📍',
     headerColor: '#ff9800',
     appKey: 'ubicacion',
-    matchKeys: ['ubicacion', 'ubicación', 'location', 'gps', 'mapa'],
+    // 'gps' se saco: es un termino tecnico generico que otras apps pueden
+    // mencionar (ej. permisos, "compartir ubicacion GPS" dentro de un
+    // mensaje de WhatsApp) sin ser en si un log de Ubicacion.
+    matchKeys: ['ubicacion', 'ubicación', 'location', 'mapa'],
   },
   llamadas: {
     title: 'Llamadas',
@@ -80,7 +91,12 @@ export const APP_PAGE_CONFIG: Record<string, AppPageConfig> = {
     icon: '📞',
     headerColor: '#00e0a0',
     appKey: 'llamadas',
-    matchKeys: ['call_log', 'call', 'llamada', 'llamadas'],
+    // 'call' suelto se saco: 'call_log' ya matchea el type real que manda
+    // el backend (CALL_LOG normalizado) sin necesidad de la palabra
+    // generica 'call', que colisionaba con llamadas de voz/video de
+    // WhatsApp o Telegram (type conteniendo "call") y las duplicaba
+    // tambien en este canal.
+    matchKeys: ['call_log', 'llamada', 'llamadas'],
   },
 };
 

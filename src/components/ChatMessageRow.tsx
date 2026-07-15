@@ -19,31 +19,15 @@ export default function ChatMessageRow({ index, style, entries, showContactName 
 
   return (
     <div style={{ ...style, paddingBottom: 12, boxSizing: 'border-box' }}>
-      <article
-        className="chat-message"
-        style={{
-          height: '100%',
-          boxSizing: 'border-box',
-          overflowY: 'auto',
-          display: 'flex',
-          gap: 12,
-          alignItems: 'flex-start',
-          borderLeft: isOutgoing ? '1px solid rgba(179, 0, 255, 0.2)' : `3px solid ${avatarColor}`,
-          borderRight: isOutgoing ? `3px solid ${avatarColor}` : '1px solid rgba(179, 0, 255, 0.2)',
-        }}
-      >
+      <div className={`chat-bubble-row${isOutgoing ? ' outgoing' : ''}`} style={{ height: '100%' }}>
         <div
           title={entry.contact}
-          style={{
-            width: 36, height: 36, minWidth: 36, borderRadius: '50%',
-            background: avatarColor, color: '#fff', fontWeight: 700,
-            display: 'flex', alignItems: 'center', justifyContent: 'center',
-            fontSize: '0.9rem', flexShrink: 0, marginTop: 2,
-          }}
+          className="chat-avatar"
+          style={{ background: avatarColor }}
         >
           {initial}
         </div>
-        <div style={{ flex: 1, minWidth: 0 }}>
+        <article className="chat-message" style={{ borderColor: isOutgoing ? 'rgba(179, 0, 255, 0.4)' : `${avatarColor}66` }}>
           <div className="chat-header">
             <div>
               {showContactName && <strong>{entry.contact}</strong>}
@@ -56,8 +40,8 @@ export default function ChatMessageRow({ index, style, entries, showContactName 
             <small>{formatTimestamp(entry.timestamp)}</small>
           </div>
           <div className="chat-body">{entry.msg}</div>
-        </div>
-      </article>
+        </article>
+      </div>
     </div>
   );
 }
