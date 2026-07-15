@@ -77,15 +77,14 @@ export default function AppPage({ appKey }: Props) {
       .then(r => r.json())
       .then(data => {
         const subs = data?.subscriptions || [];
-        const planKey: Record<string, string> = {
-          whatsapp: 'whatsapp', tiktok: 'tiktok', telegram: 'telegram',
-          facebook: 'facebook', instagram: 'instagram', google: 'google',
-          sms: 'sms', ubicacion: 'location', llamadas: 'call',
-        };
-        const appPlan = planKey[config.appKey] || config.appKey;
+        // El backend usa el mismo app_name en todos sus endpoints
+        // (confirmado en /api/admin/plans y /api/admin/devices/{id}/
+        // subscriptions: whatsapp, telegram, instagram, sms, facebook,
+        // tiktok, google, ubicacion, llamadas) -- config.appKey ya
+        // coincide directo, sin necesidad de traducir nada.
         const active = subs.some(
           (s: { app_name: string; active: number }) =>
-            s.app_name === appPlan && s.active
+            s.app_name === config.appKey && s.active
         );
         setAccessDenied(!active);
       })

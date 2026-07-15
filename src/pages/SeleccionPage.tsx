@@ -64,11 +64,16 @@ export default function SeleccionPage() {
   const isAllowed = (appName: string) => {
     if (role === 'admin') return true;
     if (!subsChecked) return false;
+    // El backend usa el mismo app_name en todos sus endpoints (confirmado
+    // en /api/admin/plans y /api/admin/devices/{id}/subscriptions:
+    // whatsapp, telegram, instagram, sms, facebook, tiktok, google,
+    // ubicacion, llamadas) -- solo hace falta normalizar el acento de
+    // "Ubicación", no traducir a otro nombre.
     const map: Record<string, string> = {
       whatsapp: 'whatsapp', tiktok: 'tiktok', telegram: 'telegram',
       facebook: 'facebook', instagram: 'instagram', google: 'google',
-      sms: 'sms', ubicación: 'location', ubicacion: 'location',
-      llamadas: 'call',
+      sms: 'sms', ubicación: 'ubicacion', ubicacion: 'ubicacion',
+      llamadas: 'llamadas',
     };
     const key = map[appName.toLowerCase()];
     return allowedApps.has(key);
