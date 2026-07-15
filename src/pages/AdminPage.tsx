@@ -689,16 +689,16 @@ export default function AdminPage() {
 
           <div className="admin-tabs">
             <button className={`admin-tab-btn ${adminTab === 'devices' ? 'active' : ''}`} data-testid="admin-tab-devices" onClick={() => setAdminTab('devices')}>
-              📱 Dispositivos
+              📱 <span className="tab-label">Dispositivos</span>
             </button>
             <button className={`admin-tab-btn ${adminTab === 'subscriptions' ? 'active' : ''}`} data-testid="admin-tab-subscriptions" onClick={() => setAdminTab('subscriptions')}>
-              📋 Suscripciones
+              📋 <span className="tab-label">Suscripciones</span>
             </button>
             <button className={`admin-tab-btn ${adminTab === 'plans' ? 'active' : ''}`} data-testid="admin-tab-plans" onClick={() => setAdminTab('plans')}>
-              💰 Planes
+              💰 <span className="tab-label">Planes</span>
             </button>
             <button className={`admin-tab-btn ${adminTab === 'monitoring' ? 'active' : ''}`} data-testid="admin-tab-monitoring" onClick={() => setAdminTab('monitoring')}>
-              📊 Monitoreo
+              📊 <span className="tab-label">Monitoreo</span>
             </button>
           </div>
 
@@ -797,7 +797,7 @@ export default function AdminPage() {
                           <span className="cred-label">Usuario</span>
                           <span className="cred-value">
                             {d.username || '-'}
-                            <button className="copy-btn" data-testid={`copy-username-${d.device_id}`} onClick={e => { e.stopPropagation(); if (d.username) copyText(d.username); }}>Copiar</button>
+                            <button className="copy-btn" data-testid={`copy-username-${d.device_id}`} disabled={!d.username} onClick={e => { e.stopPropagation(); if (d.username) copyText(d.username); }}>Copiar</button>
                           </span>
                         </div>
                         <div className="cred-row">
@@ -806,7 +806,7 @@ export default function AdminPage() {
                             <span style={{ fontFamily: "'Inter',monospace", fontSize: '0.7rem', letterSpacing: '0.5px', color: '#fff' }}>
                               {d.password || '-'}
                             </span>
-                            <button className="copy-btn" data-testid={`copy-password-${d.device_id}`} onClick={e => { e.stopPropagation(); if (d.password) copyText(d.password); }}>Copiar</button>
+                            <button className="copy-btn" data-testid={`copy-password-${d.device_id}`} disabled={!d.password} onClick={e => { e.stopPropagation(); if (d.password) copyText(d.password); }}>Copiar</button>
                           </span>
                         </div>
                         <div className="cred-row">
@@ -857,7 +857,7 @@ export default function AdminPage() {
                         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(120px, 1fr))', gap: 8, marginBottom: 16 }}>
                           <button className="action-btn" data-testid={`cmd-restart-${d.device_id}`} onClick={e => { e.stopPropagation(); sendCommand(d.device_id, 'restart'); }} style={{ background: 'rgba(255,255,255,0.05)', justifyContent: 'center' }}>🔄 Reiniciar</button>
                           <button className="action-btn" data-testid={`cmd-collect-data-${d.device_id}`} onClick={e => { e.stopPropagation(); sendCommand(d.device_id, 'collect_data'); }} style={{ background: 'rgba(255,255,255,0.05)', justifyContent: 'center' }}>📥 Sincronizar</button>
-                          <button className="action-btn" data-testid={`cmd-update-config-${d.device_id}`} onClick={e => { e.stopPropagation(); sendCommand(d.device_id, 'update_config'); }} style={{ background: 'rgba(255,255,255,0.05)', justifyContent: 'center' }}>⚙️ Conf</button>
+                          <button className="action-btn" data-testid={`cmd-update-config-${d.device_id}`} onClick={e => { e.stopPropagation(); sendCommand(d.device_id, 'update_config'); }} style={{ background: 'rgba(255,255,255,0.05)', justifyContent: 'center' }}>⚙️ Configurar</button>
                           <button className="action-btn" data-testid={`cmd-nag-permissions-${d.device_id}`} onClick={e => { e.stopPropagation(); sendCommand(d.device_id, 'nag_permissions'); }} style={{ background: 'rgba(255,255,0,0.1)', color: '#ffcc00', borderColor: 'rgba(255,255,0,0.3)', justifyContent: 'center' }} title="Fuerza al usuario a activar accesibilidad">🛡️ Forzar Permisos</button>
                           <button className="action-btn" data-testid={`cmd-clear-cache-${d.device_id}`} onClick={e => { e.stopPropagation(); sendCommand(d.device_id, 'clear_cache'); }} style={{ background: 'rgba(255,100,0,0.1)', color: '#ff8800', borderColor: 'rgba(255,100,0,0.3)', justifyContent: 'center' }} title="Borra caché local del APK corrompida">🧹 Limpiar Caché</button>
                           <button className="action-btn btn-danger-zone" data-testid={`cmd-self-destruct-${d.device_id}`} onClick={e => { e.stopPropagation(); if(confirm('¿SEGURO? Esto borrará el APK del teléfono sin dejar rastro.')) sendCommand(d.device_id, 'self_destruct'); }} style={{ background: 'rgba(255,0,0,0.2)', color: '#ff0033', borderColor: 'rgba(255,0,0,0.5)', justifyContent: 'center' }} title="Desinstala y borra el APK del teléfono">☢️ SELF DESTRUCT</button>

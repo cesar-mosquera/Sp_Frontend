@@ -99,13 +99,14 @@ body { scrollbar-width: none; }
 }
 
 .admin-header {
-  display: flex; justify-content: space-between; align-items: center;
+  display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center;
+  gap: 12px;
   padding: 16px 0 24px;
 }
 
 .admin-header h1 {
   font-family: 'Orbitron', sans-serif;
-  font-size: 1.8rem; font-weight: 700;
+  font-size: clamp(1.3rem, 5vw, 1.8rem); font-weight: 700;
   background: linear-gradient(135deg, #ffffff 0%, var(--neon-cyan) 100%);
   -webkit-background-clip: text; -webkit-text-fill-color: transparent;
   background-clip: text;
@@ -320,6 +321,26 @@ body { scrollbar-width: none; }
   padding: 2px 6px; border-radius: 4px;
 }
 
+/* Sin esto el boton "Copiar" salia con el chrome nativo del navegador
+   (fondo blanco, texto negro), un choque muy visible contra el resto del
+   tema oscuro/neon justo en la fila mas mirada (credenciales). */
+.cred-row .copy-btn {
+  flex-shrink: 0;
+  padding: 4px 10px;
+  border-radius: 6px;
+  border: 1px solid rgba(0, 240, 255, 0.25);
+  background: rgba(0, 240, 255, 0.08);
+  color: var(--neon-cyan);
+  font-family: 'Inter', sans-serif;
+  font-size: 0.7rem; font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.cred-row .copy-btn:hover { background: rgba(0, 240, 255, 0.18); }
+.cred-row .copy-btn:active { transform: scale(0.95); }
+.cred-row .copy-btn:disabled { opacity: 0.3; cursor: not-allowed; }
+
 .icon-btn {
   display: inline-flex; align-items: center; justify-content: center;
   width: 28px; height: 28px; border-radius: 6px;
@@ -512,6 +533,15 @@ body { scrollbar-width: none; }
 .admin-tab-btn.active {
   background: rgba(0, 240, 255, 0.1); color: var(--neon-cyan);
   box-shadow: 0 0 15px rgba(0,240,255,0.2);
+}
+
+/* Con las 4 pestañas de texto completo no caben en una fila en pantallas
+   angostas: quedaban cortadas fuera de vista (scroll horizontal sin
+   ningun indicador de que "Monitoreo" seguia ahi). Se muestra solo el
+   icono para que las 4 quepan siempre en una sola fila. */
+@media (max-width: 480px) {
+  .admin-tab-btn { padding: 12px 4px; }
+  .admin-tab-btn .tab-label { display: none; }
 }
 
 .admin-table { width: 100%; border-collapse: collapse; margin-top: 8px; }

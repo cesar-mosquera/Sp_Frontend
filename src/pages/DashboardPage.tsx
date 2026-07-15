@@ -449,7 +449,7 @@ export default function DashboardPage() {
       <div className="red-lighting" />
 
       <div className="container" id="mainContainer">
-        <div style={{ textAlign: 'left', marginBottom: 10 }}>
+        <div style={{ display: 'flex', flexWrap: 'wrap', justifyContent: 'space-between', alignItems: 'center', gap: 10, marginBottom: 10 }}>
           <Link
             to="/seleccion"
             style={{
@@ -464,6 +464,9 @@ export default function DashboardPage() {
           >
             ← Volver a Selección de Canales
           </Link>
+          <button onClick={() => { logout(); window.location.href = '/login'; }} style={{ background: 'none', border: '1px solid rgba(255,255,255,0.1)', borderRadius: 8, color: 'rgba(255,255,255,0.5)', fontSize: '0.75rem', padding: '8px 14px', cursor: 'pointer', fontFamily: 'monospace' }}>
+            🚪 Salir
+          </button>
         </div>
 
         <header>
@@ -507,10 +510,6 @@ export default function DashboardPage() {
               ⚠️ {connectionError}
             </div>
           )}
-          <button onClick={() => { window.location.href = '/seleccion'; }} style={{ position: 'absolute', top: 16, left: 16, background: 'none', border: '1px solid rgba(0,255,136,0.2)', borderRadius: 8, color: '#00ff88', fontSize: '0.85rem', padding: '4px 10px', cursor: 'pointer', fontFamily: 'monospace', opacity: 0.6, transition: 'opacity 0.2s' }}>←</button>
-          <button onClick={() => { logout(); window.location.href = '/login'; }} style={{ position: 'absolute', top: 16, right: 16, background: 'none', border: '1px solid rgba(255,255,255,0.1)', borderRadius: 8, color: 'rgba(255,255,255,0.3)', fontSize: '0.7rem', padding: '4px 10px', cursor: 'pointer', fontFamily: 'monospace' }}>
-            🚪 Salir
-          </button>
         </header>
 
         <div className="dashboard">
