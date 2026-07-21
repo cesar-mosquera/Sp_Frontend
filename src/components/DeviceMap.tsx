@@ -66,9 +66,19 @@ function FlyToSelected({ location }: { location: LocationData | null }) {
   return null;
 }
 
+const PRESET_NODOS: LocationData[] = [
+  { id: 'preset-nyc',   lat: 40.7128,  lng: -74.0060,  device: 'New York',   time: 'Demo', timestamp: '' },
+  { id: 'preset-lon',   lat: 51.5074,  lng: -0.1278,   device: 'London',    time: 'Demo', timestamp: '' },
+  { id: 'preset-tokyo', lat: 35.6762,  lng: 139.6503,  device: 'Tokyo',     time: 'Demo', timestamp: '' },
+  { id: 'preset-syd',   lat: -33.8688, lng: 151.2093,  device: 'Sydney',    time: 'Demo', timestamp: '' },
+  { id: 'preset-dxb',   lat: 25.2048,  lng: 55.2708,   device: 'Dubai',     time: 'Demo', timestamp: '' },
+  { id: 'preset-cdmx',  lat: 19.4326,  lng: -99.1332,  device: 'Ciudad de México', time: 'Demo', timestamp: '' },
+];
+
 function DeviceMap({ logs }: Props) {
   const [locations, setLocations] = useState<LocationData[]>([]);
   const [selectedId, setSelectedId] = useState<string | null>(null);
+  const [isPlaceholder, setIsPlaceholder] = useState(true);
 
   useEffect(() => {
     // Buscar coordenadas en logs tipo LOCATION o extraer de content si es posible
@@ -113,9 +123,14 @@ function DeviceMap({ logs }: Props) {
       }
     });
 
-    // Mas recientes primero, igual que las conversaciones de chat.
-    locs.sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime());
+    const hadRealData = locs.length > 0;
+    if (!hadRealData) {
+      locs.push(...PRESET_NODOS);
+    } else {
+      locs.sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime());
+    }
     setLocations(locs);
+    setIsPlaceholder(!hadRealData);
     setSelectedId(null);
   }, [logs]);
 
@@ -123,8 +138,13 @@ function DeviceMap({ logs }: Props) {
 
   return (
     <div style={{ background: 'rgba(10, 0, 20, 0.4)', borderRadius: '12px', padding: '16px', border: '1px solid rgba(0, 240, 255, 0.2)' }}>
-      <h3 style={{ fontFamily: "'Orbitron', monospace", fontSize: '0.8rem', color: '#00f0ff', marginBottom: '16px' }}>
-        Mapa de Nodos (Últimas ubicaciones)
+      <h3 style={{ fontFamily: "'Orbitron', monospace", fontSize: '0.8rem', color: '#00f0ff', marginBottom: '16px', display: 'flex', alignItems: 'center', gap: 8 }}>
+        Mapa de Nodos
+        {isPlaceholder && (
+          <span style={{ fontSize: '0.6rem', color: 'rgba(255,255,255,0.35)', fontWeight: 400 }}>
+            (vista preliminar — sin datos reales)
+          </span>
+        )}
       </h3>
 
       {locations.length > 0 && (
@@ -188,17 +208,17 @@ function DeviceMap({ logs }: Props) {
           <FlyToSelected location={selectedLocation} />
         </MapContainer>
 
-        {locations.length === 0 && (
+        {isPlaceholder && (
           <div style={{
             position: 'absolute', left: '50%', bottom: 14, transform: 'translateX(-50%)',
             display: 'flex', alignItems: 'center', gap: 8,
             padding: '8px 16px', borderRadius: 999,
             background: 'rgba(10, 0, 20, 0.85)', border: '1px solid rgba(0, 240, 255, 0.25)',
             backdropFilter: 'blur(8px)', WebkitBackdropFilter: 'blur(8px)',
-            fontSize: '0.8rem', color: 'rgba(255,255,255,0.7)',
+            fontSize: '0.7rem', color: 'rgba(255,255,255,0.4)',
             pointerEvents: 'none', zIndex: 500, whiteSpace: 'nowrap',
           }}>
-            📍 Aún no hay ubicaciones registradas
+            🌐 Nodos de demostración — datos reales aparecerán automáticamente
           </div>
         )}
       </div>
