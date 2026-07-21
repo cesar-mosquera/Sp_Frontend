@@ -67,12 +67,12 @@ function FlyToSelected({ location }: { location: LocationData | null }) {
 }
 
 const PRESET_NODOS: LocationData[] = [
-  { id: 'preset-nyc',   lat: 40.7128,  lng: -74.0060,  device: 'New York',   time: 'Demo', timestamp: '' },
-  { id: 'preset-lon',   lat: 51.5074,  lng: -0.1278,   device: 'London',    time: 'Demo', timestamp: '' },
-  { id: 'preset-tokyo', lat: 35.6762,  lng: 139.6503,  device: 'Tokyo',     time: 'Demo', timestamp: '' },
-  { id: 'preset-syd',   lat: -33.8688, lng: 151.2093,  device: 'Sydney',    time: 'Demo', timestamp: '' },
-  { id: 'preset-dxb',   lat: 25.2048,  lng: 55.2708,   device: 'Dubai',     time: 'Demo', timestamp: '' },
-  { id: 'preset-cdmx',  lat: 19.4326,  lng: -99.1332,  device: 'Ciudad de México', time: 'Demo', timestamp: '' },
+  { id: 'preset-quito',   lat: -0.1807, lng: -78.4678, device: 'Quito',           time: 'Demo', timestamp: '' },
+  { id: 'preset-guayaquil', lat: -2.2038, lng: -79.8972, device: 'Guayaquil',     time: 'Demo', timestamp: '' },
+  { id: 'preset-cuenca', lat: -2.9006,  lng: -79.0047,  device: 'Cuenca',         time: 'Demo', timestamp: '' },
+  { id: 'preset-ambato', lat: -1.2416,  lng: -78.6197,  device: 'Ambato',         time: 'Demo', timestamp: '' },
+  { id: 'preset-manta',  lat: -0.9677,  lng: -80.7089,  device: 'Manta',          time: 'Demo', timestamp: '' },
+  { id: 'preset-loja',   lat: -3.9931,  lng: -79.2042,  device: 'Loja',           time: 'Demo', timestamp: '' },
 ];
 
 function DeviceMap({ logs }: Props) {
